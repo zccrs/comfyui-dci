@@ -1,154 +1,258 @@
-# ComfyUI DCI Image Exporter
+# ComfyUI DCI Image Exporter Extension
 
-A ComfyUI extension for exporting images to DCI (DSG Combined Icons) format, following the [Desktop Spec Group icon file specification](https://desktopspec.org/unstable/%E5%9B%BE%E6%A0%87%E6%96%87%E4%BB%B6%E8%A7%84%E8%8C%83.html).
+A ComfyUI extension for converting images to DCI (DSG Combined Icons) format, following the desktop specification. This extension also provides comprehensive DCI file preview and analysis capabilities.
 
 ## Features
 
-- Export images to DCI format with proper directory structure
-- Support for multiple icon states (normal, disabled, hover, pressed)
-- Support for light and dark tone types
-- Multiple scale factors (1x, 2x, 3x, etc.)
-- Multiple image formats (WebP, PNG, JPEG)
-- Two node types: basic and advanced
+### Export Features
+- **Basic DCI Export**: Convert single images to DCI format with customizable parameters
+- **Advanced Multi-State Export**: Create DCI files with multiple icon states (normal, hover, pressed, disabled)
+- **Multiple Scale Factors**: Support for 1x, 2x, 3x scaling and custom scale combinations
+- **Format Support**: WebP, PNG, and JPEG formats
+- **Tone Support**: Light and dark tone variants
+- **Customizable Icon Sizes**: From 16x16 to 1024x1024 pixels
+
+### Preview & Analysis Features
+- **Visual Preview**: Generate grid-based previews of all images in a DCI file
+- **Metadata Display**: Show comprehensive metadata for each image including size, state, tone, scale, format
+- **Directory Structure Analysis**: Inspect the internal directory structure of DCI files
+- **Filtering Capabilities**: Filter images by state, tone, scale factor, or format
+- **File Information**: Display file sizes, image dimensions, and other technical details
 
 ## Installation
 
-1. Clone or download this repository to your ComfyUI `custom_nodes` directory:
-   ```bash
-   cd ComfyUI/custom_nodes
-   git clone <repository-url> comfyui-dci-exporter
-   ```
+1. Clone this repository into your ComfyUI custom nodes directory:
+```bash
+cd ComfyUI/custom_nodes/
+git clone https://github.com/your-username/comfyui-deepin.git
+```
 
-2. Install required dependencies:
-   ```bash
-   pip install Pillow
-   ```
+2. Install the required dependencies:
+```bash
+cd comfyui-deepin
+pip install -r requirements.txt
+```
 
 3. Restart ComfyUI
 
-## Nodes
+## Available Nodes
 
-### DCI Image Exporter (Basic)
+### Export Nodes
 
-A simple node for basic DCI export functionality.
-
-**Inputs:**
-- `image` (IMAGE): Input image to convert
-- `filename` (STRING): Output filename (without extension)
-- `icon_size` (INT): Base icon size in pixels (default: 256)
-- `icon_state` (ENUM): Icon state - normal, disabled, hover, pressed (default: normal)
-- `tone_type` (ENUM): Tone type - light, dark (default: dark)
-- `image_format` (ENUM): Output format - webp, png, jpg (default: webp)
-- `scale_factors` (STRING): Comma-separated scale factors (default: "1,2,3")
-- `output_directory` (STRING): Optional output directory
-
-**Output:**
-- `file_path` (STRING): Path to the generated DCI file
-
-### DCI Image Exporter (Advanced)
-
-An advanced node supporting multiple icon states and tones in a single DCI file.
+#### 1. DCI Image Exporter
+Basic DCI export node for single-state icons.
 
 **Inputs:**
-- `image` (IMAGE): Default input image
-- `filename` (STRING): Output filename (without extension)
-- `icon_size` (INT): Base icon size in pixels (default: 256)
-- `image_format` (ENUM): Output format - webp, png, jpg (default: webp)
-- `normal_image` (IMAGE, optional): Image for normal state
-- `disabled_image` (IMAGE, optional): Image for disabled state
-- `hover_image` (IMAGE, optional): Image for hover state
-- `pressed_image` (IMAGE, optional): Image for pressed state
-- `include_light_tone` (BOOLEAN): Include light tone variants (default: false)
-- `include_dark_tone` (BOOLEAN): Include dark tone variants (default: true)
-- `scale_factors` (STRING): Comma-separated scale factors (default: "1,2,3")
-- `output_directory` (STRING): Optional output directory
+- `image`: Input image (IMAGE)
+- `filename`: Output filename without extension (STRING)
+- `icon_size`: Target icon size in pixels (INT, default: 256)
+- `icon_state`: Icon state (normal/disabled/hover/pressed, default: normal)
+- `tone_type`: Tone type (light/dark, default: dark)
+- `image_format`: Output format (webp/png/jpg, default: webp)
+- `scale_factors`: Comma-separated scale factors (STRING, default: "1,2,3")
+- `output_directory`: Optional output directory (STRING)
 
-**Output:**
-- `file_path` (STRING): Path to the generated DCI file
+**Outputs:**
+- `file_path`: Path to the created DCI file (STRING)
 
-## DCI Format Specification
+#### 2. DCI Image Exporter (Advanced)
+Advanced DCI export node supporting multiple states and tones.
 
-The DCI (DSG Combined Icons) format is an archive format that contains multiple icon images organized in a specific directory structure:
+**Inputs:**
+- `image`: Base image (IMAGE)
+- `filename`: Output filename without extension (STRING)
+- `icon_size`: Target icon size in pixels (INT, default: 256)
+- `image_format`: Output format (webp/png/jpg, default: webp)
+- `normal_image`: Normal state image (IMAGE, optional)
+- `disabled_image`: Disabled state image (IMAGE, optional)
+- `hover_image`: Hover state image (IMAGE, optional)
+- `pressed_image`: Pressed state image (IMAGE, optional)
+- `include_light_tone`: Include light tone variant (BOOLEAN, default: false)
+- `include_dark_tone`: Include dark tone variant (BOOLEAN, default: true)
+- `scale_factors`: Comma-separated scale factors (STRING, default: "1,2,3")
+- `output_directory`: Optional output directory (STRING)
 
-```
-size/
-├── state.tone/
-│   ├── scale/
-│   │   └── priority.padding.palette.hue.saturation.brightness.red.green.blue.alpha.format
-```
+**Outputs:**
+- `file_path`: Path to the created DCI file (STRING)
 
-Where:
-- `size`: Icon size (e.g., "256")
-- `state`: Icon state (normal, disabled, hover, pressed)
-- `tone`: Tone type (light, dark)
-- `scale`: Scale factor (1, 2, 3, etc.)
-- The filename contains layer properties (currently using defaults: 1.0.0.0.0.0.0.0.0.0)
+### Preview & Analysis Nodes
+
+#### 3. DCI Preview
+Visual preview node for DCI file contents.
+
+**Inputs:**
+- `dci_file_path`: Path to DCI file (STRING)
+- `grid_columns`: Number of columns in preview grid (INT, default: 4)
+- `show_metadata`: Show metadata labels (BOOLEAN, default: true)
+
+**Outputs:**
+- `preview_image`: Grid preview of all images (IMAGE)
+- `metadata_summary`: Summary of DCI file metadata (STRING)
+
+#### 4. DCI File Loader
+Utility node for loading DCI file paths.
+
+**Inputs:**
+- `file_path`: DCI file path (STRING, optional)
+
+**Outputs:**
+- `dci_file_path`: Validated DCI file path (STRING)
+
+#### 5. DCI Metadata Extractor
+Detailed metadata extraction and filtering node.
+
+**Inputs:**
+- `dci_file_path`: Path to DCI file (STRING)
+- `filter_by_state`: Filter by icon state (all/normal/disabled/hover/pressed, default: all)
+- `filter_by_tone`: Filter by tone (all/light/dark, default: all)
+- `filter_by_scale`: Filter by scale factors (STRING, default: "all")
+
+**Outputs:**
+- `detailed_metadata`: Detailed metadata for filtered images (STRING)
+- `directory_structure`: DCI internal directory structure (STRING)
+- `file_list`: List of files matching filters (STRING)
 
 ## Usage Examples
 
-### Basic Usage
+### Basic DCI Export
+1. Load an image using `LoadImage`
+2. Connect it to `DCI Image Exporter`
+3. Configure the export parameters
+4. Execute to create a DCI file
 
-1. Load an image in ComfyUI
-2. Add a "DCI Image Exporter" node
-3. Connect the image to the node
-4. Set desired parameters (filename, size, state, etc.)
-5. Run the workflow
-6. The DCI file will be saved to the output directory
+### DCI Preview Workflow
+1. Use `DCI File Loader` to specify a DCI file path
+2. Connect to `DCI Preview` node
+3. Adjust grid columns and metadata display options
+4. View the generated preview image and metadata summary
 
-### Advanced Usage
+### Advanced Analysis
+1. Load a DCI file using `DCI File Loader`
+2. Connect to `DCI Metadata Extractor`
+3. Apply filters to focus on specific images
+4. Examine detailed metadata, directory structure, and file lists
 
-1. Load multiple images for different states (normal, hover, pressed, etc.)
-2. Add a "DCI Image Exporter (Advanced)" node
-3. Connect images to appropriate state inputs
-4. Configure tone options and scale factors
-5. Run the workflow
-6. A comprehensive DCI file with all states and scales will be generated
+### Multi-State Icon Creation
+1. Load different images for each state (normal, hover, pressed, disabled)
+2. Connect them to `DCI Image Exporter (Advanced)`
+3. Configure tone options and scale factors
+4. Generate a comprehensive multi-state DCI file
 
-### Scale Factors
+## Example Workflows
 
-Scale factors determine the pixel density variants included in the DCI file:
-- `1`: Base size (e.g., 256x256)
-- `2`: 2x size (e.g., 512x512)
-- `3`: 3x size (e.g., 768x768)
+### Basic Export and Preview
+```
+LoadImage → DCI Image Exporter → DCI Preview → PreviewImage
+                                      ↓
+                                 ShowText (metadata)
+```
 
-You can specify custom scale factors as a comma-separated string: "1,2,3,4"
+### Advanced Multi-State Analysis
+```
+LoadImage (normal) ──┐
+LoadImage (hover) ───┼─→ DCI Image Exporter (Advanced) → DCI Metadata Extractor → ShowText
+LoadImage (pressed) ─┘                                           ↓
+                                                            DCI Preview → PreviewImage
+```
+
+## DCI Format Specification
+
+This extension implements the DCI format according to the desktop specification:
+- **Magic Header**: "DCI\0"
+- **Version**: 1
+- **Directory Structure**: `size/state.tone/scale/layer.format`
+- **Supported States**: normal, disabled, hover, pressed
+- **Supported Tones**: light, dark
+- **Supported Formats**: WebP, PNG, JPEG
+
+## File Structure
+
+```
+comfyui-deepin/
+├── __init__.py              # ComfyUI extension registration
+├── nodes.py                 # All ComfyUI nodes (export + preview)
+├── dci_format.py           # DCI file creation and building
+├── dci_reader.py           # DCI file reading and parsing
+├── test_dci.py             # Basic DCI export tests
+├── test_dci_preview.py     # DCI preview functionality tests
+├── example_workflow.json   # Basic export workflow example
+├── example_dci_preview_workflow.json  # Preview workflow example
+├── requirements.txt        # Python dependencies
+└── README.md              # This documentation
+```
+
+## Testing
+
+### Test DCI Export
+```bash
+python test_dci.py
+```
+
+### Test DCI Preview
+```bash
+python test_dci_preview.py
+```
+
+The preview test will:
+1. Create a comprehensive test DCI file with multiple states, tones, and scales
+2. Test DCI file reading and parsing
+3. Generate preview grids with different column layouts
+4. Test metadata extraction and filtering
+5. Display directory structure analysis
 
 ## Technical Details
 
-### File Format
+### DCI File Format
+- **Header**: 4-byte magic + 1-byte version + 3-byte file count
+- **File Entries**: Type (1 byte) + Name (63 bytes) + Size (8 bytes) + Content
+- **Directory Structure**: Nested directories containing image files
+- **Byte Order**: Little-endian
 
-The DCI format uses little-endian byte order and includes:
-- Magic header: "DCI\0"
-- Version: 1 byte
-- File count: 3 bytes
-- File metadata and content for each file
+### Preview Generation
+- **Grid Layout**: Configurable column count with automatic row calculation
+- **Image Scaling**: Maintains aspect ratio while fitting in grid cells
+- **Metadata Overlay**: Shows size, state, tone, scale, format, and file size
+- **Font Handling**: Automatic fallback from system fonts to default
 
-### Directory Structure
+### Metadata Extraction
+- **Path Parsing**: Extracts metadata from directory structure
+- **Layer Information**: Parses complex layer filenames for additional properties
+- **Filtering**: Supports multiple filter criteria simultaneously
+- **Summary Generation**: Creates comprehensive statistics and summaries
 
-The extension creates a proper nested directory structure within the DCI archive, following the specification for icon organization by size, state, tone, and scale.
+## Dependencies
 
-### Image Processing
+- **Pillow**: Image processing and manipulation
+- **NumPy**: Array operations for ComfyUI tensor conversion
+- **PyTorch**: ComfyUI tensor compatibility
 
-- Images are automatically resized to match the target size × scale factor
-- RGBA images are supported for PNG and WebP formats
-- JPEG format automatically converts RGBA to RGB with white background
-- High-quality compression settings are used (90% quality for lossy formats)
+## Troubleshooting
 
-## Requirements
+### Common Issues
 
-- ComfyUI
-- Python 3.7+
-- Pillow (PIL)
+1. **"DCI file not found"**: Ensure the file path is correct and the file exists
+2. **"Failed to read DCI file"**: Check if the file is a valid DCI format with correct magic header
+3. **"No images found"**: The DCI file may be empty or have an unsupported structure
+4. **Font rendering issues**: The extension will fall back to default fonts if system fonts are unavailable
 
-## License
+### Debug Information
 
-This project follows the same license as ComfyUI.
+Enable debug output by checking the ComfyUI console for detailed error messages and processing information.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit issues and pull requests.
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Submit a pull request
 
-## References
+## License
 
-- [DCI Format Specification](https://desktopspec.org/unstable/%E5%9B%BE%E6%A0%87%E6%96%87%E4%BB%B6%E8%A7%84%E8%8C%83.html)
-- [DTK Core DCI Implementation](https://github.com/linuxdeepin/dtkcore/blob/master/src/dci/ddcifile.cpp)
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Based on the desktop specification for DCI format
+- Inspired by the Qt/C++ implementation in dtkcore
+- Built for the ComfyUI ecosystem
