@@ -371,11 +371,138 @@ DCI_BINARY_DATA = {
 }
 ```
 
+#### BINARY_DATA 类型
+```python
+BINARY_DATA = {
+    'content': bytes,        # 文件的二进制内容
+    'filename': str,         # 文件名
+    'size': int,            # 文件大小（字节）
+    'source_path': str      # 原始文件路径
+}
+```
+
+#### 1.3.3 二进制文件处理节点（新增）
+
+##### BinaryFileLoader 类
+**职责**: 从文件系统加载二进制文件，专为处理 DCI 图标文件等二进制数据设计
+
+**设计理念**:
+- 提供通用的二进制文件加载能力
+- 支持任意二进制文件格式，特别优化 DCI 文件
+- 输出结构化的二进制数据，便于后续节点处理
+
+**输入参数**:
+- `file_path`: 要加载的文件路径 (STRING)
+
+**输出数据**:
+- `binary_data`: 包含文件内容和元数据的二进制数据结构 (BINARY_DATA)
+
+**处理流程**:
+1. 验证文件路径的有效性和可读性
+2. 读取文件的二进制内容
+3. 提取文件元数据（文件名、大小、路径）
+4. 构建 BINARY_DATA 结构
+5. 返回结构化的二进制数据
+
+**错误处理**:
+- 文件不存在或无法读取时返回错误信息
+- 文件过大时提供警告但继续处理
+- 权限不足时提供明确的错误提示
+
+##### BinaryFileSaver 类
+**职责**: 将二进制数据保存到文件系统，支持自定义输出路径和目录
+
+**设计理念**:
+- 提供灵活的文件保存功能
+- 支持自定义输出目录和文件名
+- 与 ComfyUI 的文件系统集成
+
+**输入参数**:
+- `binary_data`: 要保存的二进制数据 (BINARY_DATA)
+- `file_path`: 目标文件路径 (STRING)
+- `output_directory`: 输出目录，可选 (STRING)
+
+**输出数据**:
+- `saved_path`: 实际保存的文件路径 (STRING)
+
+**处理流程**:
+1. 验证输入的二进制数据结构
+2. 确定最终的输出路径
+   - 如果指定了 output_directory，使用该目录
+   - 否则使用 ComfyUI 的默认输出目录
+3. 创建必要的目录结构
+4. 写入二进制数据到文件
+5. 验证写入的文件完整性
+6. 返回实际保存的文件路径
+
+**路径处理逻辑**:
+```python
+if output_directory and os.path.exists(output_directory):
+    final_path = os.path.join(output_directory, file_path)
+else:
+    # 使用 ComfyUI 输出目录
+    output_dir = folder_paths.get_output_directory()
+    final_path = os.path.join(output_dir, file_path)
+```
+
+##### BinaryFileUploader 类
+**职责**: 浏览和选择目录中的二进制文件，提供文件发现和选择功能
+
+**设计理念**:
+- 提供文件浏览和选择功能
+- 支持文件模式匹配和过滤
+- 与 ComfyUI 的输入目录系统集成
+
+**输入参数**:
+- `search_directory`: 搜索目录，可选 (STRING)
+- `file_pattern`: 文件匹配模式，可选 (STRING)
+
+**输出数据**:
+- `binary_data`: 选中文件的二进制数据 (BINARY_DATA)
+- `file_path`: 选中文件的完整路径 (STRING)
+
+**处理流程**:
+1. 确定搜索目录
+   - 如果指定了 search_directory，使用该目录
+   - 否则使用 ComfyUI 的默认输入目录
+2. 应用文件模式匹配
+   - 支持通配符模式（如 *.dci, *.png）
+   - 默认匹配所有文件（*）
+3. 扫描目录并列出匹配的文件
+4. 选择第一个匹配的文件（或提供选择机制）
+5. 加载选中文件的二进制数据
+6. 返回文件数据和路径
+
+**文件发现算法**:
+```python
+import glob
+import os
+
+def discover_files(search_dir, pattern):
+    search_pattern = os.path.join(search_dir, pattern)
+    matching_files = glob.glob(search_pattern)
+    return sorted(matching_files)  # 按名称排序
+```
+
+**使用示例**:
+- 设置 `file_pattern` 为 `"*.dci"` 来只查找 DCI 文件
+- 设置 `search_directory` 指定特定的搜索目录
+- 节点会自动选择匹配的第一个文件并显示可用文件列表
+
 ### 2.3 数据流转换
 
 #### 节点间数据传递
 ```
+# 主要工作流程
 DCIImage → DCI_IMAGE_DATA → DCIFileNode → DCI_BINARY_DATA → DCIPreviewFromBinary
+
+# 二进制文件处理工作流程
+BinaryFileLoader → BINARY_DATA → BinaryFileSaver
+BinaryFileUploader → BINARY_DATA → BinaryFileSaver
+
+# 混合工作流程
+BinaryFileLoader → BINARY_DATA → DCIPreviewFromBinary (如果是DCI文件)
+DCIFileNode → DCI_BINARY_DATA → BinaryFileSaver (保存DCI文件)
 ```
 
 #### 数据类型注册
@@ -383,9 +510,15 @@ DCIImage → DCI_IMAGE_DATA → DCIFileNode → DCI_BINARY_DATA → DCIPreviewFr
 # ComfyUI 自定义数据类型注册
 NODE_CLASS_MAPPINGS = {
     "DCI_IMAGE_DATA": "DCI_IMAGE_DATA",
-    "DCI_BINARY_DATA": "DCI_BINARY_DATA"
+    "DCI_BINARY_DATA": "DCI_BINARY_DATA",
+    "BINARY_DATA": "BINARY_DATA"
 }
 ```
+
+#### 数据类型兼容性
+- `BINARY_DATA` 是通用的二进制数据类型，适用于任何二进制文件
+- `DCI_BINARY_DATA` 是专门的 DCI 文件数据类型，包含 DCI 特定的元数据
+- 两种类型可以通过适配器模式进行转换
 
 ## 3. 算法设计
 

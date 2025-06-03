@@ -889,3 +889,200 @@ class DCIPreviewFromBinary:
         ]
 
         return "\n".join(lines)
+
+
+class BinaryFileLoader:
+    """ComfyUI node for loading binary files from file system"""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "file_path": ("STRING", {"default": "", "multiline": False}),
+            }
+        }
+
+    RETURN_TYPES = ("BINARY_DATA",)
+    RETURN_NAMES = ("binary_data",)
+    FUNCTION = "load_binary_file"
+    CATEGORY = "loaders"
+
+    def load_binary_file(self, file_path):
+        """Load binary file from file system"""
+
+        try:
+            if not file_path or not os.path.exists(file_path):
+                print(f"File not found: {file_path}")
+                return (None,)
+
+            # Read binary file
+            with open(file_path, 'rb') as f:
+                content = f.read()
+
+            # Get file info
+            filename = os.path.basename(file_path)
+            file_size = len(content)
+
+            # Create binary data structure
+            binary_data = {
+                'content': content,
+                'filename': filename,
+                'size': file_size,
+                'source_path': file_path
+            }
+
+            print(f"Loaded binary file: {filename} ({file_size} bytes)")
+            return (binary_data,)
+
+        except Exception as e:
+            print(f"Error loading binary file: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return (None,)
+
+
+class BinaryFileSaver:
+    """ComfyUI node for saving binary data to file system"""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "binary_data": ("BINARY_DATA",),
+                "file_path": ("STRING", {"default": "", "multiline": False}),
+            },
+            "optional": {
+                "output_directory": ("STRING", {"default": "", "multiline": False}),
+            }
+        }
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("saved_path",)
+    FUNCTION = "save_binary_file"
+    CATEGORY = "output"
+    OUTPUT_NODE = True
+
+    def save_binary_file(self, binary_data, file_path, output_directory=""):
+        """Save binary data to file system"""
+
+        try:
+            if not binary_data or 'content' not in binary_data:
+                print("No binary data provided")
+                return ("",)
+
+            # Determine output path
+            if output_directory and os.path.exists(output_directory):
+                if not file_path:
+                    # Use original filename if available
+                    filename = binary_data.get('filename', 'binary_file')
+                    full_path = os.path.join(output_directory, filename)
+                else:
+                    full_path = os.path.join(output_directory, os.path.basename(file_path))
+            else:
+                if not file_path:
+                    # Use ComfyUI output directory or temp directory
+                    try:
+                        import folder_paths
+                        output_dir = folder_paths.get_output_directory()
+                    except:
+                        output_dir = tempfile.gettempdir()
+
+                    filename = binary_data.get('filename', 'binary_file')
+                    full_path = os.path.join(output_dir, filename)
+                else:
+                    full_path = file_path
+
+            # Ensure directory exists
+            os.makedirs(os.path.dirname(full_path), exist_ok=True)
+
+            # Write binary data
+            with open(full_path, 'wb') as f:
+                f.write(binary_data['content'])
+
+            file_size = binary_data.get('size', len(binary_data['content']))
+            print(f"Saved binary file: {full_path} ({file_size} bytes)")
+            return (full_path,)
+
+        except Exception as e:
+            print(f"Error saving binary file: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return ("",)
+
+
+class BinaryFileUploader:
+    """ComfyUI node for uploading/selecting binary files from directory"""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {},
+            "optional": {
+                "search_directory": ("STRING", {"default": "", "multiline": False}),
+                "file_pattern": ("STRING", {"default": "*", "multiline": False}),
+            }
+        }
+
+    RETURN_TYPES = ("BINARY_DATA", "STRING")
+    RETURN_NAMES = ("binary_data", "file_path")
+    FUNCTION = "upload_binary_file"
+    CATEGORY = "loaders"
+
+    def upload_binary_file(self, search_directory="", file_pattern="*"):
+        """Upload/select binary file from directory"""
+
+        try:
+            import glob
+
+            # Determine search directory
+            if not search_directory:
+                try:
+                    import folder_paths
+                    search_directory = folder_paths.get_input_directory()
+                except:
+                    search_directory = os.getcwd()
+
+            if not os.path.exists(search_directory):
+                print(f"Search directory not found: {search_directory}")
+                return (None, "")
+
+            # Find files matching pattern
+            pattern_path = os.path.join(search_directory, file_pattern)
+            matching_files = glob.glob(pattern_path)
+
+            if not matching_files:
+                print(f"No files found matching pattern: {file_pattern} in {search_directory}")
+                return (None, "")
+
+            # Sort files and take the first one (or implement selection logic)
+            matching_files.sort()
+            selected_file = matching_files[0]
+
+            # Load the selected file
+            with open(selected_file, 'rb') as f:
+                content = f.read()
+
+            # Get file info
+            filename = os.path.basename(selected_file)
+            file_size = len(content)
+
+            # Create binary data structure
+            binary_data = {
+                'content': content,
+                'filename': filename,
+                'size': file_size,
+                'source_path': selected_file
+            }
+
+            print(f"Uploaded binary file: {filename} ({file_size} bytes)")
+            print(f"Available files: {[os.path.basename(f) for f in matching_files[:5]]}")
+            if len(matching_files) > 5:
+                print(f"... and {len(matching_files) - 5} more files")
+
+            return (binary_data, selected_file)
+
+        except Exception as e:
+            print(f"Error uploading binary file: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return (None, "")
