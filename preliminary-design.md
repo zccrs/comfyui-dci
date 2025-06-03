@@ -33,14 +33,26 @@ ComfyUI DCI Image Exporter Extension 是一个专为 ComfyUI 设计的扩展插�
 ### 2.2 模块划分
 
 #### 2.2.1 导出模块 (Export Module)
+
+##### 传统导出节点
 - **DCIImageExporter**: 基础单状态图标导出
 - **DCIImageExporterAdvanced**: 高级多状态图标导出
 - **DCIIconBuilder**: DCI 文件构建器
 - **DCIFile**: DCI 文件格式实现
 
+##### 重构导出节点（推荐）
+- **DCIImage**: 单个图像数据创建，输出结构化数据
+- **DCIFileNode**: 多图像组合，生成二进制数据流
+- **数据流架构**: 支持节点间二进制数据传递
+
 #### 2.2.2 预览模块 (Preview Module)
+
+##### 文件预览节点
 - **DCIPreviewNode**: DCI 文件可视化预览
 - **DCIFileLoader**: DCI 文件加载器
+
+##### 二进制预览节点（新增）
+- **DCIPreviewFromBinary**: 从二进制数据创建预览
 - **DCIReader**: DCI 文件读取和解析
 - **DCIPreviewGenerator**: 预览图像生成器
 
@@ -51,23 +63,46 @@ ComfyUI DCI Image Exporter Extension 是一个专为 ComfyUI 设计的扩展插�
 
 ## 3. 数据流设计
 
-### 3.1 导出流程
+### 3.1 传统导出流程
 ```
 Input Image → Tensor Conversion → PIL Image → Resize & Scale →
 Format Conversion → DCI Builder → Directory Structure → DCI File
 ```
 
-### 3.2 预览流程
+### 3.2 重构导出流程（推荐）
+```
+Input Image → DCIImage Node → DCI_IMAGE_DATA → DCIFileNode → DCI_BINARY_DATA
+                                    ↓
+Multiple Images → Multiple DCIImage Nodes → Multiple DCI_IMAGE_DATA → DCIFileNode
+```
+
+### 3.3 预览流程
+
+#### 文件预览流程
 ```
 DCI File → DCI Reader → Image Extraction → Grid Layout →
 Preview Generation → Metadata Summary → Output Display
 ```
 
-### 3.3 分析流程
+#### 二进制预览流程（新增）
+```
+DCI_BINARY_DATA → Binary Parser → Image Extraction → Grid Layout →
+Preview Generation → Metadata Summary → Output Display
+```
+
+### 3.4 分析流程
 ```
 DCI File → Structure Parsing → Metadata Extraction →
 Filtering & Sorting → Detailed Analysis → Report Generation
 ```
+
+### 3.5 数据流优势
+
+#### 重构架构优势
+- **模块化**: 每个节点职责单一，易于组合
+- **灵活性**: 支持复杂的多图像工作流程
+- **内存效率**: 二进制数据流减少文件I/O操作
+- **可扩展性**: 易于添加新的处理节点
 
 ## 4. 接口设计
 

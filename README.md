@@ -9,6 +9,8 @@
 - ✅ **多色调支持**：浅色和深色调变体
 - ✅ **高级预览系统**：基于网格的可视化与元数据覆盖
 - ✅ **全面的分析工具**：详细的元数据提取和过滤
+- ✅ **模块化节点架构**：重构为更灵活的组合式节点
+- ✅ **二进制数据流**：支持节点间二进制数据传递
 - ✅ **生产就绪**：通过示例工作流程全面测试
 
 ## 功能特性
@@ -46,7 +48,55 @@ pip install -r requirements.txt
 
 ## ComfyUI 节点详细说明
 
-本扩展提供了 5 个 ComfyUI 节点，分为导出节点、预览分析节点和工具节点三类。每个节点都有详细的输入输出规范和参数说明。
+本扩展提供了 8 个 ComfyUI 节点，分为导出节点、预览分析节点和工具节点三类。每个节点都有详细的输入输出规范和参数说明。
+
+### 新增重构节点（推荐使用）
+
+#### 1. DCI Image（DCI 图像）
+**节点类别**：`image/export`
+**功能描述**：创建单个 DCI 图像数据，输出元数据而不是直接创建文件，提供更灵活的工作流程。
+
+**必需输入参数：**
+- **`image`** (IMAGE)：ComfyUI 图像张量
+- **`icon_size`** (INT)：图标尺寸（16-1024像素），默认256
+- **`icon_state`** (COMBO)：图标状态（normal/disabled/hover/pressed），默认normal
+- **`tone_type`** (COMBO)：色调类型（light/dark），默认dark
+- **`scale`** (INT)：缩放因子（1-10），默认1
+- **`image_format`** (COMBO)：图像格式（webp/png/jpg），默认webp
+
+**输出：**
+- **`dci_image_data`** (DCI_IMAGE_DATA)：包含路径、内容、元数据的字典数据
+
+#### 2. DCI File（DCI 文件）
+**节点类别**：`image/export`
+**功能描述**：接收多个 DCI Image 输出并组合成完整的 DCI 文件，输出二进制数据。
+
+**可选输入参数：**
+- **`dci_image_1` 到 `dci_image_12`** (DCI_IMAGE_DATA)：最多12个DCI图像数据
+- **`filename`** (STRING)：文件名，默认"icon"
+- **`save_to_file`** (BOOLEAN)：是否保存到文件，默认False
+- **`output_directory`** (STRING)：输出目录，默认空
+
+**输出：**
+- **`dci_binary_data`** (DCI_BINARY_DATA)：DCI文件的二进制数据
+- **`file_path`** (STRING)：文件路径（如果保存到文件）
+
+#### 3. DCI Preview (Binary)（DCI 预览 - 二进制）
+**节点类别**：`image/preview`
+**功能描述**：从二进制 DCI 数据创建可视化预览，可与 DCI File 节点配合使用。
+
+**必需输入参数：**
+- **`dci_binary_data`** (DCI_BINARY_DATA)：DCI文件的二进制数据
+
+**可选输入参数：**
+- **`grid_columns`** (INT)：网格列数（1-10），默认4
+- **`show_metadata`** (BOOLEAN)：显示元数据，默认True
+
+**输出：**
+- **`preview_image`** (IMAGE)：预览图像
+- **`metadata_summary`** (STRING)：元数据摘要
+
+### 传统节点（向后兼容）
 
 ### 导出节点
 

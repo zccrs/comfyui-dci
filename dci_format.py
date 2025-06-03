@@ -74,34 +74,43 @@ class DCIFile:
 
     def write(self, output_path: str):
         """Write DCI file to disk"""
+        binary_data = self.to_binary()
         with open(output_path, 'wb') as f:
-            # Write header
-            f.write(self.MAGIC)
-            f.write(struct.pack('<B', self.VERSION))
+            f.write(binary_data)
 
-            # Sort files by name
-            sorted_files = sorted(self.files, key=lambda x: self._natural_sort_key(x['name']))
+    def to_binary(self) -> bytes:
+        """Generate DCI file as binary data"""
+        output = BytesIO()
 
-            # Write file count (3 bytes)
-            file_count = len(sorted_files)
-            f.write(struct.pack('<I', file_count)[:3])  # Take only first 3 bytes
+        # Write header
+        output.write(self.MAGIC)
+        output.write(struct.pack('<B', self.VERSION))
 
-            # Write file metadata and content
-            for file_info in sorted_files:
-                # File type (1 byte)
-                f.write(struct.pack('<B', file_info['type']))
+        # Sort files by name
+        sorted_files = sorted(self.files, key=lambda x: self._natural_sort_key(x['name']))
 
-                # File name (63 bytes, null-terminated)
-                file_name_bytes = file_info['name'].encode('utf-8')
-                name_padded = file_name_bytes + b'\x00' * (63 - len(file_name_bytes))
-                f.write(name_padded)
+        # Write file count (3 bytes)
+        file_count = len(sorted_files)
+        output.write(struct.pack('<I', file_count)[:3])  # Take only first 3 bytes
 
-                # Content size (8 bytes)
-                content = file_info['content']
-                f.write(struct.pack('<Q', len(content)))
+        # Write file metadata and content
+        for file_info in sorted_files:
+            # File type (1 byte)
+            output.write(struct.pack('<B', file_info['type']))
 
-                # Content
-                f.write(content)
+            # File name (63 bytes, null-terminated)
+            file_name_bytes = file_info['name'].encode('utf-8')
+            name_padded = file_name_bytes + b'\x00' * (63 - len(file_name_bytes))
+            output.write(name_padded)
+
+            # Content size (8 bytes)
+            content = file_info['content']
+            output.write(struct.pack('<Q', len(content)))
+
+            # Content
+            output.write(content)
+
+        return output.getvalue()
 
 
 class DCIIconBuilder:
@@ -182,7 +191,12 @@ class DCIIconBuilder:
 
     def build(self, output_path: str):
         """Build and write the DCI file"""
+        binary_data = self.to_binary()
+        with open(output_path, 'wb') as f:
+            f.write(binary_data)
 
+    def to_binary(self) -> bytes:
+        """Build and return the DCI file as binary data"""
         # Convert directory structure to DCI format
         for size_dir, size_content in self.directory_structure.items():
             state_tone_dirs = []
@@ -219,8 +233,8 @@ class DCIIconBuilder:
             # Add size directory to DCI
             self.dci.add_directory(size_dir, state_tone_dirs)
 
-        # Write the DCI file
-        self.dci.write(output_path)
+        # Return the DCI file as binary data
+        return self.dci.to_binary()
 
     def _create_directory_content(self, files: List[Dict]) -> bytes:
         """Create directory content from file list"""

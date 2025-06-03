@@ -17,40 +17,58 @@ class DCIReader:
     FILE_TYPE_DIRECTORY = 2
     FILE_TYPE_LINK = 3
 
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: str = None, binary_data: bytes = None):
         self.file_path = file_path
+        self.binary_data = binary_data
         self.files = []
         self.directory_structure = {}
 
     def read(self) -> bool:
-        """Read and parse DCI file"""
+        """Read and parse DCI file from file path or binary data"""
         try:
-            with open(self.file_path, 'rb') as f:
-                # Read header
-                magic = f.read(4)
-                if magic != self.MAGIC:
-                    raise ValueError(f"Invalid DCI file: wrong magic header {magic}")
-
-                version = struct.unpack('<B', f.read(1))[0]
-                if version != 1:
-                    raise ValueError(f"Unsupported DCI version: {version}")
-
-                # Read file count (3 bytes)
-                file_count_bytes = f.read(3) + b'\x00'
-                file_count = struct.unpack('<I', file_count_bytes)[0]
-
-                # Read files
-                for i in range(file_count):
-                    file_info = self._read_file_entry(f)
-                    self.files.append(file_info)
-
-                # Parse directory structure
-                self._parse_directory_structure()
-                return True
-
+            if self.binary_data is not None:
+                return self._read_from_binary_data()
+            elif self.file_path is not None:
+                return self._read_from_file()
+            else:
+                raise ValueError("Either file_path or binary_data must be provided")
         except Exception as e:
             print(f"Error reading DCI file: {e}")
             return False
+
+    def _read_from_file(self) -> bool:
+        """Read and parse DCI file from file path"""
+        with open(self.file_path, 'rb') as f:
+            return self._read_from_stream(f)
+
+    def _read_from_binary_data(self) -> bool:
+        """Read and parse DCI file from binary data"""
+        stream = BytesIO(self.binary_data)
+        return self._read_from_stream(stream)
+
+    def _read_from_stream(self, stream) -> bool:
+        """Read and parse DCI file from a stream"""
+        # Read header
+        magic = stream.read(4)
+        if magic != self.MAGIC:
+            raise ValueError(f"Invalid DCI file: wrong magic header {magic}")
+
+        version = struct.unpack('<B', stream.read(1))[0]
+        if version != 1:
+            raise ValueError(f"Unsupported DCI version: {version}")
+
+        # Read file count (3 bytes)
+        file_count_bytes = stream.read(3) + b'\x00'
+        file_count = struct.unpack('<I', file_count_bytes)[0]
+
+        # Read files
+        for i in range(file_count):
+            file_info = self._read_file_entry(stream)
+            self.files.append(file_info)
+
+        # Parse directory structure
+        self._parse_directory_structure()
+        return True
 
     def _read_file_entry(self, f) -> Dict:
         """Read a single file entry from DCI"""

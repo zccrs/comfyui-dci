@@ -3,7 +3,10 @@ from .nodes import (
     DCIImageExporterAdvanced,
     DCIPreviewNode,
     DCIFileLoader,
-    DCIMetadataExtractor
+    DCIMetadataExtractor,
+    DCIImage,
+    DCIFileNode,
+    DCIPreviewFromBinary
 )
 
 NODE_CLASS_MAPPINGS = {
@@ -12,6 +15,9 @@ NODE_CLASS_MAPPINGS = {
     "DCIPreviewNode": DCIPreviewNode,
     "DCIFileLoader": DCIFileLoader,
     "DCIMetadataExtractor": DCIMetadataExtractor,
+    "DCIImage": DCIImage,
+    "DCIFileNode": DCIFileNode,
+    "DCIPreviewFromBinary": DCIPreviewFromBinary,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -20,6 +26,9 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "DCIPreviewNode": "DCI Preview",
     "DCIFileLoader": "DCI File Loader",
     "DCIMetadataExtractor": "DCI Metadata Extractor",
+    "DCIImage": "DCI Image",
+    "DCIFileNode": "DCI File",
+    "DCIPreviewFromBinary": "DCI Preview (Binary)",
 }
 
 __all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS']

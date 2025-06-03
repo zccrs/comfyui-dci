@@ -97,7 +97,9 @@ Binary Data → Header Validation → File Entries → Directory Structure → I
 
 ### 1.3 ComfyUI 节点模块 (nodes.py)
 
-#### 1.3.1 DCIImageExporter 类
+#### 1.3.1 传统节点（向后兼容）
+
+##### DCIImageExporter 类
 **职责**: 基础 DCI 导出功能
 
 **输入参数**:
@@ -118,7 +120,7 @@ Binary Data → Header Validation → File Entries → Directory Structure → I
 5. 添加图像到构建器
 6. 生成 DCI 文件
 
-#### 1.3.2 DCIImageExporterAdvanced 类
+##### DCIImageExporterAdvanced 类
 **职责**: 高级多状态 DCI 导出
 
 **扩展功能**:
@@ -136,7 +138,7 @@ state_images = {
 }
 ```
 
-#### 1.3.3 DCIPreviewNode 类
+##### DCIPreviewNode 类
 **职责**: DCI 文件预览功能
 
 **预览参数**:
@@ -148,7 +150,14 @@ state_images = {
 - `preview_image`: 网格预览图像
 - `metadata_summary`: 元数据摘要文本
 
-#### 1.3.4 DCIMetadataExtractor 类
+##### DCIFileLoader 类
+**职责**: DCI 文件加载器
+
+**功能**:
+- 自动搜索 DCI 文件
+- 路径验证和规范化
+
+##### DCIMetadataExtractor 类
 **职责**: 元数据提取和分析
 
 **过滤功能**:
@@ -161,9 +170,109 @@ state_images = {
 - `directory_structure`: 目录结构
 - `file_list`: 文件列表
 
+#### 1.3.2 重构节点（推荐使用）
+
+##### DCIImage 类
+**职责**: 创建单个 DCI 图像数据，输出元数据而不是直接创建文件
+
+**设计理念**:
+- 模块化设计，提供更灵活的工作流程
+- 输出结构化数据而非文件，支持节点间数据传递
+- 支持复杂的多图像组合场景
+
+**输入参数**:
+- `image`: ComfyUI 图像张量
+- `icon_size`: 图标尺寸 (16-1024)
+- `icon_state`: 图标状态 (normal/disabled/hover/pressed)
+- `tone_type`: 色调类型 (light/dark)
+- `scale`: 缩放因子 (1-10)
+- `image_format`: 图像格式 (webp/png/jpg)
+
+**输出数据结构**:
+```python
+DCI_IMAGE_DATA = {
+    'path': str,           # 目录路径
+    'filename': str,       # 文件名
+    'content': bytes,      # 图像二进制数据
+    'metadata': {          # 元数据
+        'size': int,
+        'state': str,
+        'tone': str,
+        'scale': int,
+        'format': str,
+        'file_size': int,
+        'image_dimensions': tuple
+    }
+}
+```
+
+**处理流程**:
+1. 张量转换为 PIL 图像
+2. 图像缩放和格式转换
+3. 生成目录路径和文件名
+4. 创建元数据结构
+5. 返回结构化数据
+
+##### DCIFileNode 类
+**职责**: 接收多个 DCI Image 输出并组合成完整的 DCI 文件
+
+**设计理念**:
+- 支持最多12个图像输入的灵活组合
+- 输出二进制数据流，支持进一步处理
+- 可选文件保存功能
+
+**输入参数**:
+- `dci_image_1` 到 `dci_image_12`: DCI图像数据 (可选)
+- `filename`: 文件名
+- `save_to_file`: 是否保存到文件
+- `output_directory`: 输出目录
+
+**输出数据结构**:
+```python
+DCI_BINARY_DATA = {
+    'data': bytes,         # DCI文件二进制数据
+    'metadata': {          # 文件元数据
+        'file_count': int,
+        'total_size': int,
+        'images': list,    # 图像元数据列表
+        'directory_structure': dict
+    }
+}
+```
+
+**处理流程**:
+1. 收集所有输入的 DCI 图像数据
+2. 按目录结构组织文件
+3. 创建 DCI 文件对象
+4. 生成二进制数据
+5. 可选保存到文件
+6. 返回二进制数据和路径
+
+##### DCIPreviewFromBinary 类
+**职责**: 从二进制 DCI 数据创建可视化预览
+
+**设计理念**:
+- 与 DCIFileNode 配合使用
+- 支持内存中的 DCI 数据预览
+- 无需文件系统操作
+
+**输入参数**:
+- `dci_binary_data`: DCI文件的二进制数据
+- `grid_columns`: 网格列数 (1-10)
+- `show_metadata`: 显示元数据
+
+**处理流程**:
+1. 从二进制数据解析 DCI 结构
+2. 提取图像和元数据
+3. 生成网格预览
+4. 创建元数据摘要
+5. 返回预览图像和摘要
+
 ## 2. 数据结构设计
 
-### 2.1 图像元数据结构
+### 2.1 传统数据结构
+
+#### 图像元数据结构
 ```python
 ImageMetadata = {
     'image': PIL.Image,      # PIL 图像对象
@@ -179,7 +288,7 @@ ImageMetadata = {
 }
 ```
 
-### 2.2 目录结构
+#### 目录结构
 ```python
 DirectoryStructure = {
     'size_dir': {
@@ -189,6 +298,92 @@ DirectoryStructure = {
             }
         }
     }
+}
+```
+
+### 2.2 重构节点数据结构
+
+#### DCI_IMAGE_DATA 类型
+```python
+DCI_IMAGE_DATA = {
+    'path': str,             # 目录路径 (如: "256/normal.dark/2")
+    'filename': str,         # 文件名 (如: "0.0.0.0.0.0.0.0.0.0.webp")
+    'content': bytes,        # 图像二进制数据
+    'metadata': {            # 详细元数据
+        'size': int,         # 图标尺寸
+        'state': str,        # 图标状态
+        'tone': str,         # 色调类型
+        'scale': int,        # 缩放因子
+        'format': str,       # 图像格式
+        'file_size': int,    # 文件大小
+        'image_dimensions': tuple,  # 图像尺寸 (width, height)
+        'priority': int,     # 优先级
+        'padding': int,      # 填充
+        'palette': int,      # 调色板
+        'hue': int,          # 色相
+        'saturation': int,   # 饱和度
+        'brightness': int,   # 亮度
+        'red': int,          # 红色分量
+        'green': int,        # 绿色分量
+        'blue': int,         # 蓝色分量
+        'alpha': int         # 透明度
+    }
+}
+```
+
+#### DCI_BINARY_DATA 类型
+```python
+DCI_BINARY_DATA = {
+    'data': bytes,           # 完整的DCI文件二进制数据
+    'metadata': {            # 文件级元数据
+        'file_count': int,   # 文件总数
+        'total_size': int,   # 总文件大小
+        'magic': bytes,      # 魔数标识
+        'version': int,      # 格式版本
+        'images': [          # 图像元数据列表
+            {
+                'path': str,
+                'filename': str,
+                'size': int,
+                'state': str,
+                'tone': str,
+                'scale': int,
+                'format': str,
+                'file_size': int,
+                'image_dimensions': tuple
+            }
+        ],
+        'directory_structure': {  # 目录结构映射
+            'size_dirs': list,    # 尺寸目录列表
+            'state_tone_dirs': list,  # 状态.色调目录列表
+            'scale_dirs': list,   # 缩放目录列表
+            'supported_formats': list,  # 支持的格式列表
+            'statistics': {       # 统计信息
+                'total_images': int,
+                'unique_sizes': int,
+                'unique_states': int,
+                'unique_tones': int,
+                'unique_scales': int,
+                'format_distribution': dict
+            }
+        }
+    }
+}
+```
+
+### 2.3 数据流转换
+
+#### 节点间数据传递
+```
+DCIImage → DCI_IMAGE_DATA → DCIFileNode → DCI_BINARY_DATA → DCIPreviewFromBinary
+```
+
+#### 数据类型注册
+```python
+# ComfyUI 自定义数据类型注册
+NODE_CLASS_MAPPINGS = {
+    "DCI_IMAGE_DATA": "DCI_IMAGE_DATA",
+    "DCI_BINARY_DATA": "DCI_BINARY_DATA"
 }
 ```
 
