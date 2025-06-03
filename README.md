@@ -44,82 +44,272 @@ pip install -r requirements.txt
 
 3. 重启 ComfyUI
 
-## 可用节点
+## ComfyUI 节点详细说明
+
+本扩展提供了 5 个 ComfyUI 节点，分为导出节点、预览分析节点和工具节点三类。每个节点都有详细的输入输出规范和参数说明。
 
 ### 导出节点
 
-#### 1. DCI 图像导出器
-用于单状态图标的基础 DCI 导出节点。
+#### 1. DCI Image Exporter（DCI 图像导出器）
+**节点类别**：`image/export`
+**功能描述**：将单个图像转换为 DCI 格式的基础导出节点，支持单一状态和色调的图标创建。
 
-**输入：**
-- `image`：输入图像（IMAGE）
-- `filename`：输出文件名（不含扩展名）（STRING）
-- `icon_size`：目标图标尺寸（像素）（INT，默认：256）
-- `icon_state`：图标状态（normal/disabled/hover/pressed，默认：normal）
-- `tone_type`：色调类型（light/dark，默认：dark）
-- `image_format`：输出格式（webp/png/jpg，默认：webp）
-- `scale_factors`：逗号分隔的缩放因子（STRING，默认："1,2,3"）
-- `output_directory`：可选输出目录（STRING）
+**必需输入参数：**
+- **`image`** (IMAGE)
+  - **类型**：ComfyUI 图像张量
+  - **描述**：要转换为 DCI 格式的输入图像
+  - **格式**：支持 RGB、RGBA 和灰度图像
+  - **尺寸**：任意尺寸（将自动缩放到目标尺寸）
+
+- **`filename`** (STRING)
+  - **默认值**：`"icon"`
+  - **描述**：输出 DCI 文件的文件名（不包含 .dci 扩展名）
+  - **限制**：不能包含路径分隔符，文件名长度不超过 62 字符
+
+- **`icon_size`** (INT)
+  - **默认值**：`256`
+  - **范围**：16 - 1024 像素
+  - **步长**：1
+  - **描述**：目标图标的像素尺寸（正方形）
+  - **常用值**：16, 32, 48, 64, 128, 256, 512, 1024
+
+- **`icon_state`** (COMBO)
+  - **选项**：`["normal", "disabled", "hover", "pressed"]`
+  - **默认值**：`"normal"`
+  - **描述**：图标的交互状态
+    - `normal`：默认状态
+    - `disabled`：禁用状态（通常较暗或灰色）
+    - `hover`：鼠标悬停状态
+    - `pressed`：按下状态
+
+- **`tone_type`** (COMBO)
+  - **选项**：`["light", "dark"]`
+  - **默认值**：`"dark"`
+  - **描述**：图标的色调类型
+    - `dark`：深色调，适用于浅色背景
+    - `light`：浅色调，适用于深色背景
+
+- **`image_format`** (COMBO)
+  - **选项**：`["webp", "png", "jpg"]`
+  - **默认值**：`"webp"`
+  - **描述**：输出图像格式
+    - `webp`：现代格式，文件小，质量高（推荐）
+    - `png`：无损格式，支持透明度
+    - `jpg`：有损格式，文件小但不支持透明度
+
+**可选输入参数：**
+- **`scale_factors`** (STRING)
+  - **默认值**：`"1,2,3"`
+  - **描述**：逗号分隔的缩放因子列表
+  - **示例**：`"1,2"` 或 `"1,2,3,4"`
+  - **用途**：为不同 DPI 显示器生成多种尺寸
+
+- **`output_directory`** (STRING)
+  - **默认值**：`""`（空字符串）
+  - **描述**：可选的输出目录路径
+  - **行为**：为空时使用 ComfyUI 默认输出目录
 
 **输出：**
-- `file_path`：创建的 DCI 文件路径（STRING）
+- **`file_path`** (STRING)：创建的 DCI 文件的完整路径
 
-#### 2. DCI 图像导出器（高级）
-支持多状态和多色调的高级 DCI 导出节点。
+---
 
-**输入：**
-- `image`：基础图像（IMAGE）
-- `filename`：输出文件名（不含扩展名）（STRING）
-- `icon_size`：目标图标尺寸（像素）（INT，默认：256）
-- `image_format`：输出格式（webp/png/jpg，默认：webp）
-- `normal_image`：正常状态图像（IMAGE，可选）
-- `disabled_image`：禁用状态图像（IMAGE，可选）
-- `hover_image`：悬停状态图像（IMAGE，可选）
-- `pressed_image`：按下状态图像（IMAGE，可选）
-- `include_light_tone`：包含浅色调变体（BOOLEAN，默认：false）
-- `include_dark_tone`：包含深色调变体（BOOLEAN，默认：true）
-- `scale_factors`：逗号分隔的缩放因子（STRING，默认："1,2,3"）
-- `output_directory`：可选输出目录（STRING）
+#### 2. DCI Image Exporter (Advanced)（DCI 图像导出器 - 高级版）
+**节点类别**：`image/export`
+**功能描述**：支持多状态、多色调的高级 DCI 导出节点，可以为不同交互状态使用不同的图像。
+
+**必需输入参数：**
+- **`image`** (IMAGE)
+  - **类型**：ComfyUI 图像张量
+  - **描述**：基础图像，当特定状态图像未提供时使用
+  - **用途**：作为所有状态的默认图像
+
+- **`filename`** (STRING)
+  - **默认值**：`"icon"`
+  - **描述**：输出 DCI 文件名（不含扩展名）
+
+- **`icon_size`** (INT)
+  - **默认值**：`256`
+  - **范围**：16 - 1024 像素
+  - **描述**：目标图标尺寸
+
+- **`image_format`** (COMBO)
+  - **选项**：`["webp", "png", "jpg"]`
+  - **默认值**：`"webp"`
+  - **描述**：输出图像格式
+
+**可选输入参数（状态图像）：**
+- **`normal_image`** (IMAGE)
+  - **描述**：正常状态的专用图像
+  - **行为**：未连接时使用基础图像
+
+- **`disabled_image`** (IMAGE)
+  - **描述**：禁用状态的专用图像
+  - **建议**：通常是灰色或低对比度版本
+
+- **`hover_image`** (IMAGE)
+  - **描述**：悬停状态的专用图像
+  - **建议**：通常是高亮或发光版本
+
+- **`pressed_image`** (IMAGE)
+  - **描述**：按下状态的专用图像
+  - **建议**：通常是较暗或内陷效果版本
+
+**可选输入参数（色调控制）：**
+- **`include_light_tone`** (BOOLEAN)
+  - **默认值**：`False`
+  - **描述**：是否包含浅色调变体
+  - **用途**：为深色主题生成图标
+
+- **`include_dark_tone`** (BOOLEAN)
+  - **默认值**：`True`
+  - **描述**：是否包含深色调变体
+  - **用途**：为浅色主题生成图标
+
+**可选输入参数（其他）：**
+- **`scale_factors`** (STRING)
+  - **默认值**：`"1,2,3"`
+  - **描述**：缩放因子列表
+
+- **`output_directory`** (STRING)
+  - **默认值**：`""`
+  - **描述**：输出目录路径
 
 **输出：**
-- `file_path`：创建的 DCI 文件路径（STRING）
+- **`file_path`** (STRING)：创建的 DCI 文件路径
+
+---
 
 ### 预览和分析节点
 
-#### 3. DCI 预览
-DCI 文件内容的可视化预览节点。
+#### 3. DCI Preview（DCI 预览）
+**节点类别**：`image/preview`
+**功能描述**：生成 DCI 文件内容的可视化网格预览，显示所有包含的图像和元数据信息。
 
-**输入：**
-- `dci_file_path`：DCI 文件路径（STRING）
-- `grid_columns`：预览网格的列数（INT，默认：4）
-- `show_metadata`：显示元数据标签（BOOLEAN，默认：true）
+**必需输入参数：**
+- **`dci_file_path`** (STRING)
+  - **默认值**：`""`
+  - **描述**：要预览的 DCI 文件的完整路径
+  - **验证**：节点会检查文件是否存在和可读
 
-**输出：**
-- `preview_image`：所有图像的网格预览（IMAGE）
-- `metadata_summary`：DCI 文件元数据摘要（STRING）
+**可选输入参数：**
+- **`grid_columns`** (INT)
+  - **默认值**：`4`
+  - **范围**：1 - 10
+  - **步长**：1
+  - **描述**：预览网格的列数
+  - **影响**：控制预览图像的布局密度
 
-#### 4. DCI 文件加载器
-用于加载 DCI 文件路径的实用节点。
-
-**输入：**
-- `file_path`：DCI 文件路径（STRING，可选）
-
-**输出：**
-- `dci_file_path`：验证的 DCI 文件路径（STRING）
-
-#### 5. DCI 元数据提取器
-详细的元数据提取和过滤节点。
-
-**输入：**
-- `dci_file_path`：DCI 文件路径（STRING）
-- `filter_by_state`：按图标状态过滤（all/normal/disabled/hover/pressed，默认：all）
-- `filter_by_tone`：按色调过滤（all/light/dark，默认：all）
-- `filter_by_scale`：按缩放因子过滤（STRING，默认："all"）
+- **`show_metadata`** (BOOLEAN)
+  - **默认值**：`True`
+  - **描述**：是否在预览图像上显示元数据标签
+  - **内容**：显示尺寸、状态、色调、缩放、格式等信息
 
 **输出：**
-- `detailed_metadata`：过滤图像的详细元数据（STRING）
-- `directory_structure`：DCI 内部目录结构（STRING）
-- `file_list`：匹配过滤器的文件列表（STRING）
+- **`preview_image`** (IMAGE)
+  - **描述**：包含所有图像的网格预览
+  - **格式**：ComfyUI 图像张量，可直接连接到 PreviewImage 节点
+  - **布局**：自动计算行数以适应所有图像
+
+- **`metadata_summary`** (STRING)
+  - **描述**：DCI 文件的元数据摘要文本
+  - **内容**：文件名、图像总数、文件大小、支持的尺寸/状态/色调/缩放/格式等
+
+---
+
+#### 4. DCI File Loader（DCI 文件加载器）
+**节点类别**：`loaders`
+**功能描述**：用于加载和验证 DCI 文件路径的工具节点，支持自动搜索功能。
+
+**可选输入参数：**
+- **`file_path`** (STRING)
+  - **默认值**：`""`
+  - **描述**：DCI 文件的路径
+  - **行为**：
+    - 如果提供路径且文件存在，直接使用
+    - 如果为空，自动在常见目录中搜索 .dci 文件
+    - 搜索目录包括：ComfyUI 输出目录、临时目录、当前目录、下载目录、桌面
+
+**输出：**
+- **`dci_file_path`** (STRING)
+  - **描述**：验证后的 DCI 文件路径
+  - **用途**：可连接到其他需要 DCI 文件路径的节点
+
+**自动搜索逻辑：**
+1. ComfyUI 输出目录（如果可用）
+2. 系统临时目录
+3. 当前工作目录
+4. 用户下载目录
+5. 用户桌面目录
+
+---
+
+#### 5. DCI Metadata Extractor（DCI 元数据提取器）
+**节点类别**：`analysis`
+**功能描述**：提取和分析 DCI 文件的详细元数据，支持多种过滤条件。
+
+**必需输入参数：**
+- **`dci_file_path`** (STRING)
+  - **默认值**：`""`
+  - **描述**：要分析的 DCI 文件路径
+
+**可选输入参数（过滤器）：**
+- **`filter_by_state`** (COMBO)
+  - **选项**：`["all", "normal", "disabled", "hover", "pressed"]`
+  - **默认值**：`"all"`
+  - **描述**：按图标状态过滤结果
+  - **用途**：只显示特定状态的图像信息
+
+- **`filter_by_tone`** (COMBO)
+  - **选项**：`["all", "light", "dark"]`
+  - **默认值**：`"all"`
+  - **描述**：按色调类型过滤结果
+
+- **`filter_by_scale`** (STRING)
+  - **默认值**：`"all"`
+  - **描述**：按缩放因子过滤结果
+  - **格式**：
+    - `"all"`：显示所有缩放因子
+    - `"1,2"`：只显示 1x 和 2x 缩放
+    - `"3"`：只显示 3x 缩放
+
+**输出：**
+- **`detailed_metadata`** (STRING)
+  - **描述**：过滤后图像的详细元数据
+  - **内容**：每个图像的路径、文件名、尺寸、状态、色调、缩放、格式、优先级、文件大小、图像尺寸、颜色模式等
+
+- **`directory_structure`** (STRING)
+  - **描述**：DCI 文件的内部目录结构
+  - **格式**：树状结构显示，包含文件大小信息
+  - **用途**：了解 DCI 文件的组织方式
+
+- **`file_list`** (STRING)
+  - **描述**：匹配过滤条件的文件列表
+  - **格式**：每行一个文件，包含完整路径和文件大小
+  - **用途**：快速查看符合条件的文件
+
+---
+
+## 节点连接和工作流程
+
+### 数据类型说明
+- **IMAGE**：ComfyUI 标准图像张量格式 [batch, height, width, channels]，值范围 0-1
+- **STRING**：文本字符串，支持文件路径、参数设置等
+- **INT**：整数，用于尺寸、数量等数值参数
+- **BOOLEAN**：布尔值，用于开关选项
+- **COMBO**：下拉选择框，预定义选项列表
+
+### 典型连接模式
+1. **图像输入**：LoadImage → DCI Image Exporter
+2. **文件路径传递**：DCI File Loader → DCI Preview/DCI Metadata Extractor
+3. **预览显示**：DCI Preview → PreviewImage (preview_image) + ShowText (metadata_summary)
+4. **元数据分析**：DCI Metadata Extractor → ShowText (三个输出分别连接)
+
+### 节点分类在 ComfyUI 中的位置
+- **导出节点**：`image/export` 分类
+- **预览节点**：`image/preview` 分类
+- **加载器节点**：`loaders` 分类
+- **分析节点**：`analysis` 分类
 
 ## 使用示例
 
