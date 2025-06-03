@@ -1,162 +1,162 @@
-# ComfyUI DCI Image Exporter Extension
+# ComfyUI DCI 图像导出扩展
 
-A comprehensive ComfyUI extension for creating, previewing, and analyzing DCI (DSG Combined Icons) format files. This extension implements the complete DCI specification with support for multi-state icons, multiple tones, scale factors, and advanced metadata analysis.
+一个全面的 ComfyUI 扩展，用于创建、预览和分析 DCI（DSG Combined Icons）格式文件。此扩展实现了完整的 DCI 规范，支持多状态图标、多色调、缩放因子和高级元数据分析。
 
-## Project Status
+## 项目状态
 
-- ✅ **Complete DCI Format Implementation**: Full support for DCI file creation and reading
-- ✅ **Multi-State Icon Support**: Normal, hover, pressed, disabled states
-- ✅ **Multi-Tone Support**: Light and dark tone variants
-- ✅ **Advanced Preview System**: Grid-based visualization with metadata overlay
-- ✅ **Comprehensive Analysis Tools**: Detailed metadata extraction and filtering
-- ✅ **Production Ready**: Thoroughly tested with example workflows
+- ✅ **完整的 DCI 格式实现**：完全支持 DCI 文件创建和读取
+- ✅ **多状态图标支持**：正常、悬停、按下、禁用状态
+- ✅ **多色调支持**：浅色和深色调变体
+- ✅ **高级预览系统**：基于网格的可视化与元数据覆盖
+- ✅ **全面的分析工具**：详细的元数据提取和过滤
+- ✅ **生产就绪**：通过示例工作流程全面测试
 
-## Features
+## 功能特性
 
-### Export Features
-- **Basic DCI Export**: Convert single images to DCI format with customizable parameters
-- **Advanced Multi-State Export**: Create DCI files with multiple icon states (normal, hover, pressed, disabled)
-- **Multiple Scale Factors**: Support for 1x, 2x, 3x scaling and custom scale combinations
-- **Format Support**: WebP, PNG, and JPEG formats
-- **Tone Support**: Light and dark tone variants
-- **Customizable Icon Sizes**: From 16x16 to 1024x1024 pixels
+### 导出功能
+- **基础 DCI 导出**：将单个图像转换为 DCI 格式，支持自定义参数
+- **高级多状态导出**：创建包含多个图标状态的 DCI 文件（正常、悬停、按下、禁用）
+- **多种缩放因子**：支持 1x、2x、3x 缩放和自定义缩放组合
+- **格式支持**：WebP、PNG 和 JPEG 格式
+- **色调支持**：浅色和深色调变体
+- **可自定义图标尺寸**：从 16x16 到 1024x1024 像素
 
-### Preview & Analysis Features
-- **Visual Preview**: Generate grid-based previews of all images in a DCI file
-- **Metadata Display**: Show comprehensive metadata for each image including size, state, tone, scale, format
-- **Directory Structure Analysis**: Inspect the internal directory structure of DCI files
-- **Filtering Capabilities**: Filter images by state, tone, scale factor, or format
-- **File Information**: Display file sizes, image dimensions, and other technical details
+### 预览和分析功能
+- **可视化预览**：生成 DCI 文件中所有图像的网格预览
+- **元数据显示**：显示每个图像的全面元数据，包括尺寸、状态、色调、缩放、格式
+- **目录结构分析**：检查 DCI 文件的内部目录结构
+- **过滤功能**：按状态、色调、缩放因子或格式过滤图像
+- **文件信息**：显示文件大小、图像尺寸和其他技术详细信息
 
-## Installation
+## 安装
 
-1. Clone this repository into your ComfyUI custom nodes directory:
+1. 将此仓库克隆到您的 ComfyUI 自定义节点目录：
 ```bash
 cd ComfyUI/custom_nodes/
 git clone https://github.com/your-username/comfyui-deepin.git
 ```
 
-2. Install the required dependencies:
+2. 安装所需的依赖项：
 ```bash
 cd comfyui-deepin
 pip install -r requirements.txt
 ```
 
-3. Restart ComfyUI
+3. 重启 ComfyUI
 
-## Available Nodes
+## 可用节点
 
-### Export Nodes
+### 导出节点
 
-#### 1. DCI Image Exporter
-Basic DCI export node for single-state icons.
+#### 1. DCI 图像导出器
+用于单状态图标的基础 DCI 导出节点。
 
-**Inputs:**
-- `image`: Input image (IMAGE)
-- `filename`: Output filename without extension (STRING)
-- `icon_size`: Target icon size in pixels (INT, default: 256)
-- `icon_state`: Icon state (normal/disabled/hover/pressed, default: normal)
-- `tone_type`: Tone type (light/dark, default: dark)
-- `image_format`: Output format (webp/png/jpg, default: webp)
-- `scale_factors`: Comma-separated scale factors (STRING, default: "1,2,3")
-- `output_directory`: Optional output directory (STRING)
+**输入：**
+- `image`：输入图像（IMAGE）
+- `filename`：输出文件名（不含扩展名）（STRING）
+- `icon_size`：目标图标尺寸（像素）（INT，默认：256）
+- `icon_state`：图标状态（normal/disabled/hover/pressed，默认：normal）
+- `tone_type`：色调类型（light/dark，默认：dark）
+- `image_format`：输出格式（webp/png/jpg，默认：webp）
+- `scale_factors`：逗号分隔的缩放因子（STRING，默认："1,2,3"）
+- `output_directory`：可选输出目录（STRING）
 
-**Outputs:**
-- `file_path`: Path to the created DCI file (STRING)
+**输出：**
+- `file_path`：创建的 DCI 文件路径（STRING）
 
-#### 2. DCI Image Exporter (Advanced)
-Advanced DCI export node supporting multiple states and tones.
+#### 2. DCI 图像导出器（高级）
+支持多状态和多色调的高级 DCI 导出节点。
 
-**Inputs:**
-- `image`: Base image (IMAGE)
-- `filename`: Output filename without extension (STRING)
-- `icon_size`: Target icon size in pixels (INT, default: 256)
-- `image_format`: Output format (webp/png/jpg, default: webp)
-- `normal_image`: Normal state image (IMAGE, optional)
-- `disabled_image`: Disabled state image (IMAGE, optional)
-- `hover_image`: Hover state image (IMAGE, optional)
-- `pressed_image`: Pressed state image (IMAGE, optional)
-- `include_light_tone`: Include light tone variant (BOOLEAN, default: false)
-- `include_dark_tone`: Include dark tone variant (BOOLEAN, default: true)
-- `scale_factors`: Comma-separated scale factors (STRING, default: "1,2,3")
-- `output_directory`: Optional output directory (STRING)
+**输入：**
+- `image`：基础图像（IMAGE）
+- `filename`：输出文件名（不含扩展名）（STRING）
+- `icon_size`：目标图标尺寸（像素）（INT，默认：256）
+- `image_format`：输出格式（webp/png/jpg，默认：webp）
+- `normal_image`：正常状态图像（IMAGE，可选）
+- `disabled_image`：禁用状态图像（IMAGE，可选）
+- `hover_image`：悬停状态图像（IMAGE，可选）
+- `pressed_image`：按下状态图像（IMAGE，可选）
+- `include_light_tone`：包含浅色调变体（BOOLEAN，默认：false）
+- `include_dark_tone`：包含深色调变体（BOOLEAN，默认：true）
+- `scale_factors`：逗号分隔的缩放因子（STRING，默认："1,2,3"）
+- `output_directory`：可选输出目录（STRING）
 
-**Outputs:**
-- `file_path`: Path to the created DCI file (STRING)
+**输出：**
+- `file_path`：创建的 DCI 文件路径（STRING）
 
-### Preview & Analysis Nodes
+### 预览和分析节点
 
-#### 3. DCI Preview
-Visual preview node for DCI file contents.
+#### 3. DCI 预览
+DCI 文件内容的可视化预览节点。
 
-**Inputs:**
-- `dci_file_path`: Path to DCI file (STRING)
-- `grid_columns`: Number of columns in preview grid (INT, default: 4)
-- `show_metadata`: Show metadata labels (BOOLEAN, default: true)
+**输入：**
+- `dci_file_path`：DCI 文件路径（STRING）
+- `grid_columns`：预览网格的列数（INT，默认：4）
+- `show_metadata`：显示元数据标签（BOOLEAN，默认：true）
 
-**Outputs:**
-- `preview_image`: Grid preview of all images (IMAGE)
-- `metadata_summary`: Summary of DCI file metadata (STRING)
+**输出：**
+- `preview_image`：所有图像的网格预览（IMAGE）
+- `metadata_summary`：DCI 文件元数据摘要（STRING）
 
-#### 4. DCI File Loader
-Utility node for loading DCI file paths.
+#### 4. DCI 文件加载器
+用于加载 DCI 文件路径的实用节点。
 
-**Inputs:**
-- `file_path`: DCI file path (STRING, optional)
+**输入：**
+- `file_path`：DCI 文件路径（STRING，可选）
 
-**Outputs:**
-- `dci_file_path`: Validated DCI file path (STRING)
+**输出：**
+- `dci_file_path`：验证的 DCI 文件路径（STRING）
 
-#### 5. DCI Metadata Extractor
-Detailed metadata extraction and filtering node.
+#### 5. DCI 元数据提取器
+详细的元数据提取和过滤节点。
 
-**Inputs:**
-- `dci_file_path`: Path to DCI file (STRING)
-- `filter_by_state`: Filter by icon state (all/normal/disabled/hover/pressed, default: all)
-- `filter_by_tone`: Filter by tone (all/light/dark, default: all)
-- `filter_by_scale`: Filter by scale factors (STRING, default: "all")
+**输入：**
+- `dci_file_path`：DCI 文件路径（STRING）
+- `filter_by_state`：按图标状态过滤（all/normal/disabled/hover/pressed，默认：all）
+- `filter_by_tone`：按色调过滤（all/light/dark，默认：all）
+- `filter_by_scale`：按缩放因子过滤（STRING，默认："all"）
 
-**Outputs:**
-- `detailed_metadata`: Detailed metadata for filtered images (STRING)
-- `directory_structure`: DCI internal directory structure (STRING)
-- `file_list`: List of files matching filters (STRING)
+**输出：**
+- `detailed_metadata`：过滤图像的详细元数据（STRING）
+- `directory_structure`：DCI 内部目录结构（STRING）
+- `file_list`：匹配过滤器的文件列表（STRING）
 
-## Usage Examples
+## 使用示例
 
-### Basic DCI Export
-1. Load an image using `LoadImage`
-2. Connect it to `DCI Image Exporter`
-3. Configure the export parameters
-4. Execute to create a DCI file
+### 基础 DCI 导出
+1. 使用 `LoadImage` 加载图像
+2. 连接到 `DCI Image Exporter`
+3. 配置导出参数
+4. 执行以创建 DCI 文件
 
-### DCI Preview Workflow
-1. Use `DCI File Loader` to specify a DCI file path
-2. Connect to `DCI Preview` node
-3. Adjust grid columns and metadata display options
-4. View the generated preview image and metadata summary
+### DCI 预览工作流程
+1. 使用 `DCI File Loader` 指定 DCI 文件路径
+2. 连接到 `DCI Preview` 节点
+3. 调整网格列数和元数据显示选项
+4. 查看生成的预览图像和元数据摘要
 
-### Advanced Analysis
-1. Load a DCI file using `DCI File Loader`
-2. Connect to `DCI Metadata Extractor`
-3. Apply filters to focus on specific images
-4. Examine detailed metadata, directory structure, and file lists
+### 高级分析
+1. 使用 `DCI File Loader` 加载 DCI 文件
+2. 连接到 `DCI Metadata Extractor`
+3. 应用过滤器以专注于特定图像
+4. 检查详细元数据、目录结构和文件列表
 
-### Multi-State Icon Creation
-1. Load different images for each state (normal, hover, pressed, disabled)
-2. Connect them to `DCI Image Exporter (Advanced)`
-3. Configure tone options and scale factors
-4. Generate a comprehensive multi-state DCI file
+### 多状态图标创建
+1. 为每个状态加载不同的图像（正常、悬停、按下、禁用）
+2. 连接到 `DCI Image Exporter (Advanced)`
+3. 配置色调选项和缩放因子
+4. 生成全面的多状态 DCI 文件
 
-## Example Workflows
+## 示例工作流程
 
-### Basic Export and Preview
+### 基础导出和预览
 ```
 LoadImage → DCI Image Exporter → DCI Preview → PreviewImage
                                       ↓
                                  ShowText (metadata)
 ```
 
-### Advanced Multi-State Analysis
+### 高级多状态分析
 ```
 LoadImage (normal) ──┐
 LoadImage (hover) ───┼─→ DCI Image Exporter (Advanced) → DCI Metadata Extractor → ShowText
@@ -164,175 +164,175 @@ LoadImage (pressed) ─┘                                           ↓
                                                             DCI Preview → PreviewImage
 ```
 
-## DCI Format Specification
+## DCI 格式规范
 
-This extension implements the DCI format according to the desktop specification:
-- **Magic Header**: "DCI\0"
-- **Version**: 1
-- **Directory Structure**: `size/state.tone/scale/layer.format`
-- **Supported States**: normal, disabled, hover, pressed
-- **Supported Tones**: light, dark
-- **Supported Formats**: WebP, PNG, JPEG
+此扩展根据桌面规范实现 DCI 格式：
+- **魔术头**："DCI\0"
+- **版本**：1
+- **目录结构**：`size/state.tone/scale/layer.format`
+- **支持的状态**：normal、disabled、hover、pressed
+- **支持的色调**：light、dark
+- **支持的格式**：WebP、PNG、JPEG
 
-## File Structure
+## 文件结构
 
 ```
 comfyui-deepin/
-├── __init__.py              # ComfyUI extension registration
-├── nodes.py                 # All ComfyUI nodes (export + preview)
-├── dci_format.py           # DCI file creation and building
-├── dci_reader.py           # DCI file reading and parsing
-├── commit_helper.py        # Development tool for proper commit formatting
-├── test_dci.py             # Basic DCI export tests
-├── test_dci_preview.py     # DCI preview functionality tests
-├── example_workflow.json   # Basic export workflow example
-├── example_dci_preview_workflow.json  # Preview workflow example
-├── requirements.txt        # Python dependencies
-├── preliminary-design.md   # High-level architecture design
-├── detailed-design.md      # Implementation details and specifications
-└── README.md              # This documentation
+├── __init__.py              # ComfyUI 扩展注册
+├── nodes.py                 # 所有 ComfyUI 节点（导出 + 预览）
+├── dci_format.py           # DCI 文件创建和构建
+├── dci_reader.py           # DCI 文件读取和解析
+├── commit_helper.py        # 用于正确提交格式的开发工具
+├── test_dci.py             # 基础 DCI 导出测试
+├── test_dci_preview.py     # DCI 预览功能测试
+├── example_workflow.json   # 基础导出工作流程示例
+├── example_dci_preview_workflow.json  # 预览工作流程示例
+├── requirements.txt        # Python 依赖项
+├── preliminary-design.md   # 高级架构设计
+├── detailed-design.md      # 实现细节和规范
+└── README.md              # 本文档
 ```
 
-## Testing
+## 测试
 
-### Test DCI Export
+### 测试 DCI 导出
 ```bash
 python test_dci.py
 ```
 
-### Test DCI Preview
+### 测试 DCI 预览
 ```bash
 python test_dci_preview.py
 ```
 
-The preview test will:
-1. Create a comprehensive test DCI file with multiple states, tones, and scales
-2. Test DCI file reading and parsing
-3. Generate preview grids with different column layouts
-4. Test metadata extraction and filtering
-5. Display directory structure analysis
+预览测试将：
+1. 创建包含多个状态、色调和缩放的全面测试 DCI 文件
+2. 测试 DCI 文件读取和解析
+3. 生成不同列布局的预览网格
+4. 测试元数据提取和过滤
+5. 显示目录结构分析
 
-## Technical Details
+## 技术细节
 
-### DCI File Format Implementation
-The extension implements the complete DCI specification:
+### DCI 文件格式实现
+扩展实现了完整的 DCI 规范：
 
-**Binary Structure**:
+**二进制结构**：
 ```
-DCI Header (8 bytes):
-├── Magic (4 bytes): 'DCI\0'
-├── Version (1 byte): 1
-└── File Count (3 bytes): Number of files
+DCI 头部（8 字节）：
+├── 魔术（4 字节）：'DCI\0'
+├── 版本（1 字节）：1
+└── 文件计数（3 字节）：文件数量
 
-File Entry (72+ bytes per file):
-├── File Type (1 byte): 1=File, 2=Directory
-├── File Name (63 bytes): Null-terminated UTF-8
-├── Content Size (8 bytes): Little-endian uint64
-└── Content (variable): File data or directory content
+文件条目（每个文件 72+ 字节）：
+├── 文件类型（1 字节）：1=文件，2=目录
+├── 文件名（63 字节）：以空字符结尾的 UTF-8
+├── 内容大小（8 字节）：小端序 uint64
+└── 内容（可变）：文件数据或目录内容
 ```
 
-**Directory Structure**:
+**目录结构**：
 ```
-size/                    # Icon size (16, 32, 64, 128, 256, 512, 1024)
+size/                    # 图标尺寸（16、32、64、128、256、512、1024）
 └── state.tone/          # state: normal|disabled|hover|pressed
-    └── scale/           # Scale factor (1, 2, 3, etc.)
+    └── scale/           # 缩放因子（1、2、3 等）
         └── layer.format # priority.padding.palette.hue.saturation.brightness.red.green.blue.alpha.format
 ```
 
-### Advanced Features
+### 高级功能
 
-**Image Processing**:
-- **Lanczos Resampling**: High-quality image scaling preserving details
-- **Format Optimization**: WebP default with quality=90, PNG lossless, JPEG with RGB conversion
-- **Memory Efficient**: Streaming processing for large files
-- **Batch Processing**: Multiple scale factors processed simultaneously
+**图像处理**：
+- **Lanczos 重采样**：保持细节的高质量图像缩放
+- **格式优化**：WebP 默认质量=90，PNG 无损，JPEG 带 RGB 转换
+- **内存高效**：大文件的流式处理
+- **批处理**：同时处理多个缩放因子
 
-**Preview Generation**:
-- **Adaptive Grid Layout**: Automatic row/column calculation based on image count
-- **Smart Scaling**: Maintains aspect ratio while maximizing cell utilization
-- **Rich Metadata Display**: Shows size, state, tone, scale, format, and file size
-- **Font Fallback System**: Graceful degradation from system fonts to built-in defaults
+**预览生成**：
+- **自适应网格布局**：基于图像数量自动计算行/列
+- **智能缩放**：在最大化单元格利用率的同时保持纵横比
+- **丰富的元数据显示**：显示尺寸、状态、色调、缩放、格式和文件大小
+- **字体回退系统**：从系统字体到内置默认字体的优雅降级
 
-**Metadata Analysis**:
-- **Deep Structure Parsing**: Recursive directory analysis with full path reconstruction
-- **Multi-Criteria Filtering**: Simultaneous filtering by state, tone, and scale
-- **Statistical Summaries**: Comprehensive file counts, size distributions, and format analysis
-- **Natural Sorting**: Intelligent alphanumeric sorting (1, 2, 10 vs 1, 10, 2)
+**元数据分析**：
+- **深度结构解析**：带有完整路径重建的递归目录分析
+- **多条件过滤**：按状态、色调和缩放同时过滤
+- **统计摘要**：全面的文件计数、大小分布和格式分析
+- **自然排序**：智能字母数字排序（1、2、10 vs 1、10、2）
 
-## Dependencies
+## 依赖项
 
-- **Pillow**: Image processing and manipulation
-- **NumPy**: Array operations for ComfyUI tensor conversion
-- **PyTorch**: ComfyUI tensor compatibility
+- **Pillow**：图像处理和操作
+- **NumPy**：ComfyUI 张量转换的数组操作
+- **PyTorch**：ComfyUI 张量兼容性
 
-## Performance Characteristics
+## 性能特征
 
-### Benchmarks
-- **Small Icons** (≤256px): ~10ms processing time per scale factor
-- **Large Icons** (≥512px): ~50ms processing time per scale factor
-- **Memory Usage**: ~2-3x image size during processing (temporary PIL objects)
-- **File Size**: WebP typically 60-80% smaller than PNG equivalent
+### 基准测试
+- **小图标**（≤256px）：每个缩放因子约 10ms 处理时间
+- **大图标**（≥512px）：每个缩放因子约 50ms 处理时间
+- **内存使用**：处理期间约为图像大小的 2-3 倍（临时 PIL 对象）
+- **文件大小**：WebP 通常比等效 PNG 小 60-80%
 
-### Optimization Features
-- **Streaming I/O**: Large DCI files processed in chunks
-- **Lazy Loading**: Images loaded only when needed for preview
-- **Efficient Caching**: Metadata cached to avoid repeated parsing
-- **Parallel Processing**: Independent operations run concurrently
+### 优化功能
+- **流式 I/O**：大型 DCI 文件分块处理
+- **延迟加载**：仅在预览需要时加载图像
+- **高效缓存**：缓存元数据以避免重复解析
+- **并行处理**：独立操作并发运行
 
-## Troubleshooting
+## 故障排除
 
-### Common Issues
+### 常见问题
 
-1. **"DCI file not found"**:
-   - Verify file path is absolute or relative to ComfyUI working directory
-   - Check file permissions and accessibility
-   - Ensure `.dci` extension is included
+1. **"DCI file not found"**：
+   - 验证文件路径是绝对路径或相对于 ComfyUI 工作目录
+   - 检查文件权限和可访问性
+   - 确保包含 `.dci` 扩展名
 
-2. **"Failed to read DCI file"**:
-   - Validate DCI magic header ('DCI\0') using hex editor
-   - Check file corruption with file size vs expected content
-   - Verify file was created with compatible DCI writer
+2. **"Failed to read DCI file"**：
+   - 使用十六进制编辑器验证 DCI 魔术头（'DCI\0'）
+   - 检查文件大小与预期内容的文件损坏
+   - 验证文件是使用兼容的 DCI 写入器创建的
 
-3. **"No images found"**:
-   - DCI file may have invalid directory structure
-   - Check if images are in expected `size/state.tone/scale/` hierarchy
-   - Verify image files have supported formats (webp/png/jpg)
+3. **"No images found"**：
+   - DCI 文件可能具有无效的目录结构
+   - 检查图像是否在预期的 `size/state.tone/scale/` 层次结构中
+   - 验证图像文件具有支持的格式（webp/png/jpg）
 
-4. **Preview generation fails**:
-   - Large DCI files may exceed memory limits
-   - Try reducing grid columns or filtering images
-   - Check ComfyUI console for detailed error messages
+4. **预览生成失败**：
+   - 大型 DCI 文件可能超出内存限制
+   - 尝试减少网格列数或过滤图像
+   - 检查 ComfyUI 控制台以获取详细错误消息
 
-5. **Font rendering issues**:
-   - Extension automatically falls back to default fonts
-   - Install system fonts for better text rendering
-   - Font issues don't affect core functionality
+5. **字体渲染问题**：
+   - 扩展自动回退到默认字体
+   - 安装系统字体以获得更好的文本渲染
+   - 字体问题不影响核心功能
 
-### Debug Information
+### 调试信息
 
-**Console Output**: Check ComfyUI console for detailed processing logs
-**Error Handling**: All exceptions are caught and logged with context
-**Validation**: Input parameters are validated with helpful error messages
+**控制台输出**：检查 ComfyUI 控制台以获取详细的处理日志
+**错误处理**：所有异常都被捕获并记录上下文
+**验证**：输入参数通过有用的错误消息进行验证
 
-### Performance Tuning
+### 性能调优
 
-**For Large Files**:
-- Use filtering to process subsets of images
-- Reduce grid columns for preview generation
-- Consider processing in smaller batches
+**对于大文件**：
+- 使用过滤处理图像子集
+- 减少预览生成的网格列数
+- 考虑分批处理较小的批次
 
-**For Memory Constraints**:
-- Close unused preview windows
-- Restart ComfyUI periodically for long sessions
-- Monitor system memory usage
+**对于内存约束**：
+- 关闭未使用的预览窗口
+- 长时间会话定期重启 ComfyUI
+- 监控系统内存使用情况
 
-## Development Guidelines
+## 开发指南
 
-### Commit Message Format
+### 提交消息格式
 
-This project follows a strict commit message format to maintain clear project history:
+此项目遵循严格的提交消息格式以维护清晰的项目历史：
 
-**Structure**:
+**结构**：
 ```
 type: Brief description (50 chars max)
 
@@ -349,18 +349,18 @@ type: Brief description (50 chars max)
 - 包含技术细节和理由
 ```
 
-**Commit Types**:
-- `feat`: New features
-- `fix`: Bug fixes
-- `docs`: Documentation changes
-- `style`: Code style changes (formatting, etc.)
-- `refactor`: Code refactoring
-- `test`: Adding or updating tests
-- `tools`: Development tools and scripts
-- `perf`: Performance improvements
-- `chore`: Maintenance tasks
+**提交类型**：
+- `feat`：新功能
+- `fix`：错误修复
+- `docs`：文档更改
+- `style`：代码样式更改（格式等）
+- `refactor`：代码重构
+- `test`：添加或更新测试
+- `tools`：开发工具和脚本
+- `perf`：性能改进
+- `chore`：维护任务
 
-**Example**:
+**示例**：
 ```
 feat: Add DCI preview functionality
 
@@ -379,37 +379,37 @@ feat: Add DCI preview functionality
 - 为预览功能添加全面的测试套件
 ```
 
-**Tools Available**:
-- Use `commit_helper.py` to generate properly formatted commit messages
-- The script ensures proper line wrapping and format compliance
-- Automatically validates title length and body formatting
+**可用工具**：
+- 使用 `commit_helper.py` 生成正确格式的提交消息
+- 脚本确保正确的换行和格式合规性
+- 自动验证标题长度和正文格式
 
-### Code Quality Standards
+### 代码质量标准
 
-- Follow SOLID principles and design patterns
-- Maintain comprehensive documentation and comments
-- Ensure good test coverage for all functionality
-- Review architecture design when adding new features
-- Follow existing code style and conventions
-- Prioritize code reuse and avoid duplication
-- Make minimal, focused changes per commit
-- Only modify code related to current requirements
+- 遵循 SOLID 原则和设计模式
+- 维护全面的文档和注释
+- 确保所有功能的良好测试覆盖率
+- 添加新功能时审查架构设计
+- 遵循现有的代码样式和约定
+- 优先考虑代码重用并避免重复
+- 每次提交进行最小的、集中的更改
+- 仅修改与当前需求相关的代码
 
-## Contributing
+## 贡献
 
-1. Fork the repository
-2. Create a feature branch following naming convention: `feature/description` or `fix/description`
-3. Make your changes following the development guidelines above
-4. Add tests for new functionality
-5. Use `commit_helper.py` to format commit messages properly
-6. Submit a pull request with clear description
+1. Fork 仓库
+2. 创建功能分支，遵循命名约定：`feature/description` 或 `fix/description`
+3. 按照上述开发指南进行更改
+4. 为新功能添加测试
+5. 使用 `commit_helper.py` 正确格式化提交消息
+6. 提交带有清晰描述的拉取请求
 
-## License
+## 许可证
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+此项目根据 MIT 许可证授权 - 有关详细信息，请参阅 LICENSE 文件。
 
-## Acknowledgments
+## 致谢
 
-- Based on the desktop specification for DCI format
-- Inspired by the Qt/C++ implementation in dtkcore
-- Built for the ComfyUI ecosystem
+- 基于 DCI 格式的桌面规范
+- 受 dtkcore 中 Qt/C++ 实现的启发
+- 为 ComfyUI 生态系统构建
