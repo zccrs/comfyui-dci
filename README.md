@@ -182,11 +182,14 @@ comfyui-deepin/
 ├── nodes.py                 # All ComfyUI nodes (export + preview)
 ├── dci_format.py           # DCI file creation and building
 ├── dci_reader.py           # DCI file reading and parsing
+├── commit_helper.py        # Development tool for proper commit formatting
 ├── test_dci.py             # Basic DCI export tests
 ├── test_dci_preview.py     # DCI preview functionality tests
 ├── example_workflow.json   # Basic export workflow example
 ├── example_dci_preview_workflow.json  # Preview workflow example
 ├── requirements.txt        # Python dependencies
+├── preliminary-design.md   # High-level architecture design
+├── detailed-design.md      # Implementation details and specifications
 └── README.md              # This documentation
 ```
 
@@ -323,13 +326,83 @@ size/                    # Icon size (16, 32, 64, 128, 256, 512, 1024)
 - Restart ComfyUI periodically for long sessions
 - Monitor system memory usage
 
+## Development Guidelines
+
+### Commit Message Format
+
+This project follows a strict commit message format to maintain clear project history:
+
+**Structure**:
+```
+type: Brief description (50 chars max)
+
+- Detailed change description (72 chars max per line)
+- Use bullet points for multiple changes
+- Wrap long lines appropriately
+- Include technical details and rationale
+
+类型：简短描述（中文标题）
+
+- 详细变更描述（每行最多72字符）
+- 使用项目符号列出多个变更
+- 适当换行处理长行
+- 包含技术细节和理由
+```
+
+**Commit Types**:
+- `feat`: New features
+- `fix`: Bug fixes
+- `docs`: Documentation changes
+- `style`: Code style changes (formatting, etc.)
+- `refactor`: Code refactoring
+- `test`: Adding or updating tests
+- `tools`: Development tools and scripts
+- `perf`: Performance improvements
+- `chore`: Maintenance tasks
+
+**Example**:
+```
+feat: Add DCI preview functionality
+
+- Add DCIReader class for parsing DCI file format
+- Add DCIPreviewGenerator for creating visual previews
+- Support grid-based preview with metadata overlay
+- Support filtering by state, tone, scale, and format
+- Add comprehensive test suite for preview functionality
+
+功能：添加DCI预览功能
+
+- 添加DCIReader类用于解析DCI文件格式
+- 添加DCIPreviewGenerator用于创建可视化预览
+- 支持带有元数据覆盖的网格预览
+- 支持按状态、色调、缩放和格式过滤
+- 为预览功能添加全面的测试套件
+```
+
+**Tools Available**:
+- Use `commit_helper.py` to generate properly formatted commit messages
+- The script ensures proper line wrapping and format compliance
+- Automatically validates title length and body formatting
+
+### Code Quality Standards
+
+- Follow SOLID principles and design patterns
+- Maintain comprehensive documentation and comments
+- Ensure good test coverage for all functionality
+- Review architecture design when adding new features
+- Follow existing code style and conventions
+- Prioritize code reuse and avoid duplication
+- Make minimal, focused changes per commit
+- Only modify code related to current requirements
+
 ## Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
+2. Create a feature branch following naming convention: `feature/description` or `fix/description`
+3. Make your changes following the development guidelines above
 4. Add tests for new functionality
-5. Submit a pull request
+5. Use `commit_helper.py` to format commit messages properly
+6. Submit a pull request with clear description
 
 ## License
 
