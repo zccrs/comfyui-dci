@@ -30,6 +30,19 @@ ComfyUI DCI Image Exporter Extension 是一个专为 ComfyUI 设计的扩展插�
 │  DCI Format     │  DCI Reader     │ Metadata        │File   │
 │  Builder        │  Preview Gen    │ Extractor       │I/O    │
 └─────────────────┴─────────────────┴─────────────────┴───────┘
+
+目录结构映射：
+py/                 - 核心实现层
+├── dci_format.py   - DCI Format Builder
+├── dci_reader.py   - DCI Reader & Preview Gen
+└── nodes.py        - ComfyUI节点接口层
+
+locales/            - 国际化支持
+resources/          - 静态资源
+tools/              - 开发工具
+tests/              - 测试套件
+examples/           - 示例工作流
+web_version/        - Web组件（预留）
 ```
 
 ### 2.2 模块划分

@@ -12,7 +12,44 @@
 - ✅ **模块化节点架构**：重构为更灵活的组合式节点
 - ✅ **二进制数据流**：支持节点间二进制数据传递
 - ✅ **二进制文件处理**：专用的二进制文件加载、保存和上传节点
+- ✅ **规范化目录结构**：遵循ComfyUI扩展最佳实践的目录组织
+- ✅ **国际化支持**：多语言本地化文件
+- ✅ **自动化安装**：跨平台安装脚本
 - ✅ **生产就绪**：通过示例工作流程全面测试
+
+## 目录结构
+
+```
+comfyui-dci/
+├── py/                          # 核心Python模块
+│   ├── __init__.py             # 模块初始化
+│   ├── dci_format.py           # DCI格式实现
+│   ├── dci_reader.py           # DCI文件读取器
+│   └── nodes.py                # ComfyUI节点定义
+├── locales/                     # 国际化文件
+│   ├── en.json                 # 英文本地化
+│   └── zh-CN.json              # 中文本地化
+├── resources/                   # 静态资源
+│   └── README.md               # 资源说明
+├── tools/                       # 开发工具
+│   ├── commit_helper.py        # Git提交助手
+│   └── README.md               # 工具说明
+├── tests/                       # 测试文件
+│   ├── test_*.py               # 各种测试
+│   └── README.md               # 测试说明
+├── examples/                    # 示例工作流
+│   ├── example_*.json          # 示例工作流文件
+│   └── README.md               # 示例说明
+├── web_version/                 # Web组件（预留）
+│   └── README.md               # Web组件说明
+├── __init__.py                  # 扩展入口点
+├── README.md                    # 项目文档
+├── requirements.txt             # Python依赖
+├── install.sh                   # Linux/Mac安装脚本
+├── install.bat                  # Windows安装脚本
+├── preliminary-design.md        # 概要设计
+└── detailed-design.md           # 详细设计
+```
 
 ## 功能特性
 
@@ -40,15 +77,36 @@
 
 ## 安装
 
+### 自动安装（推荐）
+
 1. 将此仓库克隆到您的 ComfyUI 自定义节点目录：
 ```bash
 cd ComfyUI/custom_nodes/
-git clone https://github.com/your-username/comfyui-deepin.git
+git clone https://github.com/your-username/comfyui-dci.git
 ```
 
-2. 安装所需的依赖项：
+2. 运行安装脚本：
+
+**Linux/Mac:**
 ```bash
-cd comfyui-deepin
+cd comfyui-dci
+chmod +x install.sh
+./install.sh
+```
+
+**Windows:**
+```cmd
+cd comfyui-dci
+install.bat
+```
+
+### 手动安装
+
+1. 克隆仓库（同上）
+
+2. 手动安装依赖项：
+```bash
+cd comfyui-dci
 pip install -r requirements.txt
 ```
 

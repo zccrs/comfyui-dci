@@ -1,6 +1,69 @@
 # ComfyUI DCI Image Exporter Extension - 详细设计
 
-## 1. 节点分组设计
+## 1. 项目架构与目录结构
+
+### 1.1 目录结构设计
+
+项目采用模块化的目录结构，遵循ComfyUI扩展的最佳实践和ComfyUI-Easy-Use等成功扩展的组织方式：
+
+```
+comfyui-dci/
+├── py/                    # 核心Python实现模块
+│   ├── __init__.py       # 模块初始化和导出声明
+│   ├── dci_format.py     # DCI格式实现和构建器
+│   ├── dci_reader.py     # DCI文件读取和解析器
+│   └── nodes.py          # ComfyUI节点定义和实现
+├── locales/              # 国际化和本地化支持
+│   ├── en.json           # 英文本地化文件
+│   └── zh-CN.json        # 中文本地化文件
+├── resources/            # 静态资源和模板文件
+│   └── README.md         # 资源目录说明
+├── tools/                # 开发和维护工具
+│   ├── commit_helper.py  # Git提交助手
+│   └── README.md         # 工具目录说明
+├── tests/                # 测试套件
+│   ├── test_*.py         # 各种功能测试文件
+│   └── README.md         # 测试说明文档
+├── examples/             # 示例工作流和使用案例
+│   ├── example_*.json    # ComfyUI工作流示例文件
+│   └── README.md         # 示例说明文档
+├── web_version/          # Web组件（预留扩展）
+│   └── README.md         # Web组件说明
+├── __init__.py           # 扩展入口点和节点注册
+├── install.sh            # Linux/Mac自动安装脚本
+├── install.bat           # Windows自动安装脚本
+├── README.md             # 项目主文档
+├── requirements.txt      # Python依赖声明
+├── preliminary-design.md # 概要设计文档
+└── detailed-design.md    # 详细设计文档（本文件）
+```
+
+### 1.2 目录结构优势
+
+这种结构设计提供了以下优势：
+
+**模块化分离**：
+- `py/` 目录包含所有核心Python实现，便于代码管理
+- `locales/` 支持国际化，提升用户体验
+- `resources/` 集中管理静态资源
+- `tools/` 包含开发工具，提高开发效率
+
+**易于维护**：
+- 每个目录有明确的职责和边界
+- 相关文件集中存放，便于查找和修改
+- 文档与代码分离，便于维护
+
+**可扩展性**：
+- `web_version/` 为未来Web功能预留空间
+- 模块化设计便于添加新功能
+- 标准化结构便于团队协作
+
+**标准化**：
+- 遵循ComfyUI生态系统的惯例
+- 参考成功扩展的最佳实践
+- 便于用户理解和使用
+
+## 2. 节点分组设计
 
 ### 1.1 统一分组策略
 为了提高用户体验和节点的可发现性，所有 DCI 扩展节点都统一归类在 **"DCI"** 分组下。这种设计参考了 ComfyUI-Easy-Use 等成功扩展的做法。
