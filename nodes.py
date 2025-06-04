@@ -32,7 +32,7 @@ class DCIImageExporter:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("file_path",)
     FUNCTION = "export_dci"
-    CATEGORY = "image/export"
+    CATEGORY = "DCI/Export"
     OUTPUT_NODE = True
 
     def export_dci(self, image, filename, icon_size, icon_state, tone_type,
@@ -135,7 +135,7 @@ class DCIImageExporterAdvanced:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("file_path",)
     FUNCTION = "export_dci_advanced"
-    CATEGORY = "image/export"
+    CATEGORY = "DCI/Export"
     OUTPUT_NODE = True
 
     def export_dci_advanced(self, image, filename, icon_size, image_format,
@@ -251,7 +251,7 @@ class DCIPreviewNode:
     RETURN_TYPES = ("IMAGE", "STRING")
     RETURN_NAMES = ("preview_image", "metadata_summary")
     FUNCTION = "preview_dci"
-    CATEGORY = "image/preview"
+    CATEGORY = "DCI/Preview"
     OUTPUT_NODE = True
 
     def preview_dci(self, dci_file_path, grid_columns=4, show_metadata=True):
@@ -367,7 +367,7 @@ class DCIFileLoader:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("dci_file_path",)
     FUNCTION = "load_dci_file"
-    CATEGORY = "loaders"
+    CATEGORY = "DCI/Files"
 
     def load_dci_file(self, file_path=""):
         """Load DCI file path"""
@@ -423,7 +423,7 @@ class DCIMetadataExtractor:
     RETURN_TYPES = ("STRING", "STRING", "STRING")
     RETURN_NAMES = ("detailed_metadata", "directory_structure", "file_list")
     FUNCTION = "extract_metadata"
-    CATEGORY = "analysis"
+    CATEGORY = "DCI/Analysis"
     OUTPUT_NODE = True
 
     def extract_metadata(self, dci_file_path, filter_by_state="all", filter_by_tone="all", filter_by_scale="all"):
@@ -551,7 +551,7 @@ class DCIImage:
     RETURN_TYPES = ("DCI_IMAGE_DATA",)
     RETURN_NAMES = ("dci_image_data",)
     FUNCTION = "create_dci_image"
-    CATEGORY = "image/export"
+    CATEGORY = "DCI/Export"
 
     def create_dci_image(self, image, icon_size, icon_state, tone_type, scale, image_format):
         """Create DCI image metadata and data"""
@@ -653,7 +653,7 @@ class DCIFileNode:
     RETURN_TYPES = ("DCI_BINARY_DATA", "STRING")
     RETURN_NAMES = ("dci_binary_data", "file_path")
     FUNCTION = "create_dci_file"
-    CATEGORY = "image/export"
+    CATEGORY = "DCI/Export"
     OUTPUT_NODE = True
 
     def create_dci_file(self, filename="icon", save_to_file=False, output_directory="", **kwargs):
@@ -807,7 +807,7 @@ class DCIPreviewFromBinary:
     RETURN_TYPES = ("IMAGE", "STRING")
     RETURN_NAMES = ("preview_image", "metadata_summary")
     FUNCTION = "preview_dci_binary"
-    CATEGORY = "image/preview"
+    CATEGORY = "DCI/Preview"
     OUTPUT_NODE = True
 
     def preview_dci_binary(self, dci_binary_data, grid_columns=4, show_metadata=True):
@@ -905,7 +905,7 @@ class BinaryFileLoader:
     RETURN_TYPES = ("BINARY_DATA",)
     RETURN_NAMES = ("binary_data",)
     FUNCTION = "load_binary_file"
-    CATEGORY = "loaders"
+    CATEGORY = "DCI/Files"
 
     def load_binary_file(self, file_path):
         """Load binary file from file system"""
@@ -959,7 +959,7 @@ class BinaryFileSaver:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("saved_path",)
     FUNCTION = "save_binary_file"
-    CATEGORY = "output"
+    CATEGORY = "DCI/Files"
     OUTPUT_NODE = True
 
     def save_binary_file(self, binary_data, file_path, output_directory=""):
@@ -1026,7 +1026,7 @@ class BinaryFileUploader:
     RETURN_TYPES = ("BINARY_DATA", "STRING")
     RETURN_NAMES = ("binary_data", "file_path")
     FUNCTION = "upload_binary_file"
-    CATEGORY = "loaders"
+    CATEGORY = "DCI/Files"
 
     def upload_binary_file(self, search_directory="", file_pattern="*"):
         """Upload/select binary file from directory"""
@@ -1086,3 +1086,33 @@ class BinaryFileUploader:
             import traceback
             traceback.print_exc()
             return (None, "")
+
+
+# Node mappings for ComfyUI registration
+NODE_CLASS_MAPPINGS = {
+    "DCIImageExporter": DCIImageExporter,
+    "DCIImageExporterAdvanced": DCIImageExporterAdvanced,
+    "DCIPreviewNode": DCIPreviewNode,
+    "DCIFileLoader": DCIFileLoader,
+    "DCIMetadataExtractor": DCIMetadataExtractor,
+    "DCIImage": DCIImage,
+    "DCIFileNode": DCIFileNode,
+    "DCIPreviewFromBinary": DCIPreviewFromBinary,
+    "BinaryFileLoader": BinaryFileLoader,
+    "BinaryFileSaver": BinaryFileSaver,
+    "BinaryFileUploader": BinaryFileUploader,
+}
+
+NODE_DISPLAY_NAME_MAPPINGS = {
+    "DCIImageExporter": "DCI Image Exporter",
+    "DCIImageExporterAdvanced": "DCI Image Exporter (Advanced)",
+    "DCIPreviewNode": "DCI Preview",
+    "DCIFileLoader": "DCI File Loader",
+    "DCIMetadataExtractor": "DCI Metadata Extractor",
+    "DCIImage": "DCI Image",
+    "DCIFileNode": "DCI File",
+    "DCIPreviewFromBinary": "DCI Preview (Binary)",
+    "BinaryFileLoader": "Binary File Loader",
+    "BinaryFileSaver": "Binary File Saver",
+    "BinaryFileUploader": "Binary File Uploader",
+}
