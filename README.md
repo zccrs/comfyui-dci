@@ -54,14 +54,38 @@ pip install -r requirements.txt
 
 3. 重启 ComfyUI
 
+4. 安装完成后，所有 DCI 节点将出现在 ComfyUI 节点菜单的 **"DCI"** 分类下，按功能分为 Export、Preview、Analysis、Files 四个子分类
+
 ## ComfyUI 节点详细说明
 
-本扩展提供了 11 个 ComfyUI 节点，分为导出节点、预览分析节点、二进制文件处理节点和工具节点四类。每个节点都有详细的输入输出规范和参数说明。
+本扩展提供了 11 个 ComfyUI 节点，所有节点都统一归类在 **"DCI"** 分组下，并按功能分为四个子分类，便于在 ComfyUI 界面中快速找到和使用。每个节点都有详细的输入输出规范和参数说明。
+
+### 节点分组
+所有 DCI 扩展节点都位于 ComfyUI 节点菜单的 **"DCI"** 分类下，按功能分为四个子分类：
+
+#### DCI/Export（导出）
+- DCI Image Exporter
+- DCI Image Exporter (Advanced)
+- DCI Image
+- DCI File
+
+#### DCI/Preview（预览）
+- DCI Preview
+- DCI Preview (Binary)
+
+#### DCI/Analysis（分析）
+- DCI Metadata Extractor
+
+#### DCI/Files（文件处理）
+- DCI File Loader
+- Binary File Loader
+- Binary File Saver
+- Binary File Uploader
 
 ### 新增重构节点（推荐使用）
 
 #### 1. DCI Image（DCI 图像）
-**节点类别**：`image/export`
+**节点类别**：`DCI/Export`
 **功能描述**：创建单个 DCI 图像数据，输出元数据而不是直接创建文件，提供更灵活的工作流程。
 
 **必需输入参数：**
@@ -76,7 +100,7 @@ pip install -r requirements.txt
 - **`dci_image_data`** (DCI_IMAGE_DATA)：包含路径、内容、元数据的字典数据
 
 #### 2. DCI File（DCI 文件）
-**节点类别**：`image/export`
+**节点类别**：`DCI/Export`
 **功能描述**：接收多个 DCI Image 输出并组合成完整的 DCI 文件，输出二进制数据。
 
 **可选输入参数：**
@@ -90,7 +114,7 @@ pip install -r requirements.txt
 - **`file_path`** (STRING)：文件路径（如果保存到文件）
 
 #### 3. DCI Preview (Binary)（DCI 预览 - 二进制）
-**节点类别**：`image/preview`
+**节点类别**：`DCI/Preview`
 **功能描述**：从二进制 DCI 数据创建可视化预览，可与 DCI File 节点配合使用。
 
 **必需输入参数：**
@@ -107,7 +131,7 @@ pip install -r requirements.txt
 ### 二进制文件处理节点（新增）
 
 #### 4. Binary File Loader（二进制文件加载器）
-**节点类别**：`loaders`
+**节点类别**：`DCI/Files`
 **功能描述**：从文件系统加载二进制文件，专为处理 DCI 图标文件等二进制数据设计。
 
 **必需输入参数：**
@@ -127,7 +151,7 @@ BINARY_DATA = {
 ```
 
 #### 5. Binary File Saver（二进制文件保存器）
-**节点类别**：`output`
+**节点类别**：`DCI/Files`
 **功能描述**：将二进制数据保存到文件系统，支持自定义输出路径和目录。
 
 **必需输入参数：**
@@ -141,7 +165,7 @@ BINARY_DATA = {
 - **`saved_path`** (STRING)：实际保存的文件路径
 
 #### 6. Binary File Uploader（二进制文件上传器）
-**节点类别**：`loaders`
+**节点类别**：`DCI/Files`
 **功能描述**：浏览和选择目录中的二进制文件，提供文件发现和选择功能。
 
 **可选输入参数：**
@@ -162,7 +186,7 @@ BINARY_DATA = {
 ### 导出节点
 
 #### 1. DCI Image Exporter（DCI 图像导出器）
-**节点类别**：`image/export`
+**节点类别**：`DCI/Export`
 **功能描述**：将单个图像转换为 DCI 格式的基础导出节点，支持单一状态和色调的图标创建。
 
 **必需输入参数：**
@@ -226,7 +250,7 @@ BINARY_DATA = {
 ---
 
 #### 2. DCI Image Exporter (Advanced)（DCI 图像导出器 - 高级版）
-**节点类别**：`image/export`
+**节点类别**：`DCI/Export`
 **功能描述**：支持多状态、多色调的高级 DCI 导出节点，可以为不同交互状态使用不同的图像。
 
 **必需输入参数：**
@@ -294,7 +318,7 @@ BINARY_DATA = {
 ### 预览和分析节点
 
 #### 3. DCI Preview（DCI 预览）
-**节点类别**：`image/preview`
+**节点类别**：`DCI/Preview`
 **功能描述**：生成 DCI 文件内容的可视化网格预览，显示所有包含的图像和元数据信息。
 
 **必需输入参数：**
@@ -329,7 +353,7 @@ BINARY_DATA = {
 ---
 
 #### 4. DCI File Loader（DCI 文件加载器）
-**节点类别**：`loaders`
+**节点类别**：`DCI/Files`
 **功能描述**：用于加载和验证 DCI 文件路径的工具节点，支持自动搜索功能。
 
 **可选输入参数：**
@@ -356,7 +380,7 @@ BINARY_DATA = {
 ---
 
 #### 5. DCI Metadata Extractor（DCI 元数据提取器）
-**节点类别**：`analysis`
+**节点类别**：`DCI/Analysis`
 **功能描述**：提取和分析 DCI 文件的详细元数据，支持多种过滤条件。
 
 **必需输入参数：**
@@ -417,10 +441,11 @@ BINARY_DATA = {
 4. **元数据分析**：DCI Metadata Extractor → ShowText (三个输出分别连接)
 
 ### 节点分类在 ComfyUI 中的位置
-- **导出节点**：`image/export` 分类
-- **预览节点**：`image/preview` 分类
-- **加载器节点**：`loaders` 分类
-- **分析节点**：`analysis` 分类
+所有 DCI 扩展节点都统一位于 **`DCI`** 分类下，按功能分为四个子分类：
+- **DCI/Export**：DCI Image Exporter、DCI Image Exporter (Advanced)、DCI Image、DCI File
+- **DCI/Preview**：DCI Preview、DCI Preview (Binary)
+- **DCI/Analysis**：DCI Metadata Extractor
+- **DCI/Files**：DCI File Loader、Binary File Loader、Binary File Saver、Binary File Uploader
 
 ## 使用示例
 

@@ -1,6 +1,71 @@
 # ComfyUI DCI Image Exporter Extension - 详细设计
 
-## 1. 模块详细设计
+## 1. 节点分组设计
+
+### 1.1 统一分组策略
+为了提高用户体验和节点的可发现性，所有 DCI 扩展节点都统一归类在 **"DCI"** 分组下。这种设计参考了 ComfyUI-Easy-Use 等成功扩展的做法。
+
+**设计原则**:
+- 统一性：所有相关节点集中在一个分组下
+- 可发现性：用户可以轻松找到所有 DCI 相关功能
+- 一致性：避免节点分散在不同的系统分类中
+
+**实现方式**:
+```python
+# 在每个节点类中设置统一的 CATEGORY
+class DCIImageExporter:
+    CATEGORY = "DCI"
+
+class DCIPreviewNode:
+    CATEGORY = "DCI"
+
+# 所有节点都使用相同的分类
+```
+
+**节点分组结构**:
+```
+DCI/
+├── DCI Image Exporter
+├── DCI Image Exporter (Advanced)
+├── DCI Preview
+├── DCI File Loader
+├── DCI Metadata Extractor
+├── DCI Image
+├── DCI File
+├── DCI Preview (Binary)
+├── Binary File Loader
+├── Binary File Saver
+└── Binary File Uploader
+```
+
+### 1.2 节点注册机制
+为确保节点能正确加载和显示，实现了双重注册机制：
+
+**主注册文件 (__init__.py)**:
+```python
+NODE_CLASS_MAPPINGS = {
+    "DCIImageExporter": DCIImageExporter,
+    "DCIImageExporterAdvanced": DCIImageExporterAdvanced,
+    # ... 其他节点
+}
+
+NODE_DISPLAY_NAME_MAPPINGS = {
+    "DCIImageExporter": "DCI Image Exporter",
+    "DCIImageExporterAdvanced": "DCI Image Exporter (Advanced)",
+    # ... 其他节点
+}
+```
+
+**节点文件内注册 (nodes.py)**:
+```python
+# 在文件末尾重复定义，确保兼容性
+NODE_CLASS_MAPPINGS = { ... }
+NODE_DISPLAY_NAME_MAPPINGS = { ... }
+```
+
+这种双重注册确保了与不同版本的 ComfyUI 和其他扩展的兼容性。
+
+## 2. 模块详细设计
 
 ### 1.1 DCI 文件格式模块 (dci_format.py)
 
