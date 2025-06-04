@@ -12,15 +12,15 @@ else
     echo "Warning: No virtual environment detected. Consider using one."
 fi
 
-# Check if pip is available
-if ! command -v pip &> /dev/null; then
-    echo "Error: pip is not installed or not in PATH"
+# Check if python is available
+if ! command -v python &> /dev/null; then
+    echo "Error: python is not installed or not in PATH"
     exit 1
 fi
 
-# Install dependencies
+# Install dependencies using the recommended method
 echo "Installing Python dependencies..."
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 
 if [ $? -eq 0 ]; then
     echo "Dependencies installed successfully!"

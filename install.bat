@@ -4,17 +4,17 @@ REM This script installs the required dependencies for the DCI extension
 
 echo Installing ComfyUI DCI Extension dependencies...
 
-REM Check if pip is available
-pip --version >nul 2>&1
+REM Check if python is available
+python --version >nul 2>&1
 if errorlevel 1 (
-    echo Error: pip is not installed or not in PATH
+    echo Error: python is not installed or not in PATH
     pause
     exit /b 1
 )
 
-REM Install dependencies
+REM Install dependencies using the recommended method
 echo Installing Python dependencies...
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 
 if errorlevel 1 (
     echo Error: Failed to install dependencies

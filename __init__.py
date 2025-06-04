@@ -26,39 +26,50 @@ from .py.nodes import (
 )
 
 # ComfyUI Node Registration
+# Using DCI prefix to ensure unique node names and avoid conflicts
 NODE_CLASS_MAPPINGS = {
-    "DCIImageExporter": DCIImageExporter,
-    "DCIImageExporterAdvanced": DCIImageExporterAdvanced,
-    "DCIPreviewNode": DCIPreviewNode,
-    "DCIFileLoader": DCIFileLoader,
-    "DCIMetadataExtractor": DCIMetadataExtractor,
-    "DCIImage": DCIImage,
-    "DCIFileNode": DCIFileNode,
-    "DCIPreviewFromBinary": DCIPreviewFromBinary,
-    "BinaryFileLoader": BinaryFileLoader,
-    "BinaryFileSaver": BinaryFileSaver,
-    "BinaryFileUploader": BinaryFileUploader,
+    "DCI_ImageExporter": DCIImageExporter,
+    "DCI_ImageExporterAdvanced": DCIImageExporterAdvanced,
+    "DCI_PreviewNode": DCIPreviewNode,
+    "DCI_FileLoader": DCIFileLoader,
+    "DCI_MetadataExtractor": DCIMetadataExtractor,
+    "DCI_Image": DCIImage,
+    "DCI_FileNode": DCIFileNode,
+    "DCI_PreviewFromBinary": DCIPreviewFromBinary,
+    "DCI_BinaryFileLoader": BinaryFileLoader,
+    "DCI_BinaryFileSaver": BinaryFileSaver,
+    "DCI_BinaryFileUploader": BinaryFileUploader,
 }
 
 # Display names for ComfyUI interface
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "DCIImageExporter": "DCI Image Exporter",
-    "DCIImageExporterAdvanced": "DCI Image Exporter (Advanced)",
-    "DCIPreviewNode": "DCI Preview",
-    "DCIFileLoader": "DCI File Loader",
-    "DCIMetadataExtractor": "DCI Metadata Extractor",
-    "DCIImage": "DCI Image",
-    "DCIFileNode": "DCI File",
-    "DCIPreviewFromBinary": "DCI Preview (Binary)",
-    "BinaryFileLoader": "Binary File Loader",
-    "BinaryFileSaver": "Binary File Saver",
-    "BinaryFileUploader": "Binary File Uploader",
+    "DCI_ImageExporter": "DCI Image Exporter",
+    "DCI_ImageExporterAdvanced": "DCI Image Exporter (Advanced)",
+    "DCI_PreviewNode": "DCI Preview",
+    "DCI_FileLoader": "DCI File Loader",
+    "DCI_MetadataExtractor": "DCI Metadata Extractor",
+    "DCI_Image": "DCI Image",
+    "DCI_FileNode": "DCI File",
+    "DCI_PreviewFromBinary": "DCI Preview (Binary)",
+    "DCI_BinaryFileLoader": "Binary File Loader",
+    "DCI_BinaryFileSaver": "Binary File Saver",
+    "DCI_BinaryFileUploader": "Binary File Uploader",
 }
 
 # Extension metadata
 __version__ = "1.0.0"
 __author__ = "ComfyUI DCI Team"
 __description__ = "DCI (DSG Combined Icons) format support for ComfyUI"
+
+# Custom data types for ComfyUI
+# These types are used for passing structured data between nodes
+# ComfyUI will treat them as opaque data that can be passed between nodes
+# but won't be displayed in the UI
+CUSTOM_DATA_TYPES = {
+    "DCI_IMAGE_DATA": "DCI_IMAGE_DATA",
+    "DCI_BINARY_DATA": "DCI_BINARY_DATA",
+    "BINARY_DATA": "BINARY_DATA"
+}
 
 # Export for ComfyUI
 __all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS']

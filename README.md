@@ -119,26 +119,26 @@ pip install -r requirements.txt
 本扩展提供了 11 个 ComfyUI 节点，所有节点都统一归类在 **"DCI"** 分组下，并按功能分为四个子分类，便于在 ComfyUI 界面中快速找到和使用。每个节点都有详细的输入输出规范和参数说明。
 
 ### 节点分组
-所有 DCI 扩展节点都位于 ComfyUI 节点菜单的 **"DCI"** 分类下，按功能分为四个子分类：
+所有 DCI 扩展节点都位于 ComfyUI 节点菜单的 **"DCI"** 分类下，按功能分为四个子分类。所有节点名称都使用 "DCI_" 前缀以确保唯一性并避免与其他扩展冲突：
 
 #### DCI/Export（导出）
-- DCI Image Exporter
-- DCI Image Exporter (Advanced)
-- DCI Image
-- DCI File
+- DCI_ImageExporter (DCI Image Exporter)
+- DCI_ImageExporterAdvanced (DCI Image Exporter Advanced)
+- DCI_Image (DCI Image)
+- DCI_FileNode (DCI File)
 
 #### DCI/Preview（预览）
-- DCI Preview
-- DCI Preview (Binary)
+- DCI_PreviewNode (DCI Preview)
+- DCI_PreviewFromBinary (DCI Preview Binary)
 
 #### DCI/Analysis（分析）
-- DCI Metadata Extractor
+- DCI_MetadataExtractor (DCI Metadata Extractor)
 
 #### DCI/Files（文件处理）
-- DCI File Loader
-- Binary File Loader
-- Binary File Saver
-- Binary File Uploader
+- DCI_FileLoader (DCI File Loader)
+- DCI_BinaryFileLoader (Binary File Loader)
+- DCI_BinaryFileSaver (Binary File Saver)
+- DCI_BinaryFileUploader (Binary File Uploader)
 
 ### 新增重构节点（推荐使用）
 

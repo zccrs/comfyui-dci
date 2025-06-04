@@ -77,7 +77,11 @@ class DCIImageExporter:
                 try:
                     import folder_paths
                     output_dir = folder_paths.get_output_directory()
-                except:
+                except ImportError:
+                    # Fallback if ComfyUI folder_paths is not available
+                    output_dir = tempfile.gettempdir()
+                except Exception:
+                    # Fallback for any other folder_paths related errors
                     output_dir = tempfile.gettempdir()
                 output_path = os.path.join(output_dir, f"{filename}.dci")
 
@@ -161,7 +165,11 @@ class DCIImageExporterAdvanced:
                 try:
                     import folder_paths
                     output_dir = folder_paths.get_output_directory()
-                except:
+                except ImportError:
+                    # Fallback if ComfyUI folder_paths is not available
+                    output_dir = tempfile.gettempdir()
+                except Exception:
+                    # Fallback for any other folder_paths related errors
                     output_dir = tempfile.gettempdir()
                 output_path = os.path.join(output_dir, f"{filename}.dci")
 
@@ -314,7 +322,8 @@ class DCIPreviewNode:
         draw = ImageDraw.Draw(error_image)
         try:
             font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 14)
-        except:
+        except (OSError, IOError):
+            # Font file not found, use default font
             font = ImageFont.load_default()
 
         # Draw error message
@@ -379,7 +388,11 @@ class DCIFileLoader:
             try:
                 import folder_paths
                 search_dirs.append(folder_paths.get_output_directory())
-            except:
+            except ImportError:
+                # ComfyUI folder_paths not available
+                pass
+            except Exception:
+                # Any other folder_paths related errors
                 pass
 
             search_dirs.extend([
@@ -471,7 +484,8 @@ class DCIMetadataExtractor:
                 scale_values = [int(s.strip()) for s in scale_filter.split(',') if s.strip().isdigit()]
                 if scale_values:
                     filtered = [img for img in filtered if img['scale'] in scale_values]
-            except:
+            except (ValueError, AttributeError):
+                # Invalid scale filter format, ignore filter
                 pass
 
         return filtered
@@ -746,7 +760,11 @@ class DCIFileNode:
                     try:
                         import folder_paths
                         output_dir = folder_paths.get_output_directory()
-                    except:
+                    except ImportError:
+                        # ComfyUI folder_paths not available
+                        output_dir = tempfile.gettempdir()
+                    except Exception:
+                        # Any other folder_paths related errors
                         output_dir = tempfile.gettempdir()
                     file_path = os.path.join(output_dir, f"{filename}.dci")
 
@@ -984,7 +1002,11 @@ class BinaryFileSaver:
                     try:
                         import folder_paths
                         output_dir = folder_paths.get_output_directory()
-                    except:
+                    except ImportError:
+                        # ComfyUI folder_paths not available
+                        output_dir = tempfile.gettempdir()
+                    except Exception:
+                        # Any other folder_paths related errors
                         output_dir = tempfile.gettempdir()
 
                     filename = binary_data.get('filename', 'binary_file')
@@ -1039,7 +1061,11 @@ class BinaryFileUploader:
                 try:
                     import folder_paths
                     search_directory = folder_paths.get_input_directory()
-                except:
+                except ImportError:
+                    # ComfyUI folder_paths not available
+                    search_directory = os.getcwd()
+                except Exception:
+                    # Any other folder_paths related errors
                     search_directory = os.getcwd()
 
             if not os.path.exists(search_directory):
@@ -1086,33 +1112,3 @@ class BinaryFileUploader:
             import traceback
             traceback.print_exc()
             return (None, "")
-
-
-# Node mappings for ComfyUI registration
-NODE_CLASS_MAPPINGS = {
-    "DCIImageExporter": DCIImageExporter,
-    "DCIImageExporterAdvanced": DCIImageExporterAdvanced,
-    "DCIPreviewNode": DCIPreviewNode,
-    "DCIFileLoader": DCIFileLoader,
-    "DCIMetadataExtractor": DCIMetadataExtractor,
-    "DCIImage": DCIImage,
-    "DCIFileNode": DCIFileNode,
-    "DCIPreviewFromBinary": DCIPreviewFromBinary,
-    "BinaryFileLoader": BinaryFileLoader,
-    "BinaryFileSaver": BinaryFileSaver,
-    "BinaryFileUploader": BinaryFileUploader,
-}
-
-NODE_DISPLAY_NAME_MAPPINGS = {
-    "DCIImageExporter": "DCI Image Exporter",
-    "DCIImageExporterAdvanced": "DCI Image Exporter (Advanced)",
-    "DCIPreviewNode": "DCI Preview",
-    "DCIFileLoader": "DCI File Loader",
-    "DCIMetadataExtractor": "DCI Metadata Extractor",
-    "DCIImage": "DCI Image",
-    "DCIFileNode": "DCI File",
-    "DCIPreviewFromBinary": "DCI Preview (Binary)",
-    "BinaryFileLoader": "Binary File Loader",
-    "BinaryFileSaver": "Binary File Saver",
-    "BinaryFileUploader": "Binary File Uploader",
-}
