@@ -1,0 +1,16 @@
+[project]
+name = "dci"
+description = "A comprehensive ComfyUI extension for creating, previewing, and analyzing DCI (DSG Combined Icons) format files. This extension fully implements the DCI specification, supporting multi-state icons, multiple color tones, scaling factors, and advanced metadata analysis."
+version = "1.0.0"
+license = {file = "LICENSE"}
+dependencies = ["Pillow>=8.0.0", "numpy>=1.19.0"]
+
+[project.urls]
+Repository = "https://github.com/zccrs/comfyui-dci"
+#  Used by Comfy Registry https://registry.comfy.org
+
+[tool.comfy]
+PublisherId = ""
+DisplayName = "comfyui-dci"
+Icon = ""
+includes = []
