@@ -524,6 +524,7 @@ BINARY_DATA = {
 
 **输出数据**:
 - `binary_data`: 包含文件内容和元数据的二进制数据结构 (BINARY_DATA)
+- `file_path`: 加载文件的完整路径 (STRING)
 
 **处理流程**:
 1. 验证文件路径的有效性和可读性

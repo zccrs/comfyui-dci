@@ -920,8 +920,8 @@ class BinaryFileLoader:
             }
         }
 
-    RETURN_TYPES = ("BINARY_DATA",)
-    RETURN_NAMES = ("binary_data",)
+    RETURN_TYPES = ("BINARY_DATA", "STRING")
+    RETURN_NAMES = ("binary_data", "file_path")
     FUNCTION = "load_binary_file"
     CATEGORY = "DCI/Files"
 
@@ -931,7 +931,7 @@ class BinaryFileLoader:
         try:
             if not file_path or not os.path.exists(file_path):
                 print(f"File not found: {file_path}")
-                return (None,)
+                return (None, "")
 
             # Read binary file
             with open(file_path, 'rb') as f:
@@ -950,13 +950,13 @@ class BinaryFileLoader:
             }
 
             print(f"Loaded binary file: {filename} ({file_size} bytes)")
-            return (binary_data,)
+            return (binary_data, file_path)
 
         except Exception as e:
             print(f"Error loading binary file: {str(e)}")
             import traceback
             traceback.print_exc()
-            return (None,)
+            return (None, "")
 
 
 class BinaryFileSaver:

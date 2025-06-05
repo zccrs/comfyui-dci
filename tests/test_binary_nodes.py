@@ -7,10 +7,10 @@ import os
 import tempfile
 import sys
 
-# Add current directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from nodes import BinaryFileLoader, BinaryFileSaver, BinaryFileUploader
+from py.nodes import BinaryFileLoader, BinaryFileSaver, BinaryFileUploader
 
 
 def test_binary_file_operations():
@@ -35,10 +35,11 @@ def test_binary_file_operations():
         result = loader.load_binary_file(temp_file_path)
 
         if result[0] is not None:
-            binary_data = result[0]
+            binary_data, loaded_file_path = result
             print(f"✓ Loaded file: {binary_data['filename']}")
             print(f"✓ File size: {binary_data['size']} bytes")
             print(f"✓ Content matches: {binary_data['content'] == test_data}")
+            print(f"✓ File path: {loaded_file_path}")
         else:
             print("✗ Failed to load binary file")
             return False
@@ -75,10 +76,10 @@ def test_binary_file_operations():
         result = uploader.upload_binary_file(search_dir, file_pattern)
 
         if result[0] is not None:
-            uploaded_data = result[0]
+            uploaded_data, uploaded_file_path = result
             print(f"✓ Uploaded file: {uploaded_data['filename']}")
             print(f"✓ File size: {uploaded_data['size']} bytes")
-            print(f"✓ File path: {result[1]}")
+            print(f"✓ File path: {uploaded_file_path}")
         else:
             print("✗ Failed to upload binary file")
             return False

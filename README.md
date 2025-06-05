@@ -197,6 +197,7 @@ pip install -r requirements.txt
 
 **输出：**
 - **`binary_data`** (BINARY_DATA)：包含文件内容和元数据的二进制数据结构
+- **`file_path`** (STRING)：加载文件的完整路径
 
 **数据结构：**
 ```python
