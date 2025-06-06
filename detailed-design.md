@@ -501,12 +501,7 @@ DCI_BINARY_DATA = {
 
 #### BINARY_DATA 类型
 ```python
-BINARY_DATA = {
-    'content': bytes,        # 文件的二进制内容
-    'filename': str,         # 文件名
-    'size': int,            # 文件大小（字节）
-    'source_path': str      # 原始文件路径
-}
+BINARY_DATA = bytes         # 直接的二进制数据内容，不包含元数据包装
 ```
 
 #### 1.3.3 二进制文件处理节点（新增）
@@ -523,15 +518,14 @@ BINARY_DATA = {
 - `file_path`: 要加载的文件路径 (STRING)
 
 **输出数据**:
-- `binary_data`: 包含文件内容和元数据的二进制数据结构 (BINARY_DATA)
+- `binary_data`: 文件的二进制内容 (BINARY_DATA)
 - `file_path`: 加载文件的完整路径 (STRING)
 
 **处理流程**:
 1. 验证文件路径的有效性和可读性
 2. 读取文件的二进制内容
-3. 提取文件元数据（文件名、大小、路径）
-4. 构建 BINARY_DATA 结构
-5. 返回结构化的二进制数据
+3. 直接返回二进制数据，不进行任何包装或元数据添加
+4. 返回文件路径用于后续处理
 
 **错误处理**:
 - 文件不存在或无法读取时返回错误信息

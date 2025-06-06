@@ -36,9 +36,9 @@ def test_binary_file_operations():
 
         if result[0] is not None:
             binary_data, loaded_file_path = result
-            print(f"✓ Loaded file: {binary_data['filename']}")
-            print(f"✓ File size: {binary_data['size']} bytes")
-            print(f"✓ Content matches: {binary_data['content'] == test_data}")
+            print(f"✓ Loaded file: {os.path.basename(loaded_file_path)}")
+            print(f"✓ File size: {len(binary_data)} bytes")
+            print(f"✓ Content matches: {binary_data == test_data}")
             print(f"✓ File path: {loaded_file_path}")
         else:
             print("✗ Failed to load binary file")
@@ -77,8 +77,8 @@ def test_binary_file_operations():
 
         if result[0] is not None:
             uploaded_data, uploaded_file_path = result
-            print(f"✓ Uploaded file: {uploaded_data['filename']}")
-            print(f"✓ File size: {uploaded_data['size']} bytes")
+            print(f"✓ Uploaded file: {os.path.basename(uploaded_file_path)}")
+            print(f"✓ File size: {len(uploaded_data)} bytes")
             print(f"✓ File path: {uploaded_file_path}")
         else:
             print("✗ Failed to upload binary file")

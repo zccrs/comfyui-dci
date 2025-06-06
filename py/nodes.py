@@ -941,16 +941,9 @@ class BinaryFileLoader:
             filename = os.path.basename(file_path)
             file_size = len(content)
 
-            # Create binary data structure
-            binary_data = {
-                'content': content,
-                'filename': filename,
-                'size': file_size,
-                'source_path': file_path
-            }
-
             print(f"Loaded binary file: {filename} ({file_size} bytes)")
-            return (binary_data, file_path)
+            # Return the binary content directly, not wrapped in a dictionary
+            return (content, file_path)
 
         except Exception as e:
             print(f"Error loading binary file: {str(e)}")
@@ -984,15 +977,15 @@ class BinaryFileSaver:
         """Save binary data to file system"""
 
         try:
-            if not binary_data or 'content' not in binary_data:
+            if not binary_data:
                 print("No binary data provided")
                 return ("",)
 
             # Determine output path
             if output_directory and os.path.exists(output_directory):
                 if not file_path:
-                    # Use original filename if available
-                    filename = binary_data.get('filename', 'binary_file')
+                    # Use default filename
+                    filename = 'binary_file'
                     full_path = os.path.join(output_directory, filename)
                 else:
                     full_path = os.path.join(output_directory, os.path.basename(file_path))
@@ -1009,7 +1002,7 @@ class BinaryFileSaver:
                         # Any other folder_paths related errors
                         output_dir = tempfile.gettempdir()
 
-                    filename = binary_data.get('filename', 'binary_file')
+                    filename = 'binary_file'
                     full_path = os.path.join(output_dir, filename)
                 else:
                     full_path = file_path
@@ -1017,11 +1010,11 @@ class BinaryFileSaver:
             # Ensure directory exists
             os.makedirs(os.path.dirname(full_path), exist_ok=True)
 
-            # Write binary data
+            # Write binary data directly
             with open(full_path, 'wb') as f:
-                f.write(binary_data['content'])
+                f.write(binary_data)
 
-            file_size = binary_data.get('size', len(binary_data['content']))
+            file_size = len(binary_data)
             print(f"Saved binary file: {full_path} ({file_size} bytes)")
             return (full_path,)
 
@@ -1092,20 +1085,13 @@ class BinaryFileUploader:
             filename = os.path.basename(selected_file)
             file_size = len(content)
 
-            # Create binary data structure
-            binary_data = {
-                'content': content,
-                'filename': filename,
-                'size': file_size,
-                'source_path': selected_file
-            }
-
             print(f"Uploaded binary file: {filename} ({file_size} bytes)")
             print(f"Available files: {[os.path.basename(f) for f in matching_files[:5]]}")
             if len(matching_files) > 5:
                 print(f"... and {len(matching_files) - 5} more files")
 
-            return (binary_data, selected_file)
+            # Return the binary content directly, not wrapped in a dictionary
+            return (content, selected_file)
 
         except Exception as e:
             print(f"Error uploading binary file: {str(e)}")

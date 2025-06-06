@@ -196,18 +196,12 @@ pip install -r requirements.txt
 - **`file_path`** (STRING)：要加载的文件路径
 
 **输出：**
-- **`binary_data`** (BINARY_DATA)：包含文件内容和元数据的二进制数据结构
+- **`binary_data`** (BINARY_DATA)：文件的二进制内容（bytes 类型）
 - **`file_path`** (STRING)：加载文件的完整路径
 
-**数据结构：**
-```python
-BINARY_DATA = {
-    'content': bytes,      # 文件的二进制内容
-    'filename': str,       # 文件名
-    'size': int,          # 文件大小（字节）
-    'source_path': str    # 原始文件路径
-}
-```
+**数据格式：**
+- `binary_data` 直接输出文件的二进制内容，不包含任何元数据包装
+- 适用于需要直接处理二进制数据的场景
 
 #### 5. Binary File Saver（二进制文件保存器）
 **节点类别**：`DCI/Files`
@@ -232,7 +226,7 @@ BINARY_DATA = {
 - **`file_pattern`** (STRING)：文件匹配模式，默认"*"（所有文件）
 
 **输出：**
-- **`binary_data`** (BINARY_DATA)：选中文件的二进制数据
+- **`binary_data`** (BINARY_DATA)：选中文件的二进制内容（bytes 类型）
 - **`file_path`** (STRING)：选中文件的完整路径
 
 **使用示例：**

@@ -118,11 +118,10 @@ def demonstrate_dci_workflow():
     print("   - Input: search_directory (STRING), file_pattern (STRING)")
     print("   - Output: binary_data (BINARY_DATA), file_path (STRING)")
 
-    print("\nBINARY_DATA Structure:")
-    print("- content: bytes (the actual binary file content)")
-    print("- filename: str (original filename)")
-    print("- size: int (file size in bytes)")
-    print("- source_path: str (original file path)")
+    print("\nBINARY_DATA Format:")
+    print("- Direct binary content (bytes type)")
+    print("- No metadata wrapper or dictionary structure")
+    print("- Ready for immediate use in binary operations")
 
     print("\nUse Cases:")
     print("- Load DCI icon files created outside ComfyUI")
