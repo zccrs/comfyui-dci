@@ -874,7 +874,8 @@ class BinaryFileLoader:
     @classmethod
     def INPUT_TYPES(cls):
         return {
-            "required": {
+            "required": {},
+            "optional": {
                 "file_path": ("STRING", {"default": "", "multiline": False}),
             }
         }
@@ -884,7 +885,7 @@ class BinaryFileLoader:
     FUNCTION = "load_binary_file"
     CATEGORY = "DCI/Files"
 
-    def load_binary_file(self, file_path):
+    def load_binary_file(self, file_path=""):
         """Load binary file from file system"""
 
         try:
