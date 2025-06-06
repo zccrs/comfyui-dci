@@ -247,10 +247,10 @@ class DCIPreviewNode:
     @classmethod
     def INPUT_TYPES(cls):
         return {
-            "required": {
-                "dci_file_path": ("STRING", {"default": "", "multiline": False}),
-            },
+            "required": {},
             "optional": {
+                "dci_file_path": ("STRING", {"default": "", "multiline": False}),
+                "dci_binary_data": ("BINARY_DATA",),
                 "grid_columns": ("INT", {"default": 4, "min": 1, "max": 10, "step": 1}),
                 "show_metadata": ("BOOLEAN", {"default": True}),
             }
@@ -262,17 +262,25 @@ class DCIPreviewNode:
     CATEGORY = "DCI/Preview"
     OUTPUT_NODE = True
 
-    def preview_dci(self, dci_file_path, grid_columns=4, show_metadata=True):
+    def preview_dci(self, grid_columns=4, show_metadata=True, dci_file_path="", dci_binary_data=None):
         """Preview DCI file contents"""
 
         try:
-            if not dci_file_path or not os.path.exists(dci_file_path):
-                return self._create_error_output("DCI file not found or path is empty")
+            # Determine input source
+            if dci_binary_data is not None:
+                # Use binary data
+                reader = DCIReader(binary_data=dci_binary_data)
+                source_name = "binary_data"
+            elif dci_file_path and os.path.exists(dci_file_path):
+                # Use file path
+                reader = DCIReader(dci_file_path)
+                source_name = os.path.basename(dci_file_path)
+            else:
+                return self._create_error_output("No DCI file path or binary data provided")
 
-            # Read DCI file
-            reader = DCIReader(dci_file_path)
+            # Read DCI data
             if not reader.read():
-                return self._create_error_output("Failed to read DCI file")
+                return self._create_error_output("Failed to read DCI data")
 
             # Extract images
             images = reader.get_icon_images()
@@ -288,7 +296,7 @@ class DCIPreviewNode:
 
             # Generate metadata summary
             summary = generator.create_metadata_summary(images)
-            summary_text = self._format_summary(summary, dci_file_path)
+            summary_text = self._format_summary(summary, source_name)
 
             print(f"DCI preview generated: {len(images)} images found")
             return (preview_tensor, summary_text)
@@ -341,13 +349,13 @@ class DCIPreviewNode:
 
         return (error_tensor, error_message)
 
-    def _format_summary(self, summary, file_path):
+    def _format_summary(self, summary, source_name):
         """Format metadata summary as text"""
         if not summary:
             return "No metadata available"
 
         lines = [
-            f"DCI File: {os.path.basename(file_path)}",
+            f"DCI Source: {source_name}",
             f"Total Images: {summary['total_images']}",
             f"Total File Size: {summary['total_file_size']} bytes",
             "",
@@ -361,61 +369,6 @@ class DCIPreviewNode:
         return "\n".join(lines)
 
 
-class DCIFileLoader:
-    """ComfyUI node for loading DCI files from file system"""
-
-    @classmethod
-    def INPUT_TYPES(cls):
-        return {
-            "required": {},
-            "optional": {
-                "file_path": ("STRING", {"default": "", "multiline": False}),
-            }
-        }
-
-    RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("dci_file_path",)
-    FUNCTION = "load_dci_file"
-    CATEGORY = "DCI/Files"
-
-    def load_dci_file(self, file_path=""):
-        """Load DCI file path"""
-
-        if not file_path:
-            # Try to find DCI files in common directories
-            search_dirs = []
-
-            try:
-                import folder_paths
-                search_dirs.append(folder_paths.get_output_directory())
-            except ImportError:
-                # ComfyUI folder_paths not available
-                pass
-            except Exception:
-                # Any other folder_paths related errors
-                pass
-
-            search_dirs.extend([
-                tempfile.gettempdir(),
-                os.getcwd(),
-                os.path.expanduser("~/Downloads"),
-                os.path.expanduser("~/Desktop")
-            ])
-
-            for search_dir in search_dirs:
-                if os.path.exists(search_dir):
-                    dci_files = [f for f in os.listdir(search_dir) if f.endswith('.dci')]
-                    if dci_files:
-                        file_path = os.path.join(search_dir, dci_files[0])
-                        print(f"Auto-found DCI file: {file_path}")
-                        break
-
-        if file_path and os.path.exists(file_path):
-            return (file_path,)
-        else:
-            print(f"DCI file not found: {file_path}")
-            return ("",)
-
 
 class DCIMetadataExtractor:
     """ComfyUI node for extracting detailed metadata from DCI files"""
@@ -423,10 +376,10 @@ class DCIMetadataExtractor:
     @classmethod
     def INPUT_TYPES(cls):
         return {
-            "required": {
-                "dci_file_path": ("STRING", {"default": "", "multiline": False}),
-            },
+            "required": {},
             "optional": {
+                "dci_file_path": ("STRING", {"default": "", "multiline": False}),
+                "dci_binary_data": ("BINARY_DATA",),
                 "filter_by_state": (["all", "normal", "disabled", "hover", "pressed"], {"default": "all"}),
                 "filter_by_tone": (["all", "light", "dark"], {"default": "all"}),
                 "filter_by_scale": ("STRING", {"default": "all", "multiline": False}),
@@ -439,17 +392,23 @@ class DCIMetadataExtractor:
     CATEGORY = "DCI/Analysis"
     OUTPUT_NODE = True
 
-    def extract_metadata(self, dci_file_path, filter_by_state="all", filter_by_tone="all", filter_by_scale="all"):
+    def extract_metadata(self, filter_by_state="all", filter_by_tone="all", filter_by_scale="all", dci_file_path="", dci_binary_data=None):
         """Extract detailed metadata from DCI file"""
 
         try:
-            if not dci_file_path or not os.path.exists(dci_file_path):
-                return ("DCI file not found", "", "")
+            # Determine input source
+            if dci_binary_data is not None:
+                # Use binary data
+                reader = DCIReader(binary_data=dci_binary_data)
+            elif dci_file_path and os.path.exists(dci_file_path):
+                # Use file path
+                reader = DCIReader(dci_file_path)
+            else:
+                return ("No DCI file path or binary data provided", "", "")
 
-            # Read DCI file
-            reader = DCIReader(dci_file_path)
+            # Read DCI data
             if not reader.read():
-                return ("Failed to read DCI file", "", "")
+                return ("Failed to read DCI data", "", "")
 
             # Extract images
             images = reader.get_icon_images()

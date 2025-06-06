@@ -135,7 +135,6 @@ pip install -r requirements.txt
 - DCI_MetadataExtractor (DCI Metadata Extractor)
 
 #### DCI/Files（文件处理）
-- DCI_FileLoader (DCI File Loader)
 - DCI_BinaryFileLoader (Binary File Loader)
 - DCI_BinaryFileSaver (Binary File Saver)
 - DCI_BinaryFileUploader (Binary File Uploader)
@@ -372,13 +371,17 @@ pip install -r requirements.txt
 
 #### 3. DCI Preview（DCI 预览）
 **节点类别**：`DCI/Preview`
-**功能描述**：生成 DCI 文件内容的可视化网格预览，显示所有包含的图像和元数据信息。
+**功能描述**：生成 DCI 文件内容的可视化网格预览，显示所有包含的图像和元数据信息。支持文件路径和二进制数据两种输入方式。
 
-**必需输入参数：**
+**可选输入参数：**
 - **`dci_file_path`** (STRING)
   - **默认值**：`""`
   - **描述**：要预览的 DCI 文件的完整路径
   - **验证**：节点会检查文件是否存在和可读
+
+- **`dci_binary_data`** (BINARY_DATA)
+  - **描述**：DCI 文件的二进制数据
+  - **用途**：可直接从 Binary File Loader 或其他二进制数据源获取
 
 **可选输入参数：**
 - **`grid_columns`** (INT)
@@ -405,41 +408,18 @@ pip install -r requirements.txt
 
 ---
 
-#### 4. DCI File Loader（DCI 文件加载器）
-**节点类别**：`DCI/Files`
-**功能描述**：用于加载和验证 DCI 文件路径的工具节点，支持自动搜索功能。
+#### 4. DCI Metadata Extractor（DCI 元数据提取器）
+**节点类别**：`DCI/Analysis`
+**功能描述**：提取和分析 DCI 文件的详细元数据，支持多种过滤条件。支持文件路径和二进制数据两种输入方式。
 
 **可选输入参数：**
-- **`file_path`** (STRING)
-  - **默认值**：`""`
-  - **描述**：DCI 文件的路径
-  - **行为**：
-    - 如果提供路径且文件存在，直接使用
-    - 如果为空，自动在常见目录中搜索 .dci 文件
-    - 搜索目录包括：ComfyUI 输出目录、临时目录、当前目录、下载目录、桌面
-
-**输出：**
-- **`dci_file_path`** (STRING)
-  - **描述**：验证后的 DCI 文件路径
-  - **用途**：可连接到其他需要 DCI 文件路径的节点
-
-**自动搜索逻辑：**
-1. ComfyUI 输出目录（如果可用）
-2. 系统临时目录
-3. 当前工作目录
-4. 用户下载目录
-5. 用户桌面目录
-
----
-
-#### 5. DCI Metadata Extractor（DCI 元数据提取器）
-**节点类别**：`DCI/Analysis`
-**功能描述**：提取和分析 DCI 文件的详细元数据，支持多种过滤条件。
-
-**必需输入参数：**
 - **`dci_file_path`** (STRING)
   - **默认值**：`""`
   - **描述**：要分析的 DCI 文件路径
+
+- **`dci_binary_data`** (BINARY_DATA)
+  - **描述**：DCI 文件的二进制数据
+  - **用途**：可直接从 Binary File Loader 或其他二进制数据源获取
 
 **可选输入参数（过滤器）：**
 - **`filter_by_state`** (COMBO)
@@ -489,7 +469,7 @@ pip install -r requirements.txt
 
 ### 典型连接模式
 1. **图像输入**：LoadImage → DCI Image Exporter
-2. **文件路径传递**：DCI File Loader → DCI Preview/DCI Metadata Extractor
+2. **二进制文件处理**：Binary File Loader → DCI Preview/DCI Metadata Extractor
 3. **预览显示**：DCI Preview → PreviewImage (preview_image) + ShowText (metadata_summary)
 4. **元数据分析**：DCI Metadata Extractor → ShowText (三个输出分别连接)
 
@@ -498,7 +478,7 @@ pip install -r requirements.txt
 - **DCI/Export**：DCI Image Exporter、DCI Image Exporter (Advanced)、DCI Image、DCI File
 - **DCI/Preview**：DCI Preview、DCI Preview (Binary)
 - **DCI/Analysis**：DCI Metadata Extractor
-- **DCI/Files**：DCI File Loader、Binary File Loader、Binary File Saver、Binary File Uploader
+- **DCI/Files**：Binary File Loader、Binary File Saver、Binary File Uploader
 
 ## 使用示例
 
@@ -509,13 +489,13 @@ pip install -r requirements.txt
 4. 执行以创建 DCI 文件
 
 ### DCI 预览工作流程
-1. 使用 `DCI File Loader` 指定 DCI 文件路径
+1. 使用 `Binary File Loader` 加载 DCI 文件
 2. 连接到 `DCI Preview` 节点
 3. 调整网格列数和元数据显示选项
 4. 查看生成的预览图像和元数据摘要
 
 ### 高级分析
-1. 使用 `DCI File Loader` 加载 DCI 文件
+1. 使用 `Binary File Loader` 加载 DCI 文件
 2. 连接到 `DCI Metadata Extractor`
 3. 应用过滤器以专注于特定图像
 4. 检查详细元数据、目录结构和文件列表

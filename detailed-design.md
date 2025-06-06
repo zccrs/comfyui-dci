@@ -91,7 +91,7 @@ DCI/
 ├── DCI Image Exporter
 ├── DCI Image Exporter (Advanced)
 ├── DCI Preview
-├── DCI File Loader
+
 ├── DCI Metadata Extractor
 ├── DCI Image
 ├── DCI File
