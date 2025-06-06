@@ -985,15 +985,13 @@ class BinaryFileSaver:
 
 
 class BinaryFileUploader:
-    """ComfyUI node for uploading/selecting binary files from directory"""
+    """ComfyUI node for uploading binary files through UI"""
 
     @classmethod
     def INPUT_TYPES(cls):
         return {
-            "required": {},
-            "optional": {
-                "search_directory": ("STRING", {"default": "", "multiline": False}),
-                "file_pattern": ("STRING", {"default": "*", "multiline": False}),
+            "required": {
+                "upload": ("UPLOAD",),
             }
         }
 
@@ -1002,55 +1000,33 @@ class BinaryFileUploader:
     FUNCTION = "upload_binary_file"
     CATEGORY = "DCI/Files"
 
-    def upload_binary_file(self, search_directory="", file_pattern="*"):
-        """Upload/select binary file from directory"""
+    def upload_binary_file(self, upload):
+        """Upload binary file through ComfyUI interface"""
 
         try:
-            import glob
-
-            # Determine search directory
-            if not search_directory:
-                try:
-                    import folder_paths
-                    search_directory = folder_paths.get_input_directory()
-                except ImportError:
-                    # ComfyUI folder_paths not available
-                    search_directory = os.getcwd()
-                except Exception:
-                    # Any other folder_paths related errors
-                    search_directory = os.getcwd()
-
-            if not os.path.exists(search_directory):
-                print(f"Search directory not found: {search_directory}")
+            # Get uploaded file info
+            if not upload or not hasattr(upload, 'name'):
+                print("No file uploaded")
                 return (None, "")
 
-            # Find files matching pattern
-            pattern_path = os.path.join(search_directory, file_pattern)
-            matching_files = glob.glob(pattern_path)
+            # Get file path from upload
+            file_path = upload.name if hasattr(upload, 'name') else str(upload)
 
-            if not matching_files:
-                print(f"No files found matching pattern: {file_pattern} in {search_directory}")
+            # Check if file exists
+            if not os.path.exists(file_path):
+                print(f"Uploaded file not found: {file_path}")
                 return (None, "")
 
-            # Sort files and take the first one (or implement selection logic)
-            matching_files.sort()
-            selected_file = matching_files[0]
-
-            # Load the selected file
-            with open(selected_file, 'rb') as f:
+            # Read binary file
+            with open(file_path, 'rb') as f:
                 content = f.read()
 
             # Get file info
-            filename = os.path.basename(selected_file)
+            filename = os.path.basename(file_path)
             file_size = len(content)
 
             print(f"Uploaded binary file: {filename} ({file_size} bytes)")
-            print(f"Available files: {[os.path.basename(f) for f in matching_files[:5]]}")
-            if len(matching_files) > 5:
-                print(f"... and {len(matching_files) - 5} more files")
-
-            # Return the binary content directly, not wrapped in a dictionary
-            return (content, selected_file)
+            return (content, file_path)
 
         except Exception as e:
             print(f"Error uploading binary file: {str(e)}")

@@ -218,20 +218,20 @@ pip install -r requirements.txt
 
 #### 6. Binary File Uploader（二进制文件上传器）
 **节点类别**：`DCI/Files`
-**功能描述**：浏览和选择目录中的二进制文件，提供文件发现和选择功能。
+**功能描述**：通过 ComfyUI 界面上传二进制文件，提供直观的文件选择体验。
 
-**可选输入参数：**
-- **`search_directory`** (STRING)：搜索目录，默认使用 ComfyUI 输入目录
-- **`file_pattern`** (STRING)：文件匹配模式，默认"*"（所有文件）
+**必需输入参数：**
+- **`upload`** (UPLOAD)：文件上传控件，用户可通过界面选择文件
 
 **输出：**
-- **`binary_data`** (BINARY_DATA)：选中文件的二进制内容（bytes 类型）
-- **`file_path`** (STRING)：选中文件的完整路径
+- **`binary_data`** (BINARY_DATA)：上传文件的二进制内容（bytes 类型）
+- **`file_path`** (STRING)：上传文件的完整路径
 
-**使用示例：**
-- 设置 `file_pattern` 为 `"*.dci"` 来只查找 DCI 文件
-- 设置 `search_directory` 指定特定的搜索目录
-- 节点会自动选择匹配的第一个文件并显示可用文件列表
+**使用说明：**
+- 点击上传按钮选择要上传的文件
+- 支持任意二进制文件格式
+- 自动读取文件内容并输出二进制数据
+- 在控制台显示上传文件的信息
 
 ### 传统节点（向后兼容）
 
