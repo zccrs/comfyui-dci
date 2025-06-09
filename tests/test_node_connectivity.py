@@ -28,12 +28,11 @@ class TestNodeConnectivity(unittest.TestCase):
             @classmethod
             def INPUT_TYPES(cls):
                 return {
-                    "required": {},
-                    "optional": {
-                        "dci_file_path": ("STRING", {"default": "", "multiline": False}),
+                    "required": {
                         "dci_binary_data": ("BINARY_DATA",),
+                    },
+                    "optional": {
                         "grid_columns": ("INT", {"default": 4, "min": 1, "max": 10, "step": 1}),
-                        "show_metadata": ("BOOLEAN", {"default": True}),
                     }
                 }
 
@@ -57,7 +56,7 @@ class TestNodeConnectivity(unittest.TestCase):
 
         # 获取类型信息
         dci_output_type = dci_file_node.RETURN_TYPES[0]
-        preview_input_type = preview_node.INPUT_TYPES()['optional']['dci_binary_data'][0]
+        preview_input_type = preview_node.INPUT_TYPES()['required']['dci_binary_data'][0]
         saver_input_type = saver_node.INPUT_TYPES()['required']['binary_data'][0]
 
         # 验证类型匹配
