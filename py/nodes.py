@@ -24,14 +24,14 @@ class DCIPreviewNode:
             }
         }
 
-    RETURN_TYPES = ("IMAGE", "STRING")
-    RETURN_NAMES = ("preview_image", "metadata_summary")
+    RETURN_TYPES = ()
+    RETURN_NAMES = ()
     FUNCTION = "preview_dci"
     CATEGORY = "DCI/Preview"
     OUTPUT_NODE = True
 
     def preview_dci(self, grid_columns=4, show_metadata=True, dci_file_path="", dci_binary_data=None):
-        """Preview DCI file contents"""
+        """Preview DCI file contents with in-node display"""
 
         try:
             # Determine input source
@@ -44,78 +44,82 @@ class DCIPreviewNode:
                 reader = DCIReader(dci_file_path)
                 source_name = os.path.basename(dci_file_path)
             else:
-                return self._create_error_output("No DCI file path or binary data provided")
+                return {"ui": {"text": ["No DCI file path or binary data provided"]}}
 
             # Read DCI data
             if not reader.read():
-                return self._create_error_output("Failed to read DCI data")
+                return {"ui": {"text": ["Failed to read DCI data"]}}
 
             # Extract images
             images = reader.get_icon_images()
             if not images:
-                return self._create_error_output("No images found in DCI file")
+                return {"ui": {"text": ["No images found in DCI file"]}}
 
             # Generate preview
             generator = DCIPreviewGenerator()
             preview_image = generator.create_preview_grid(images, grid_columns)
 
-            # Convert PIL image to ComfyUI tensor
-            preview_tensor = self._pil_to_tensor(preview_image)
+            # Convert PIL image to base64 for UI display
+            preview_base64 = self._pil_to_base64(preview_image)
 
             # Generate metadata summary
             summary = generator.create_metadata_summary(images)
             summary_text = self._format_summary(summary, source_name)
 
+            # Create UI output with image and text
+            ui_output = {
+                "ui": {
+                    "images": [preview_base64],
+                    "text": [summary_text] if show_metadata else []
+                }
+            }
+
             print(f"DCI preview generated: {len(images)} images found")
-            return (preview_tensor, summary_text)
+            return ui_output
 
         except Exception as e:
             print(f"Error previewing DCI file: {str(e)}")
             import traceback
             traceback.print_exc()
-            return self._create_error_output(f"Error: {str(e)}")
+            return {"ui": {"text": [f"Error: {str(e)}"]}}
 
-    def _pil_to_tensor(self, pil_image):
-        """Convert PIL image to ComfyUI tensor"""
+    def _pil_to_base64(self, pil_image):
+        """Convert PIL image to base64 string for UI display"""
+        import base64
+        import hashlib
+        import time
+
         # Convert to RGB if necessary
         if pil_image.mode != 'RGB':
             pil_image = pil_image.convert('RGB')
 
-        # Convert to numpy array
-        img_array = np.array(pil_image).astype(np.float32) / 255.0
+        # Save to bytes buffer
+        buffer = BytesIO()
+        pil_image.save(buffer, format='PNG')
+        img_bytes = buffer.getvalue()
 
-        # Convert to tensor with batch dimension
-        tensor = torch.from_numpy(img_array).unsqueeze(0)
+        # Generate unique filename
+        timestamp = str(int(time.time()))
+        hash_obj = hashlib.md5(img_bytes)
+        filename = f"dci_preview_{timestamp}_{hash_obj.hexdigest()[:8]}.png"
 
-        return tensor
-
-    def _create_error_output(self, error_message):
-        """Create error output"""
-        # Create error image
-        error_image = Image.new('RGB', (400, 200), (200, 200, 200))
-        from PIL import ImageDraw, ImageFont
-
-        draw = ImageDraw.Draw(error_image)
+        # Save to temp directory for ComfyUI
         try:
-            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 14)
-        except (OSError, IOError):
-            # Font file not found, use default font
-            font = ImageFont.load_default()
+            import folder_paths
+            temp_dir = folder_paths.get_temp_directory()
+        except:
+            temp_dir = tempfile.gettempdir()
 
-        # Draw error message
-        bbox = draw.textbbox((0, 0), error_message, font=font)
-        text_width = bbox[2] - bbox[0]
-        text_height = bbox[3] - bbox[1]
+        temp_path = os.path.join(temp_dir, filename)
+        with open(temp_path, 'wb') as f:
+            f.write(img_bytes)
 
-        x = (error_image.width - text_width) // 2
-        y = (error_image.height - text_height) // 2
-
-        draw.text((x, y), error_message, fill=(100, 100, 100), font=font)
-
-        # Convert to tensor
-        error_tensor = self._pil_to_tensor(error_image)
-
-        return (error_tensor, error_message)
+        # Return in format expected by ComfyUI
+        return {
+            "filename": filename,
+            "subfolder": "",
+            "type": "temp"
+        }
 
     def _format_summary(self, summary, source_name):
         """Format metadata summary as text"""
@@ -123,15 +127,15 @@ class DCIPreviewNode:
             return "No metadata available"
 
         lines = [
-            f"DCI Source: {source_name}",
-            f"Total Images: {summary['total_images']}",
-            f"Total File Size: {summary['total_file_size']} bytes",
+            f"📁 DCI Source: {source_name}",
+            f"🖼️  Total Images: {summary['total_images']}",
+            f"📊 Total File Size: {summary['total_file_size']} bytes",
             "",
-            f"Icon Sizes: {', '.join(map(str, summary['sizes']))}",
-            f"States: {', '.join(summary['states'])}",
-            f"Tones: {', '.join(summary['tones'])}",
-            f"Scale Factors: {', '.join(map(str, summary['scales']))}",
-            f"Formats: {', '.join(summary['formats'])}",
+            f"📏 Icon Sizes: {', '.join(map(str, summary['sizes']))}",
+            f"🎭 States: {', '.join(summary['states'])}",
+            f"🎨 Tones: {', '.join(summary['tones'])}",
+            f"🔍 Scale Factors: {', '.join(map(str, summary['scales']))}",
+            f"🗂️  Formats: {', '.join(summary['formats'])}",
         ]
 
         return "\n".join(lines)
