@@ -132,17 +132,13 @@ pip install -r requirements.txt
 
 #### 2. DCI File（DCI 文件）
 **节点类别**：`DCI/Export`
-**功能描述**：接收多个 DCI Image 输出并组合成完整的 DCI 文件，输出二进制数据。
+**功能描述**：接收多个 DCI Image 输出并组合成完整的 DCI 文件，专注于生成二进制数据。如需保存文件，请使用 Binary File Saver 节点。
 
 **可选输入参数：**
 - **`dci_image_1` 到 `dci_image_12`** (DCI_IMAGE_DATA)：最多12个DCI图像数据
-- **`filename`** (STRING)：文件名，默认"icon"
-- **`save_to_file`** (BOOLEAN)：是否保存到文件，默认False
-- **`output_directory`** (STRING)：输出目录，默认空
 
 **输出：**
 - **`dci_binary_data`** (DCI_BINARY_DATA)：DCI文件的二进制数据
-- **`file_path`** (STRING)：文件路径（如果保存到文件）
 
 #### 3. DCI Preview（DCI 预览）
 **节点类别**：`DCI/Preview`
@@ -195,8 +191,7 @@ pip install -r requirements.txt
    - 设置图标尺寸、状态、色调、缩放因子和格式
 
 2. **组合 DCI 文件**：
-   - 使用 `DCI File` 节点将多个 DCI 图像组合成完整的 DCI 文件
-   - 可选择保存到文件或仅输出二进制数据
+   - 使用 `DCI File` 节点将多个 DCI 图像组合成完整的 DCI 文件二进制数据
 
 3. **预览 DCI 内容**：
    - 使用 `DCI Preview` 节点查看 DCI 文件的内容和元数据
@@ -222,8 +217,8 @@ LoadImage → DCI Image → DCI File → DCI Preview
 ### 多图像工作流程
 ```
 LoadImage (normal) → DCI Image (normal) ──┐
-LoadImage (hover)  → DCI Image (hover)  ──┼─→ DCI File → Binary File Saver
-LoadImage (pressed)→ DCI Image (pressed)──┘
+LoadImage (hover)  → DCI Image (hover)  ──┼─→ DCI File ──→ Binary File Saver
+LoadImage (pressed)→ DCI Image (pressed)──┘           └─→ DCI Preview
 ```
 
 ### 文件处理工作流程

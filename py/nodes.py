@@ -264,19 +264,15 @@ class DCIFileNode:
                 "dci_image_10": ("DCI_IMAGE_DATA",),
                 "dci_image_11": ("DCI_IMAGE_DATA",),
                 "dci_image_12": ("DCI_IMAGE_DATA",),
-                "filename": ("STRING", {"default": "icon", "multiline": False}),
-                "save_to_file": ("BOOLEAN", {"default": False}),
-                "output_directory": ("STRING", {"default": "", "multiline": False}),
             }
         }
 
-    RETURN_TYPES = ("DCI_BINARY_DATA", "STRING")
-    RETURN_NAMES = ("dci_binary_data", "file_path")
+    RETURN_TYPES = ("DCI_BINARY_DATA",)
+    RETURN_NAMES = ("dci_binary_data",)
     FUNCTION = "create_dci_file"
     CATEGORY = "DCI/Export"
-    OUTPUT_NODE = True
 
-    def create_dci_file(self, filename="icon", save_to_file=False, output_directory="", **kwargs):
+    def create_dci_file(self, **kwargs):
         """Combine multiple DCI images into a DCI file"""
 
         try:
@@ -289,7 +285,7 @@ class DCIFileNode:
 
             if not dci_images:
                 print("No DCI images provided")
-                return (b"", "")
+                return (b"",)
 
             # Create DCI file structure
             dci_file = DCIFile()
@@ -357,35 +353,14 @@ class DCIFileNode:
             # Generate binary data
             binary_data = dci_file.to_binary()
 
-            # Optionally save to file
-            file_path = ""
-            if save_to_file:
-                if output_directory and os.path.exists(output_directory):
-                    file_path = os.path.join(output_directory, f"{filename}.dci")
-                else:
-                    try:
-                        import folder_paths
-                        output_dir = folder_paths.get_output_directory()
-                    except ImportError:
-                        # ComfyUI folder_paths not available
-                        output_dir = tempfile.gettempdir()
-                    except Exception:
-                        # Any other folder_paths related errors
-                        output_dir = tempfile.gettempdir()
-                    file_path = os.path.join(output_dir, f"{filename}.dci")
-
-                with open(file_path, 'wb') as f:
-                    f.write(binary_data)
-                print(f"DCI file saved: {file_path}")
-
             print(f"Created DCI file with {len(dci_images)} images ({len(binary_data)} bytes)")
-            return (binary_data, file_path)
+            return (binary_data,)
 
         except Exception as e:
             print(f"Error creating DCI file: {str(e)}")
             import traceback
             traceback.print_exc()
-            return (b"", "")
+            return (b"",)
 
     def _create_directory_content(self, files, dci_file):
         """Create directory content from file list"""

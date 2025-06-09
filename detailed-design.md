@@ -367,35 +367,21 @@ DCI_IMAGE_DATA = {
 
 **设计理念**:
 - 支持最多12个图像输入的灵活组合
-- 输出二进制数据流，支持进一步处理
-- 可选文件保存功能
+- 专注于生成二进制数据，遵循单一职责原则
+- 文件保存功能由专门的 Binary File Saver 节点处理
 
 **输入参数**:
 - `dci_image_1` 到 `dci_image_12`: DCI图像数据 (可选)
-- `filename`: 文件名
-- `save_to_file`: 是否保存到文件
-- `output_directory`: 输出目录
 
-**输出数据结构**:
-```python
-DCI_BINARY_DATA = {
-    'data': bytes,         # DCI文件二进制数据
-    'metadata': {          # 文件元数据
-        'file_count': int,
-        'total_size': int,
-        'images': list,    # 图像元数据列表
-        'directory_structure': dict
-    }
-}
-```
+**输出**:
+- `dci_binary_data` (BINARY_DATA): DCI文件的二进制数据
 
 **处理流程**:
 1. 收集所有输入的 DCI 图像数据
 2. 按目录结构组织文件
 3. 创建 DCI 文件对象
 4. 生成二进制数据
-5. 可选保存到文件
-6. 返回二进制数据和路径
+5. 返回二进制数据
 
 ##### DCIPreviewFromBinary 类
 **职责**: 从二进制 DCI 数据创建可视化预览
