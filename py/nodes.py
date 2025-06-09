@@ -35,6 +35,8 @@ class DCIPreviewNode:
                 "custom_bg_r": ("INT", {"default": 240, "min": 0, "max": 255, "step": 1}),
                 "custom_bg_g": ("INT", {"default": 240, "min": 0, "max": 255, "step": 1}),
                 "custom_bg_b": ("INT", {"default": 240, "min": 0, "max": 255, "step": 1}),
+                "text_font_size": ("INT", {"default": 12, "min": 8, "max": 24, "step": 1}),
+                "show_file_paths": ("BOOLEAN", {"default": True}),
             }
         }
 
@@ -44,7 +46,7 @@ class DCIPreviewNode:
     CATEGORY = "DCI/Preview"
     OUTPUT_NODE = True
 
-    def preview_dci(self, dci_binary_data, grid_columns=1, background_color="light_gray", custom_bg_r=240, custom_bg_g=240, custom_bg_b=240):
+    def preview_dci(self, dci_binary_data, grid_columns=1, background_color="light_gray", custom_bg_r=240, custom_bg_g=240, custom_bg_b=240, text_font_size=12, show_file_paths=True):
         """Preview DCI file contents with in-node display"""
 
         try:
@@ -72,7 +74,7 @@ class DCIPreviewNode:
             preview_base64 = self._pil_to_base64(preview_image)
 
             # Generate detailed metadata summary
-            summary_text = self._format_detailed_summary(images, source_name)
+            summary_text = self._format_detailed_summary(images, source_name, text_font_size, show_file_paths)
 
             # Create UI output with image and text
             ui_output = {
@@ -146,7 +148,7 @@ class DCIPreviewNode:
             "type": "temp"
         }
 
-    def _format_detailed_summary(self, images, source_name):
+    def _format_detailed_summary(self, images, source_name, font_size=12, show_file_paths=True):
         """Format detailed metadata summary as text with comprehensive information"""
         if not images:
             return "No images available"
@@ -163,8 +165,13 @@ class DCIPreviewNode:
         formats = sorted(set(img['format'] for img in images))
         paths = sorted(set(img['path'] for img in images))
 
-        # Build detailed summary
+        # Create font size style tag for HTML formatting
+        font_style = f'<span style="font-size: {font_size}px; font-family: monospace;">'
+        font_end = '</span>'
+
+        # Build detailed summary with HTML formatting
         lines = [
+            font_style,
             f"📁 DCI 数据源: {source_name}",
             f"🖼️  图像总数: {total_images}",
             f"📊 文件总大小: {total_file_size:,} 字节 ({total_file_size/1024:.1f} KB)",
@@ -183,37 +190,51 @@ class DCIPreviewNode:
             "",
             "🗂️  图像格式:",
             f"   {', '.join(formats)}",
-            "",
-            "📂 目录路径:",
         ]
 
-        # Add paths with indentation
-        for path in paths:
-            lines.append(f"   {path}")
+        # Add file paths section if enabled
+        if show_file_paths:
+            lines.extend([
+                "",
+                "📂 文件路径列表:",
+            ])
+            # Sort images for consistent display and extract full paths
+            sorted_images = sorted(images, key=lambda x: (x['size'], x['state'], x['tone'], x['scale']))
+            for img in sorted_images:
+                # Construct full DCI path like /235/normal.light/1/1.0.0.0.0.0.0.0.0.0.webp
+                full_path = f"/{img['path']}/{img['filename']}"
+                lines.append(f"   {full_path}")
 
-        lines.append("")
-        lines.append("📋 详细图像信息:")
-        lines.append("=" * 50)
+        lines.extend([
+            "",
+            "📋 详细图像信息:",
+            "=" * 50
+        ])
 
         # Sort images for consistent display
         sorted_images = sorted(images, key=lambda x: (x['size'], x['state'], x['tone'], x['scale']))
 
         # Add detailed info for each image
         for i, img in enumerate(sorted_images, 1):
-            lines.extend([
+            # Construct full DCI path
+            full_path = f"/{img['path']}/{img['filename']}"
+
+            image_info = [
                 f"图像 #{i}:",
-                f"  📁 路径: {img['path']}/{img['filename']}",
-                f"  📏 尺寸: {img['size']}px",
+                f"  📁 完整路径: {full_path}",
+                f"  📏 图标尺寸: {img['size']}px",
                 f"  🎭 状态: {img['state']}",
                 f"  🎨 色调: {img['tone']}",
-                f"  🔍 缩放: {img['scale']:g}x",
-                f"  🗂️  格式: {img['format']}",
+                f"  🔍 缩放因子: {img['scale']:g}x",
+                f"  🗂️  图像格式: {img['format']}",
                 f"  📊 文件大小: {img['file_size']:,} 字节",
                 f"  🖼️  实际尺寸: {img['image'].size[0]}×{img['image'].size[1]}px",
                 f"  🎯 优先级: {img.get('priority', 1)}",
                 ""
-            ])
+            ]
+            lines.extend(image_info)
 
+        lines.append(font_end)
         return "\n".join(lines)
 
 
