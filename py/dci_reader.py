@@ -299,9 +299,9 @@ class DCIPreviewGenerator:
         if image.size[0] != image_size or image.size[1] != image_size:
             image = image.resize((image_size, image_size), Image.Resampling.LANCZOS)
 
-        # Center image in cell
-        img_x = x + (cell_size - image.size[0]) // 2
-        img_y = y + (cell_size - image.size[1]) // 2
+        # Position image at left side of cell instead of center
+        img_x = x  # Left align instead of centering
+        img_y = y + (cell_size - image.size[1]) // 2  # Still center vertically
 
         # Paste image
         if image.mode == 'RGBA':

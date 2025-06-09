@@ -30,7 +30,7 @@ class DCIPreviewNode:
                 "dci_binary_data": ("BINARY_DATA",),
             },
             "optional": {
-                "grid_columns": ("INT", {"default": 4, "min": 1, "max": 10, "step": 1}),
+                "grid_columns": ("INT", {"default": 1, "min": 1, "max": 10, "step": 1}),
             }
         }
 
@@ -40,7 +40,7 @@ class DCIPreviewNode:
     CATEGORY = "DCI/Preview"
     OUTPUT_NODE = True
 
-    def preview_dci(self, dci_binary_data, grid_columns=4):
+    def preview_dci(self, dci_binary_data, grid_columns=1):
         """Preview DCI file contents with in-node display"""
 
         try:
@@ -64,9 +64,8 @@ class DCIPreviewNode:
             # Convert PIL image to base64 for UI display
             preview_base64 = self._pil_to_base64(preview_image)
 
-            # Generate metadata summary (always show metadata)
-            summary = generator.create_metadata_summary(images)
-            summary_text = self._format_summary(summary, source_name)
+            # Generate detailed metadata summary
+            summary_text = self._format_detailed_summary(images, source_name)
 
             # Create UI output with image and text
             ui_output = {
@@ -123,22 +122,73 @@ class DCIPreviewNode:
             "type": "temp"
         }
 
-    def _format_summary(self, summary, source_name):
-        """Format metadata summary as text"""
-        if not summary:
-            return "No metadata available"
+    def _format_detailed_summary(self, images, source_name):
+        """Format detailed metadata summary as text with comprehensive information"""
+        if not images:
+            return "No images available"
 
+        # Calculate summary statistics
+        total_images = len(images)
+        total_file_size = sum(img['file_size'] for img in images)
+
+        # Collect unique values
+        sizes = sorted(set(img['size'] for img in images))
+        states = sorted(set(img['state'] for img in images))
+        tones = sorted(set(img['tone'] for img in images))
+        scales = sorted(set(img['scale'] for img in images))
+        formats = sorted(set(img['format'] for img in images))
+        paths = sorted(set(img['path'] for img in images))
+
+        # Build detailed summary
         lines = [
-            f"📁 DCI Source: {source_name}",
-            f"🖼️  Total Images: {summary['total_images']}",
-            f"📊 Total File Size: {summary['total_file_size']} bytes",
+            f"📁 DCI 数据源: {source_name}",
+            f"🖼️  图像总数: {total_images}",
+            f"📊 文件总大小: {total_file_size:,} 字节 ({total_file_size/1024:.1f} KB)",
             "",
-            f"📏 Icon Sizes: {', '.join(map(str, summary['sizes']))}",
-            f"🎭 States: {', '.join(summary['states'])}",
-            f"🎨 Tones: {', '.join(summary['tones'])}",
-            f"🔍 Scale Factors: {', '.join(map(str, summary['scales']))}",
-            f"🗂️  Formats: {', '.join(summary['formats'])}",
+            "📏 图标尺寸:",
+            f"   {', '.join(f'{size}px' for size in sizes)}",
+            "",
+            "🎭 图标状态:",
+            f"   {', '.join(states)}",
+            "",
+            "🎨 色调类型:",
+            f"   {', '.join(tones)}",
+            "",
+            "🔍 缩放因子:",
+            f"   {', '.join(f'{scale:g}x' for scale in scales)}",
+            "",
+            "🗂️  图像格式:",
+            f"   {', '.join(formats)}",
+            "",
+            "📂 目录路径:",
         ]
+
+        # Add paths with indentation
+        for path in paths:
+            lines.append(f"   {path}")
+
+        lines.append("")
+        lines.append("📋 详细图像信息:")
+        lines.append("=" * 50)
+
+        # Sort images for consistent display
+        sorted_images = sorted(images, key=lambda x: (x['size'], x['state'], x['tone'], x['scale']))
+
+        # Add detailed info for each image
+        for i, img in enumerate(sorted_images, 1):
+            lines.extend([
+                f"图像 #{i}:",
+                f"  📁 路径: {img['path']}/{img['filename']}",
+                f"  📏 尺寸: {img['size']}px",
+                f"  🎭 状态: {img['state']}",
+                f"  🎨 色调: {img['tone']}",
+                f"  🔍 缩放: {img['scale']:g}x",
+                f"  🗂️  格式: {img['format']}",
+                f"  📊 文件大小: {img['file_size']:,} 字节",
+                f"  🖼️  实际尺寸: {img['image'].size[0]}×{img['image'].size[1]}px",
+                f"  🎯 优先级: {img.get('priority', 1)}",
+                ""
+            ])
 
         return "\n".join(lines)
 
