@@ -454,7 +454,7 @@ class BinaryFileSaver:
         return {
             "required": {
                 "binary_data": ("BINARY_DATA",),
-                "file_path": ("STRING", {"default": "", "multiline": False}),
+                "file_name": ("STRING", {"default": "binary_file", "multiline": False}),
             },
             "optional": {
                 "output_directory": ("STRING", {"default": "", "multiline": False}),
@@ -467,50 +467,71 @@ class BinaryFileSaver:
     CATEGORY = "DCI/Files"
     OUTPUT_NODE = True
 
-    def save_binary_file(self, binary_data, file_path, output_directory=""):
+    def save_binary_file(self, binary_data, file_name, output_directory=""):
         """Save binary data to file system"""
 
         try:
-            if not binary_data:
-                print("No binary data provided")
+            # Check if binary_data is valid
+            if binary_data is None:
+                print("No binary data provided (None)")
                 return ("",)
 
-            # Determine output path
-            if output_directory and os.path.exists(output_directory):
-                if not file_path:
-                    # Use default filename
-                    filename = 'binary_file'
-                    full_path = os.path.join(output_directory, filename)
-                else:
-                    full_path = os.path.join(output_directory, os.path.basename(file_path))
-            else:
-                if not file_path:
-                    # Use ComfyUI output directory or temp directory
-                    try:
-                        import folder_paths
-                        output_dir = folder_paths.get_output_directory()
-                    except ImportError:
-                        # ComfyUI folder_paths not available
-                        output_dir = tempfile.gettempdir()
-                    except Exception:
-                        # Any other folder_paths related errors
-                        output_dir = tempfile.gettempdir()
+            if isinstance(binary_data, bytes) and len(binary_data) == 0:
+                print("Empty binary data provided")
+                return ("",)
 
-                    filename = 'binary_file'
-                    full_path = os.path.join(output_dir, filename)
-                else:
-                    full_path = file_path
+            if not isinstance(binary_data, bytes):
+                print(f"Invalid binary data type: {type(binary_data)}")
+                return ("",)
+
+            print(f"Processing binary data: {len(binary_data)} bytes")
+
+            # Clean up file name (remove any path separators)
+            clean_file_name = os.path.basename(file_name) if file_name else "binary_file"
+            if not clean_file_name:
+                clean_file_name = "binary_file"
+
+            # Determine output directory
+            if output_directory and os.path.exists(output_directory):
+                output_dir = output_directory
+            else:
+                # Use ComfyUI output directory or temp directory
+                try:
+                    import folder_paths
+                    output_dir = folder_paths.get_output_directory()
+                    print(f"Using ComfyUI output directory: {output_dir}")
+                except ImportError:
+                    # ComfyUI folder_paths not available
+                    output_dir = tempfile.gettempdir()
+                    print(f"ComfyUI not available, using temp directory: {output_dir}")
+                except Exception as e:
+                    # Any other folder_paths related errors
+                    output_dir = tempfile.gettempdir()
+                    print(f"Error accessing ComfyUI output directory: {e}, using temp directory: {output_dir}")
+
+            # Create full path
+            full_path = os.path.join(output_dir, clean_file_name)
+            print(f"Target file path: {full_path}")
 
             # Ensure directory exists
-            os.makedirs(os.path.dirname(full_path), exist_ok=True)
+            dir_path = os.path.dirname(full_path)
+            if dir_path:
+                os.makedirs(dir_path, exist_ok=True)
+                print(f"Ensured directory exists: {dir_path}")
 
-            # Write binary data directly
+            # Write binary data
             with open(full_path, 'wb') as f:
-                f.write(binary_data)
+                bytes_written = f.write(binary_data)
+                print(f"Wrote {bytes_written} bytes to file")
 
-            file_size = len(binary_data)
-            print(f"Saved binary file: {full_path} ({file_size} bytes)")
-            return (full_path,)
+            # Verify file was written correctly
+            if os.path.exists(full_path):
+                actual_size = os.path.getsize(full_path)
+                print(f"File saved successfully: {full_path} ({actual_size} bytes)")
+                return (full_path,)
+            else:
+                print(f"File was not created: {full_path}")
+                return ("",)
 
         except Exception as e:
             print(f"Error saving binary file: {str(e)}")
