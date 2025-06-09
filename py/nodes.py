@@ -26,12 +26,11 @@ class DCIPreviewNode:
     @classmethod
     def INPUT_TYPES(cls):
         return {
-            "required": {},
-            "optional": {
-                "dci_file_path": ("STRING", {"default": "", "multiline": False}),
+            "required": {
                 "dci_binary_data": ("BINARY_DATA",),
+            },
+            "optional": {
                 "grid_columns": ("INT", {"default": 4, "min": 1, "max": 10, "step": 1}),
-                "show_metadata": ("BOOLEAN", {"default": True}),
             }
         }
 
@@ -41,21 +40,13 @@ class DCIPreviewNode:
     CATEGORY = "DCI/Preview"
     OUTPUT_NODE = True
 
-    def preview_dci(self, grid_columns=4, show_metadata=True, dci_file_path="", dci_binary_data=None):
+    def preview_dci(self, dci_binary_data, grid_columns=4):
         """Preview DCI file contents with in-node display"""
 
         try:
-            # Determine input source
-            if dci_binary_data is not None:
-                # Use binary data
-                reader = DCIReader(binary_data=dci_binary_data)
-                source_name = "binary_data"
-            elif dci_file_path and os.path.exists(dci_file_path):
-                # Use file path
-                reader = DCIReader(dci_file_path)
-                source_name = os.path.basename(dci_file_path)
-            else:
-                return {"ui": {"text": ["No DCI file path or binary data provided"]}}
+            # Use binary data
+            reader = DCIReader(binary_data=dci_binary_data)
+            source_name = "binary_data"
 
             # Read DCI data
             if not reader.read():
@@ -73,7 +64,7 @@ class DCIPreviewNode:
             # Convert PIL image to base64 for UI display
             preview_base64 = self._pil_to_base64(preview_image)
 
-            # Generate metadata summary
+            # Generate metadata summary (always show metadata)
             summary = generator.create_metadata_summary(images)
             summary_text = self._format_summary(summary, source_name)
 
@@ -81,7 +72,7 @@ class DCIPreviewNode:
             ui_output = {
                 "ui": {
                     "images": [preview_base64],
-                    "text": [summary_text] if show_metadata else []
+                    "text": [summary_text]
                 }
             }
 

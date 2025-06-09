@@ -97,9 +97,9 @@ def create_test_dci_file():
         return None
 
 
-def test_preview_node_file_input():
-    """Test DCIPreviewNode with file path input"""
-    print("\n=== Testing DCIPreviewNode with file path input ===")
+def test_preview_node_binary_input_basic():
+    """Test DCIPreviewNode with binary data input (basic test)"""
+    print("\n=== Testing DCIPreviewNode with binary data input ===")
 
     # Create test DCI file
     dci_file_path = create_test_dci_file()
@@ -107,24 +107,32 @@ def test_preview_node_file_input():
         print("✗ Cannot test without DCI file")
         return False
 
+    # Read binary data
+    try:
+        with open(dci_file_path, 'rb') as f:
+            binary_data = f.read()
+        print(f"✓ Read binary data: {len(binary_data)} bytes")
+    except Exception as e:
+        print(f"✗ Failed to read binary data: {str(e)}")
+        return False
+
     # Create preview node
     preview_node = DCIPreviewNode()
 
     # Test with different grid configurations
     test_configs = [
-        {"grid_columns": 2, "show_metadata": True},
-        {"grid_columns": 4, "show_metadata": True},
-        {"grid_columns": 6, "show_metadata": False},
+        {"grid_columns": 2},
+        {"grid_columns": 4},
+        {"grid_columns": 6},
     ]
 
     for i, config in enumerate(test_configs):
-        print(f"\nTest {i+1}: Grid columns={config['grid_columns']}, Metadata={config['show_metadata']}")
+        print(f"\nTest {i+1}: Grid columns={config['grid_columns']}")
 
         try:
             result = preview_node.preview_dci(
-                dci_file_path=dci_file_path,
-                grid_columns=config['grid_columns'],
-                show_metadata=config['show_metadata']
+                dci_binary_data=binary_data,
+                grid_columns=config['grid_columns']
             )
 
             # Check result structure
@@ -137,20 +145,16 @@ def test_preview_node_file_input():
                     image_info = ui_data["images"][0]
                     print(f"  ✓ Preview image generated: {image_info['filename']}")
                     print(f"    Type: {image_info.get('type', 'unknown')}")
-                    print(f"    Format: {image_info.get('format', 'unknown')}")
                 else:
                     print(f"  ✗ No preview image in UI output")
 
-                # Check text
-                if config['show_metadata']:
-                    if "text" in ui_data and ui_data["text"]:
-                        text_content = ui_data["text"][0]
-                        print(f"  ✓ Metadata text generated ({len(text_content)} characters)")
-                        print(f"    Preview: {text_content[:100]}...")
-                    else:
-                        print(f"  ✗ No metadata text in UI output")
+                # Check text (metadata is always shown now)
+                if "text" in ui_data and ui_data["text"]:
+                    text_content = ui_data["text"][0]
+                    print(f"  ✓ Metadata text generated ({len(text_content)} characters)")
+                    print(f"    Preview: {text_content[:100]}...")
                 else:
-                    print(f"  ✓ Metadata disabled as expected")
+                    print(f"  ✗ No metadata text in UI output")
 
             else:
                 print(f"  ✗ Invalid result structure: {type(result)}")
@@ -166,8 +170,8 @@ def test_preview_node_file_input():
 
 
 def test_preview_node_binary_input():
-    """Test DCIPreviewNode with binary data input"""
-    print("\n=== Testing DCIPreviewNode with binary data input ===")
+    """Test DCIPreviewNode with binary data input (detailed test)"""
+    print("\n=== Testing DCIPreviewNode with binary data input (detailed) ===")
 
     # Create test DCI file
     dci_file_path = create_test_dci_file()
@@ -190,8 +194,7 @@ def test_preview_node_binary_input():
     try:
         result = preview_node.preview_dci(
             dci_binary_data=binary_data,
-            grid_columns=3,
-            show_metadata=True
+            grid_columns=3
         )
 
         # Check result structure
@@ -206,7 +209,7 @@ def test_preview_node_binary_input():
             else:
                 print(f"✗ No preview image in UI output")
 
-            # Check text
+            # Check text (metadata is always shown now)
             if "text" in ui_data and ui_data["text"]:
                 text_content = ui_data["text"][0]
                 print(f"✓ Metadata text generated ({len(text_content)} characters)")
@@ -237,32 +240,8 @@ def test_preview_node_error_handling():
 
     preview_node = DCIPreviewNode()
 
-    # Test 1: No input provided
-    print("\nTest 1: No input provided")
-    try:
-        result = preview_node.preview_dci()
-        if isinstance(result, dict) and "ui" in result and "text" in result["ui"]:
-            error_text = result["ui"]["text"][0]
-            print(f"✓ Error handled correctly: {error_text}")
-        else:
-            print(f"✗ Error not handled properly")
-    except Exception as e:
-        print(f"✗ Unexpected exception: {str(e)}")
-
-    # Test 2: Invalid file path
-    print("\nTest 2: Invalid file path")
-    try:
-        result = preview_node.preview_dci(dci_file_path="nonexistent_file.dci")
-        if isinstance(result, dict) and "ui" in result and "text" in result["ui"]:
-            error_text = result["ui"]["text"][0]
-            print(f"✓ Invalid file error handled: {error_text}")
-        else:
-            print(f"✗ Invalid file error not handled properly")
-    except Exception as e:
-        print(f"✗ Unexpected exception: {str(e)}")
-
-    # Test 3: Invalid binary data
-    print("\nTest 3: Invalid binary data")
+    # Test 1: Invalid binary data
+    print("\nTest 1: Invalid binary data")
     try:
         result = preview_node.preview_dci(dci_binary_data=b"invalid_dci_data")
         if isinstance(result, dict) and "ui" in result and "text" in result["ui"]:
@@ -272,6 +251,28 @@ def test_preview_node_error_handling():
             print(f"✗ Invalid binary data error not handled properly")
     except Exception as e:
         print(f"✗ Unexpected exception: {str(e)}")
+
+    # Test 2: Empty binary data
+    print("\nTest 2: Empty binary data")
+    try:
+        result = preview_node.preview_dci(dci_binary_data=b"")
+        if isinstance(result, dict) and "ui" in result and "text" in result["ui"]:
+            error_text = result["ui"]["text"][0]
+            print(f"✓ Empty binary data error handled: {error_text}")
+        else:
+            print(f"✗ Empty binary data error not handled properly")
+    except Exception as e:
+        print(f"✗ Unexpected exception: {str(e)}")
+
+    # Test 3: None binary data (should cause TypeError)
+    print("\nTest 3: None binary data")
+    try:
+        result = preview_node.preview_dci(dci_binary_data=None)
+        print(f"✗ Should have raised an exception for None binary data")
+    except TypeError as e:
+        print(f"✓ TypeError correctly raised for None binary data: {str(e)}")
+    except Exception as e:
+        print(f"⚠ Unexpected exception type: {str(e)}")
 
     return True
 
@@ -296,11 +297,11 @@ def main():
     success = True
 
     try:
-        # Test file input
-        if not test_preview_node_file_input():
+        # Test basic binary input
+        if not test_preview_node_binary_input_basic():
             success = False
 
-        # Test binary input
+        # Test detailed binary input
         if not test_preview_node_binary_input():
             success = False
 
