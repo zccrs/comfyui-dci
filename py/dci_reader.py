@@ -250,15 +250,48 @@ class DCIReader:
 class DCIPreviewGenerator:
     """Generate preview images with metadata annotations"""
 
-    def __init__(self):
+    def __init__(self, background_color=(240, 240, 240)):
         self.font_size = 12
         self.margin = 10
         self.label_height = 80
+        self.background_color = background_color
+        self.text_color = self._get_contrasting_text_color(background_color)
 
-    def create_preview_grid(self, images: List[Dict], grid_cols: int = 4) -> Image.Image:
+    def _get_contrasting_text_color(self, bg_color):
+        """Calculate contrasting text color based on background color brightness"""
+        # Calculate relative luminance using the formula for sRGB
+        r, g, b = bg_color
+
+        # Convert to linear RGB
+        def to_linear(c):
+            c = c / 255.0
+            if c <= 0.03928:
+                return c / 12.92
+            else:
+                return pow((c + 0.055) / 1.055, 2.4)
+
+        r_linear = to_linear(r)
+        g_linear = to_linear(g)
+        b_linear = to_linear(b)
+
+        # Calculate relative luminance
+        luminance = 0.2126 * r_linear + 0.7152 * g_linear + 0.0722 * b_linear
+
+        # Return black for light backgrounds, white for dark backgrounds
+        if luminance > 0.5:
+            return (0, 0, 0)  # Black text for light background
+        else:
+            return (255, 255, 255)  # White text for dark background
+
+    def create_preview_grid(self, images: List[Dict], grid_cols: int = 4, background_color=None) -> Image.Image:
         """Create a grid preview of all images with metadata"""
         if not images:
-            return self._create_empty_preview()
+            return self._create_empty_preview(background_color)
+
+        # Update background color if provided
+        if background_color is not None:
+            self.background_color = background_color
+            self.text_color = self._get_contrasting_text_color(background_color)
 
         # Sort images by size, state, tone, scale
         sorted_images = sorted(images, key=lambda x: (
@@ -273,10 +306,10 @@ class DCIPreviewGenerator:
         cell_width = max_size + self.margin * 2
         cell_height = max_size + self.label_height + self.margin * 2
 
-        # Create preview canvas
+        # Create preview canvas with specified background color
         canvas_width = cell_width * grid_cols
         canvas_height = cell_height * grid_rows
-        canvas = Image.new('RGB', (canvas_width, canvas_height), (240, 240, 240))
+        canvas = Image.new('RGB', (canvas_width, canvas_height), self.background_color)
 
         # Draw images and labels
         for i, img_info in enumerate(sorted_images):
@@ -331,15 +364,18 @@ class DCIPreviewGenerator:
             f"File: {img_info['file_size']}B"
         ]
 
-        # Draw metadata text
+        # Draw metadata text with contrasting color
         text_y = y + cell_size + 5
         for line in metadata_lines:
-            draw.text((x, text_y), line, fill=(0, 0, 0), font=font)
+            draw.text((x, text_y), line, fill=self.text_color, font=font)
             text_y += self.font_size + 2
 
-    def _create_empty_preview(self) -> Image.Image:
+    def _create_empty_preview(self, background_color=None) -> Image.Image:
         """Create an empty preview image"""
-        canvas = Image.new('RGB', (400, 200), (240, 240, 240))
+        bg_color = background_color if background_color is not None else self.background_color
+        text_color = self._get_contrasting_text_color(bg_color)
+
+        canvas = Image.new('RGB', (400, 200), bg_color)
         draw = ImageDraw.Draw(canvas)
 
         try:
@@ -355,7 +391,7 @@ class DCIPreviewGenerator:
         x = (canvas.width - text_width) // 2
         y = (canvas.height - text_height) // 2
 
-        draw.text((x, y), text, fill=(100, 100, 100), font=font)
+        draw.text((x, y), text, fill=text_color, font=font)
 
         return canvas
 

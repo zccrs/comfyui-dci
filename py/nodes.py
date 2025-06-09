@@ -31,6 +31,10 @@ class DCIPreviewNode:
             },
             "optional": {
                 "grid_columns": ("INT", {"default": 1, "min": 1, "max": 10, "step": 1}),
+                "background_color": (["light_gray", "dark_gray", "white", "black", "blue", "green", "red", "custom"], {"default": "light_gray"}),
+                "custom_bg_r": ("INT", {"default": 240, "min": 0, "max": 255, "step": 1}),
+                "custom_bg_g": ("INT", {"default": 240, "min": 0, "max": 255, "step": 1}),
+                "custom_bg_b": ("INT", {"default": 240, "min": 0, "max": 255, "step": 1}),
             }
         }
 
@@ -40,7 +44,7 @@ class DCIPreviewNode:
     CATEGORY = "DCI/Preview"
     OUTPUT_NODE = True
 
-    def preview_dci(self, dci_binary_data, grid_columns=1):
+    def preview_dci(self, dci_binary_data, grid_columns=1, background_color="light_gray", custom_bg_r=240, custom_bg_g=240, custom_bg_b=240):
         """Preview DCI file contents with in-node display"""
 
         try:
@@ -57,9 +61,12 @@ class DCIPreviewNode:
             if not images:
                 return {"ui": {"text": ["No images found in DCI file"]}}
 
+            # Determine background color
+            bg_color = self._get_background_color(background_color, custom_bg_r, custom_bg_g, custom_bg_b)
+
             # Generate preview
             generator = DCIPreviewGenerator()
-            preview_image = generator.create_preview_grid(images, grid_columns)
+            preview_image = generator.create_preview_grid(images, grid_columns, bg_color)
 
             # Convert PIL image to base64 for UI display
             preview_base64 = self._pil_to_base64(preview_image)
@@ -75,7 +82,7 @@ class DCIPreviewNode:
                 }
             }
 
-            print(f"DCI preview generated: {len(images)} images found")
+            print(f"DCI preview generated: {len(images)} images found, background: {background_color}")
             return ui_output
 
         except Exception as e:
@@ -83,6 +90,23 @@ class DCIPreviewNode:
             import traceback
             traceback.print_exc()
             return {"ui": {"text": [f"Error: {str(e)}"]}}
+
+    def _get_background_color(self, color_name, custom_r, custom_g, custom_b):
+        """Get RGB color tuple based on color name or custom values"""
+        color_presets = {
+            "light_gray": (240, 240, 240),
+            "dark_gray": (64, 64, 64),
+            "white": (255, 255, 255),
+            "black": (0, 0, 0),
+            "blue": (70, 130, 180),
+            "green": (60, 120, 60),
+            "red": (120, 60, 60),
+        }
+
+        if color_name == "custom":
+            return (custom_r, custom_g, custom_b)
+        else:
+            return color_presets.get(color_name, (240, 240, 240))
 
     def _pil_to_base64(self, pil_image):
         """Convert PIL image to base64 string for UI display"""
