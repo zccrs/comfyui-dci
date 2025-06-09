@@ -125,7 +125,7 @@ class DCIIconBuilder:
         self.directory_structure = {}  # Track directory structure
 
     def add_icon_image(self, image: Image.Image, size: int, state: str = 'normal',
-                      tone: str = 'dark', scale: int = 1, format: str = 'webp'):
+                      tone: str = 'dark', scale: float = 1.0, format: str = 'webp'):
         """Add an icon image for specific state, tone, and scale"""
 
         if state not in self.ICON_STATES:
@@ -138,7 +138,7 @@ class DCIIconBuilder:
             raise ValueError(f"Invalid format: {format}. Must be one of {self.SUPPORTED_FORMATS}")
 
         # Calculate actual size with scale
-        actual_size = size * scale
+        actual_size = int(size * scale)
 
         # Resize image to target size
         resized_image = image.resize((actual_size, actual_size), Image.Resampling.LANCZOS)
@@ -164,7 +164,8 @@ class DCIIconBuilder:
         # Create directory structure: size/state.tone/scale/1.0.0.0.0.format
         size_dir = str(size)
         state_tone_dir = f"{state}.{tone}"
-        scale_dir = str(scale)
+        # Format scale to remove unnecessary decimal places
+        scale_dir = f"{scale:g}"
 
         # Layer file: priority.padding.palette.hue.saturation.brightness.red.green.blue.alpha.format
         layer_filename = f"1.0.0.0.0.0.0.0.0.0.{format}"
@@ -264,15 +265,15 @@ class DCIIconBuilder:
 
 def create_dci_icon(image: Image.Image, output_path: str, size: int = 256,
                    states: List[str] = None, tones: List[str] = None,
-                   scales: List[int] = None, format: str = 'webp'):
+                   scales: List[float] = None, format: str = 'webp'):
     """Create a DCI icon file from an image"""
 
     if states is None:
         states = ['normal']
     if tones is None:
-        tones = ['dark']
+        tones = ['light']
     if scales is None:
-        scales = [1, 2, 3]
+        scales = [1.0, 1.25, 1.5, 2.0]
 
     builder = DCIIconBuilder()
 

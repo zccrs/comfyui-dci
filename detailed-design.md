@@ -338,7 +338,7 @@ state_images = {
 - `icon_size`: 图标尺寸 (16-1024)
 - `icon_state`: 图标状态 (normal/disabled/hover/pressed)
 - `tone_type`: 色调类型 (light/dark)
-- `scale`: 缩放因子 (1-10)
+- `scale`: 缩放因子 (0.1-10.0，支持小数)
 - `image_format`: 图像格式 (webp/png/jpg)
 
 **输出数据结构**:
@@ -452,7 +452,7 @@ DCI_IMAGE_DATA = {
         'size': int,         # 图标尺寸
         'state': str,        # 图标状态
         'tone': str,         # 色调类型
-        'scale': int,        # 缩放因子
+        'scale': float,      # 缩放因子（支持小数）
         'format': str,       # 图像格式
         'file_size': int,    # 文件大小
         'image_dimensions': tuple,  # 图像尺寸 (width, height)

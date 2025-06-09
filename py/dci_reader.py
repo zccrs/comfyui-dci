@@ -166,10 +166,14 @@ class DCIReader:
                 # Parse size and scale
                 try:
                     size = int(size_str) if size_str.isdigit() else 0
-                    scale = int(scale_str) if scale_str.isdigit() else 1
+                    # Support both integer and float scale values
+                    try:
+                        scale = float(scale_str) if scale_str else 1.0
+                    except ValueError:
+                        scale = 1.0
                 except ValueError:
                     size = 0
-                    scale = 1
+                    scale = 1.0
 
                 # Process files in this directory
                 for filename, file_info in files.items():
@@ -322,7 +326,7 @@ class DCIPreviewGenerator:
             f"Size: {img_info['size']}px",
             f"State: {img_info['state']}",
             f"Tone: {img_info['tone']}",
-            f"Scale: {img_info['scale']}x",
+            f"Scale: {img_info['scale']:g}x",
             f"Format: {img_info['format']}",
             f"File: {img_info['file_size']}B"
         ]

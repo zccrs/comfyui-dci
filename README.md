@@ -42,7 +42,7 @@ comfyui-dci/
 ### 导出功能
 - **DCI 图像创建**：将单个图像转换为 DCI 图像数据，支持自定义参数
 - **DCI 文件组合**：将多个 DCI 图像组合成完整的 DCI 文件
-- **多种缩放因子**：支持 1x、2x、3x 缩放和自定义缩放组合
+- **多种缩放因子**：支持小数缩放如 1x、1.25x、1.5x、2x 等自定义缩放组合
 - **格式支持**：WebP、PNG 和 JPEG 格式
 - **色调支持**：浅色和深色调变体
 - **可自定义图标尺寸**：从 16x16 到 1024x1024 像素
@@ -124,7 +124,7 @@ pip install -r requirements.txt
 - **`icon_size`** (INT)：图标尺寸（16-1024像素），默认256
 - **`icon_state`** (COMBO)：图标状态（normal/disabled/hover/pressed），默认normal
 - **`tone_type`** (COMBO)：色调类型（light/dark），默认dark
-- **`scale`** (INT)：缩放因子（1-10），默认1
+- **`scale`** (FLOAT)：缩放因子（0.1-10.0），默认1.0，支持小数如1.25
 - **`image_format`** (COMBO)：图像格式（webp/png/jpg），默认webp
 
 **输出：**
@@ -272,7 +272,7 @@ DCI 头部（8 字节）：
 ```
 size/                    # 图标尺寸（16、32、64、128、256、512、1024）
 └── state.tone/          # state: normal|disabled|hover|pressed
-    └── scale/           # 缩放因子（1、2、3 等）
+    └── scale/           # 缩放因子（1、1.25、1.5、2 等，支持小数）
         └── layer.format # priority.padding.palette.hue.saturation.brightness.red.green.blue.alpha.format
 ```
 

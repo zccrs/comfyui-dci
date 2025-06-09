@@ -154,7 +154,7 @@ class DCIImage:
                 "icon_size": ("INT", {"default": 256, "min": 16, "max": 1024, "step": 1}),
                 "icon_state": (["normal", "disabled", "hover", "pressed"], {"default": "normal"}),
                 "tone_type": (["light", "dark"], {"default": "dark"}),
-                "scale": ("INT", {"default": 1, "min": 1, "max": 10, "step": 1}),
+                "scale": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 10.0, "step": 0.1}),
                 "image_format": (["webp", "png", "jpg"], {"default": "webp"}),
             }
         }
@@ -186,7 +186,7 @@ class DCIImage:
                 pil_image = Image.fromarray(img_array[:, :, 0], 'L').convert('RGB')
 
             # Calculate actual size with scale
-            actual_size = icon_size * scale
+            actual_size = int(icon_size * scale)
 
             # Resize image to target size
             resized_image = pil_image.resize((actual_size, actual_size), Image.Resampling.LANCZOS)
@@ -210,7 +210,9 @@ class DCIImage:
             img_content = img_bytes.getvalue()
 
             # Create DCI path: size/state.tone/scale/1.0.0.0.0.0.0.0.0.0.format
-            dci_path = f"{icon_size}/{icon_state}.{tone_type}/{scale}/1.0.0.0.0.0.0.0.0.0.{image_format}"
+            # Format scale to remove unnecessary decimal places
+            scale_str = f"{scale:g}"  # This removes trailing zeros
+            dci_path = f"{icon_size}/{icon_state}.{tone_type}/{scale_str}/1.0.0.0.0.0.0.0.0.0.{image_format}"
 
             # Create metadata dictionary
             dci_image_data = {
