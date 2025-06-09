@@ -10,7 +10,7 @@ import sys
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from py.nodes import BinaryFileLoader, BinaryFileSaver, BinaryFileUploader
+from py.nodes import BinaryFileLoader, BinaryFileSaver
 
 
 def test_binary_file_operations():
@@ -65,24 +65,7 @@ def test_binary_file_operations():
             print("✗ Failed to save binary file")
             return False
 
-        # Test 3: Binary File Uploader
-        print("\n3. Testing BinaryFileUploader...")
-        uploader = BinaryFileUploader()
 
-        # Test with the directory containing our temp file
-        search_dir = os.path.dirname(temp_file_path)
-        file_pattern = "*.dci"
-
-        result = uploader.upload_binary_file(search_dir, file_pattern)
-
-        if result[0] is not None:
-            uploaded_data, uploaded_file_path = result
-            print(f"✓ Uploaded file: {os.path.basename(uploaded_file_path)}")
-            print(f"✓ File size: {len(uploaded_data)} bytes")
-            print(f"✓ File path: {uploaded_file_path}")
-        else:
-            print("✗ Failed to upload binary file")
-            return False
 
         print("\n" + "=" * 50)
         print("All binary file handling tests passed! ✓")
@@ -124,11 +107,7 @@ def test_error_handling():
     result = saver.save_binary_file(None, "test.dci")
     print(f"✓ Handles invalid data: {result[0] == ''}")
 
-    # Test uploading from non-existent directory
-    print("3. Testing non-existent directory...")
-    uploader = BinaryFileUploader()
-    result = uploader.upload_binary_file("/non/existent/dir", "*.dci")
-    print(f"✓ Handles non-existent directory: {result[0] is None}")
+
 
 
 if __name__ == "__main__":
@@ -141,7 +120,6 @@ if __name__ == "__main__":
         print("\nUsage in ComfyUI:")
         print("- BinaryFileLoader: Load DCI files from file system")
         print("- BinaryFileSaver: Save binary data to DCI files")
-        print("- BinaryFileUploader: Browse and select DCI files from directories")
     else:
         print("\n❌ Some tests failed. Please check the implementation.")
         sys.exit(1)

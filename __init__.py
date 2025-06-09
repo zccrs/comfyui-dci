@@ -20,8 +20,7 @@ from .py.nodes import (
     DCIFileNode,
     DCIPreviewFromBinary,
     BinaryFileLoader,
-    BinaryFileSaver,
-    BinaryFileUploader
+    BinaryFileSaver
 )
 
 # ComfyUI Node Registration
@@ -36,7 +35,6 @@ NODE_CLASS_MAPPINGS = {
     "DCI_PreviewFromBinary": DCIPreviewFromBinary,
     "DCI_BinaryFileLoader": BinaryFileLoader,
     "DCI_BinaryFileSaver": BinaryFileSaver,
-    "DCI_BinaryFileUploader": BinaryFileUploader,
 }
 
 # Display names for ComfyUI interface
@@ -50,7 +48,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "DCI_PreviewFromBinary": "DCI Preview (Binary)",
     "DCI_BinaryFileLoader": "Binary File Loader",
     "DCI_BinaryFileSaver": "Binary File Saver",
-    "DCI_BinaryFileUploader": "Binary File Uploader",
 }
 
 # Extension metadata

@@ -569,50 +569,7 @@ else:
     final_path = os.path.join(output_dir, file_path)
 ```
 
-##### BinaryFileUploader 类
-**职责**: 通过 ComfyUI 界面上传二进制文件，提供直观的文件选择体验
 
-**设计理念**:
-- 利用 ComfyUI 原生的文件上传机制
-- 提供简洁直观的用户界面
-- 与 ComfyUI 的文件处理系统无缝集成
-
-**输入参数**:
-- `upload`: 文件上传控件，必需 (UPLOAD)
-
-**输出数据**:
-- `binary_data`: 上传文件的二进制数据 (BINARY_DATA)
-- `file_path`: 上传文件的完整路径 (STRING)
-
-**处理流程**:
-1. 接收用户通过界面上传的文件
-2. 验证上传文件的有效性
-3. 获取文件路径和基本信息
-4. 读取文件的二进制内容
-5. 返回文件数据和路径信息
-
-**上传处理算法**:
-```python
-def upload_binary_file(self, upload):
-    # 验证上传对象
-    if not upload or not hasattr(upload, 'name'):
-        return (None, "")
-
-    # 获取文件路径
-    file_path = upload.name
-
-    # 读取二进制内容
-    with open(file_path, 'rb') as f:
-        content = f.read()
-
-    return (content, file_path)
-```
-
-**使用说明**:
-- 点击上传按钮选择要上传的文件
-- 支持任意二进制文件格式
-- 自动读取文件内容并输出二进制数据
-- 在控制台显示上传文件的信息
 
 ### 2.3 数据流转换
 
@@ -623,7 +580,6 @@ DCIImage → DCI_IMAGE_DATA → DCIFileNode → DCI_BINARY_DATA → DCIPreviewFr
 
 # 二进制文件处理工作流程
 BinaryFileLoader → BINARY_DATA → BinaryFileSaver
-BinaryFileUploader → BINARY_DATA → BinaryFileSaver
 
 # 混合工作流程
 BinaryFileLoader → BINARY_DATA → DCIPreviewFromBinary (如果是DCI文件)

@@ -79,7 +79,6 @@ web_version/        - Web组件（预留）
 #### 2.2.4 二进制文件处理模块 (Binary File I/O Module)
 - **BinaryFileLoader**: 二进制文件加载器
 - **BinaryFileSaver**: 二进制文件保存器
-- **BinaryFileUploader**: 二进制文件上传器（通过UI界面）
 - **Binary Data Structure**: 统一的二进制数据结构
 
 ## 3. 数据流设计

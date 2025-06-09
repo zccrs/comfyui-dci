@@ -137,7 +137,6 @@ pip install -r requirements.txt
 #### DCI/Files（文件处理）
 - DCI_BinaryFileLoader (Binary File Loader)
 - DCI_BinaryFileSaver (Binary File Saver)
-- DCI_BinaryFileUploader (Binary File Uploader)
 
 ### 新增重构节点（推荐使用）
 
@@ -216,22 +215,7 @@ pip install -r requirements.txt
 **输出：**
 - **`saved_path`** (STRING)：实际保存的文件路径
 
-#### 6. Binary File Uploader（二进制文件上传器）
-**节点类别**：`DCI/Files`
-**功能描述**：通过 ComfyUI 界面上传二进制文件，提供直观的文件选择体验。
 
-**必需输入参数：**
-- **`upload`** (UPLOAD)：文件上传控件，用户可通过界面选择文件
-
-**输出：**
-- **`binary_data`** (BINARY_DATA)：上传文件的二进制内容（bytes 类型）
-- **`file_path`** (STRING)：上传文件的完整路径
-
-**使用说明：**
-- 点击上传按钮选择要上传的文件
-- 支持任意二进制文件格式
-- 自动读取文件内容并输出二进制数据
-- 在控制台显示上传文件的信息
 
 ### 传统节点（向后兼容）
 
