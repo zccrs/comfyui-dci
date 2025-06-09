@@ -251,6 +251,12 @@ class DCIImage:
                 "tone_type": (["light", "dark"], {"default": "dark"}),
                 "scale": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 10.0, "step": 0.1}),
                 "image_format": (["webp", "png", "jpg"], {"default": "webp"}),
+            },
+            "optional": {
+                "background_color": (["transparent", "white", "black", "custom"], {"default": "transparent"}),
+                "custom_bg_r": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
+                "custom_bg_g": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
+                "custom_bg_b": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
             }
         }
 
@@ -259,7 +265,7 @@ class DCIImage:
     FUNCTION = "create_dci_image"
     CATEGORY = "DCI/Export"
 
-    def create_dci_image(self, image, icon_size, icon_state, tone_type, scale, image_format):
+    def create_dci_image(self, image, icon_size, icon_state, tone_type, scale, image_format, background_color="transparent", custom_bg_r=255, custom_bg_g=255, custom_bg_b=255):
         """Create DCI image metadata and data"""
 
         try:
@@ -280,6 +286,26 @@ class DCIImage:
             else:
                 pil_image = Image.fromarray(img_array[:, :, 0], 'L').convert('RGB')
 
+            # Handle background color for images with transparency
+            if background_color != "transparent" and pil_image.mode in ('RGBA', 'LA'):
+                # Determine background color
+                if background_color == "white":
+                    bg_color = (255, 255, 255)
+                elif background_color == "black":
+                    bg_color = (0, 0, 0)
+                elif background_color == "custom":
+                    bg_color = (custom_bg_r, custom_bg_g, custom_bg_b)
+                else:
+                    bg_color = (255, 255, 255)  # Default to white
+
+                # Create background and composite
+                background = Image.new('RGB', pil_image.size, bg_color)
+                if pil_image.mode == 'RGBA':
+                    background.paste(pil_image, mask=pil_image.split()[-1])
+                else:
+                    background.paste(pil_image)
+                pil_image = background
+
             # Calculate actual size with scale
             actual_size = int(icon_size * scale)
 
@@ -289,11 +315,21 @@ class DCIImage:
             # Convert to bytes
             img_bytes = BytesIO()
             if image_format == 'webp':
-                resized_image.save(img_bytes, format='WEBP', quality=90)
+                # For WebP, preserve transparency if available
+                if resized_image.mode == 'RGBA' and background_color == "transparent":
+                    resized_image.save(img_bytes, format='WEBP', quality=90, lossless=True)
+                else:
+                    # Convert to RGB for lossy WebP
+                    if resized_image.mode == 'RGBA':
+                        rgb_image = Image.new('RGB', resized_image.size, (255, 255, 255))
+                        rgb_image.paste(resized_image, mask=resized_image.split()[-1] if resized_image.mode == 'RGBA' else None)
+                        resized_image = rgb_image
+                    resized_image.save(img_bytes, format='WEBP', quality=90)
             elif image_format == 'png':
+                # PNG supports transparency
                 resized_image.save(img_bytes, format='PNG')
             elif image_format == 'jpg':
-                # Convert to RGB if necessary for JPEG
+                # Convert to RGB if necessary for JPEG (JPEG doesn't support transparency)
                 if resized_image.mode in ('RGBA', 'LA', 'P'):
                     rgb_image = Image.new('RGB', resized_image.size, (255, 255, 255))
                     if resized_image.mode == 'P':
@@ -319,10 +355,12 @@ class DCIImage:
                 'scale': scale,
                 'format': image_format,
                 'actual_size': actual_size,
-                'file_size': len(img_content)
+                'file_size': len(img_content),
+                'background_color': background_color,
+                'pil_image': resized_image  # Store PIL image for debug purposes
             }
 
-            print(f"Created DCI image: {dci_path} ({len(img_content)} bytes)")
+            print(f"Created DCI image: {dci_path} ({len(img_content)} bytes), background: {background_color}")
             return (dci_image_data,)
 
         except Exception as e:
@@ -330,6 +368,217 @@ class DCIImage:
             import traceback
             traceback.print_exc()
             return ({},)
+
+
+class DCIImageDebug:
+    """ComfyUI node for debugging and previewing DCI Image data"""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "dci_image_data": ("DCI_IMAGE_DATA",),
+            },
+            "optional": {
+                "show_metadata": ("BOOLEAN", {"default": True}),
+                "show_binary_info": ("BOOLEAN", {"default": True}),
+                "preview_background": (["transparent", "white", "black", "checkerboard"], {"default": "checkerboard"}),
+            }
+        }
+
+    RETURN_TYPES = ()
+    RETURN_NAMES = ()
+    FUNCTION = "debug_dci_image"
+    CATEGORY = "DCI/Debug"
+    OUTPUT_NODE = True
+
+    def debug_dci_image(self, dci_image_data, show_metadata=True, show_binary_info=True, preview_background="checkerboard"):
+        """Debug and preview DCI image data"""
+
+        try:
+            if not dci_image_data or not isinstance(dci_image_data, dict):
+                return {"ui": {"text": ["Invalid DCI image data"]}}
+
+            # Get the PIL image from DCI data
+            pil_image = dci_image_data.get('pil_image')
+            if pil_image is None:
+                # Try to reconstruct from binary content
+                content = dci_image_data.get('content')
+                if content:
+                    pil_image = Image.open(BytesIO(content))
+                else:
+                    return {"ui": {"text": ["No image data found in DCI image"]}}
+
+            # Create preview image with background
+            preview_image = self._create_preview_with_background(pil_image, preview_background)
+
+            # Convert to ComfyUI format
+            preview_base64 = self._pil_to_base64(preview_image)
+
+            # Generate debug information
+            debug_text = self._format_debug_info(dci_image_data, show_metadata, show_binary_info)
+
+            # Create UI output
+            ui_output = {
+                "ui": {
+                    "images": [preview_base64],
+                    "text": [debug_text]
+                }
+            }
+
+            print(f"DCI Image Debug: {dci_image_data.get('path', 'unknown')} - {pil_image.size} - {pil_image.mode}")
+            return ui_output
+
+        except Exception as e:
+            print(f"Error debugging DCI image: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return {"ui": {"text": [f"Error: {str(e)}"]}}
+
+    def _create_preview_with_background(self, pil_image, background_type):
+        """Create preview image with specified background"""
+        if background_type == "transparent" or pil_image.mode != 'RGBA':
+            return pil_image
+
+        # Create background
+        if background_type == "white":
+            background = Image.new('RGB', pil_image.size, (255, 255, 255))
+        elif background_type == "black":
+            background = Image.new('RGB', pil_image.size, (0, 0, 0))
+        elif background_type == "checkerboard":
+            background = self._create_checkerboard_background(pil_image.size)
+        else:
+            return pil_image
+
+        # Composite image onto background
+        if pil_image.mode == 'RGBA':
+            background.paste(pil_image, mask=pil_image.split()[-1])
+        else:
+            background.paste(pil_image)
+
+        return background
+
+    def _create_checkerboard_background(self, size, square_size=16):
+        """Create a checkerboard pattern background"""
+        width, height = size
+        background = Image.new('RGB', size, (255, 255, 255))
+
+        # Create checkerboard pattern
+        for y in range(0, height, square_size):
+            for x in range(0, width, square_size):
+                # Determine if this square should be gray
+                if (x // square_size + y // square_size) % 2 == 1:
+                    # Draw gray square
+                    for py in range(y, min(y + square_size, height)):
+                        for px in range(x, min(x + square_size, width)):
+                            background.putpixel((px, py), (200, 200, 200))
+
+        return background
+
+    def _pil_to_base64(self, pil_image):
+        """Convert PIL image to base64 string for UI display"""
+        import base64
+        import hashlib
+        import time
+
+        # Convert to RGB if necessary
+        if pil_image.mode not in ('RGB', 'RGBA'):
+            pil_image = pil_image.convert('RGB')
+
+        # Save to bytes buffer
+        buffer = BytesIO()
+        pil_image.save(buffer, format='PNG')
+        img_bytes = buffer.getvalue()
+
+        # Generate unique filename
+        timestamp = str(int(time.time()))
+        hash_obj = hashlib.md5(img_bytes)
+        filename = f"dci_debug_{timestamp}_{hash_obj.hexdigest()[:8]}.png"
+
+        # Save to temp directory for ComfyUI
+        try:
+            import folder_paths
+            temp_dir = folder_paths.get_temp_directory()
+        except:
+            temp_dir = tempfile.gettempdir()
+
+        temp_path = os.path.join(temp_dir, filename)
+        with open(temp_path, 'wb') as f:
+            f.write(img_bytes)
+
+        # Return in format expected by ComfyUI
+        return {
+            "filename": filename,
+            "subfolder": "",
+            "type": "temp"
+        }
+
+    def _format_debug_info(self, dci_image_data, show_metadata, show_binary_info):
+        """Format debug information as text"""
+        lines = [
+            "🔍 DCI Image Debug Information",
+            "=" * 40,
+            ""
+        ]
+
+        if show_metadata:
+            lines.extend([
+                "📋 基本信息:",
+                f"  📁 DCI路径: {dci_image_data.get('path', 'N/A')}",
+                f"  📏 图标尺寸: {dci_image_data.get('size', 'N/A')}px",
+                f"  🎭 状态: {dci_image_data.get('state', 'N/A')}",
+                f"  🎨 色调: {dci_image_data.get('tone', 'N/A')}",
+                f"  🔍 缩放因子: {dci_image_data.get('scale', 'N/A')}x",
+                f"  🗂️  图像格式: {dci_image_data.get('format', 'N/A')}",
+                f"  📊 实际尺寸: {dci_image_data.get('actual_size', 'N/A')}px",
+                f"  🎯 背景处理: {dci_image_data.get('background_color', 'N/A')}",
+                ""
+            ])
+
+        if show_binary_info:
+            content = dci_image_data.get('content', b'')
+            file_size = len(content)
+
+            lines.extend([
+                "🔢 二进制数据信息:",
+                f"  📊 文件大小: {file_size:,} 字节 ({file_size/1024:.2f} KB)",
+                f"  🔗 数据类型: {type(content).__name__}",
+                ""
+            ])
+
+            if content and len(content) > 0:
+                # Show first few bytes as hex
+                hex_preview = ' '.join(f'{b:02x}' for b in content[:16])
+                if len(content) > 16:
+                    hex_preview += "..."
+
+                lines.extend([
+                    "🔍 二进制数据预览 (前16字节):",
+                    f"  {hex_preview}",
+                    ""
+                ])
+
+        # PIL Image information
+        pil_image = dci_image_data.get('pil_image')
+        if pil_image:
+            lines.extend([
+                "🖼️  PIL图像信息:",
+                f"  📐 尺寸: {pil_image.size[0]}×{pil_image.size[1]}px",
+                f"  🎨 颜色模式: {pil_image.mode}",
+                f"  📊 格式: {getattr(pil_image, 'format', 'N/A')}",
+                ""
+            ])
+
+        # Add validation status
+        lines.extend([
+            "✅ 验证状态:",
+            f"  📁 路径格式: {'✓' if dci_image_data.get('path') else '✗'}",
+            f"  🔢 二进制数据: {'✓' if dci_image_data.get('content') else '✗'}",
+            f"  🖼️  PIL图像: {'✓' if dci_image_data.get('pil_image') else '✗'}",
+            f"  📊 元数据完整: {'✓' if all(k in dci_image_data for k in ['size', 'state', 'tone', 'scale', 'format']) else '✗'}",
+        ])
+
+        return "\n".join(lines)
 
 
 class DCIFileNode:

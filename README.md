@@ -109,6 +109,9 @@ pip install -r requirements.txt
 #### DCI/Preview（预览）
 - DCI_PreviewNode (DCI Preview)
 
+#### DCI/Debug（调试）
+- DCI_ImageDebug (DCI Image Debug)
+
 #### DCI/Files（文件处理）
 - DCI_BinaryFileLoader (Binary File Loader)
 - DCI_BinaryFileSaver (Binary File Saver)
@@ -127,8 +130,20 @@ pip install -r requirements.txt
 - **`scale`** (FLOAT)：缩放因子（0.1-10.0），默认1.0，支持小数如1.25
 - **`image_format`** (COMBO)：图像格式（webp/png/jpg），默认webp
 
+**可选输入参数：**
+- **`background_color`** (COMBO)：背景色处理（transparent/white/black/custom），默认transparent
+- **`custom_bg_r`** (INT)：自定义背景色红色分量（0-255），默认255
+- **`custom_bg_g`** (INT)：自定义背景色绿色分量（0-255），默认255
+- **`custom_bg_b`** (INT)：自定义背景色蓝色分量（0-255），默认255
+
 **输出：**
 - **`dci_image_data`** (DCI_IMAGE_DATA)：包含路径、内容、元数据的字典数据
+
+**背景色处理说明：**
+- **transparent**：保持原始透明度（仅PNG和WebP支持）
+- **white**：将透明背景替换为白色
+- **black**：将透明背景替换为黑色
+- **custom**：使用自定义RGB颜色作为背景
 
 #### 2. DCI File（DCI 文件）
 **节点类别**：`DCI/Export`
@@ -173,7 +188,40 @@ pip install -r requirements.txt
 
 **注意**：此节点不再接受 `dci_file_path` 参数，专门用于处理二进制数据输入。默认使用单列布局以便更好地查看详细信息。
 
-#### 4. Binary File Loader（二进制文件加载器）
+#### 4. DCI Image Debug（DCI 图像调试）
+**节点类别**：`DCI/Debug`
+**功能描述**：专门用于调试和预览单个 DCI 图像数据的详细信息，提供全面的元数据分析和可视化预览。
+
+**必需输入参数：**
+- **`dci_image_data`** (DCI_IMAGE_DATA)：DCI 图像数据
+
+**可选输入参数：**
+- **`show_metadata`** (BOOLEAN)：是否显示元数据信息，默认True
+- **`show_binary_info`** (BOOLEAN)：是否显示二进制数据信息，默认True
+- **`preview_background`** (COMBO)：预览背景类型（transparent/white/black/checkerboard），默认checkerboard
+
+**节点内调试功能：**
+- **图像预览**：直接在节点界面中显示处理后的图像
+- **智能背景显示**：支持透明、白色、黑色和棋盘格背景，便于查看透明图像
+- **详细元数据分析**：显示完整的DCI图像信息，包括：
+  - DCI路径、图标尺寸、状态、色调、缩放因子
+  - 图像格式、实际尺寸、背景处理方式
+  - 二进制数据大小、数据类型、十六进制预览
+  - PIL图像信息（尺寸、颜色模式、格式）
+  - 数据完整性验证状态
+- **二进制数据分析**：显示文件大小、数据类型和前16字节的十六进制预览
+- **验证状态检查**：自动检查DCI图像数据的完整性和有效性
+
+**输出：**
+- 无输出（所有调试信息直接在节点内显示）
+
+**使用场景：**
+- 调试DCI图像创建过程中的问题
+- 验证图像数据的正确性和完整性
+- 分析背景色处理效果
+- 检查二进制数据的生成结果
+
+#### 5. Binary File Loader（二进制文件加载器）
 **节点类别**：`DCI/Files`
 **功能描述**：从文件系统加载二进制文件，专为处理 DCI 图标文件等二进制数据设计。
 
@@ -184,7 +232,7 @@ pip install -r requirements.txt
 - **`binary_data`** (BINARY_DATA)：文件的二进制内容（bytes 类型）
 - **`file_path`** (STRING)：加载文件的完整路径
 
-#### 5. Binary File Saver（二进制文件保存器）
+#### 6. Binary File Saver（二进制文件保存器）
 **节点类别**：`DCI/Files`
 **功能描述**：将二进制数据保存到文件系统，支持自定义输出路径和目录。
 
@@ -226,12 +274,25 @@ pip install -r requirements.txt
 2. **预览和分析**：
    - 将加载的二进制数据连接到 `DCI Preview` 节点进行预览
 
+### 调试工作流程
+
+1. **调试单个 DCI 图像**：
+   - 使用 `DCI Image Debug` 节点检查单个 DCI 图像的详细信息
+   - 验证背景色处理效果和图像质量
+   - 分析二进制数据的生成结果
+
+2. **问题排查**：
+   - 当图像背景出现问题时，使用调试节点检查背景色处理设置
+   - 验证图像数据的完整性和格式正确性
+   - 检查DCI路径和元数据的生成结果
+
 ### 高级用法
 
 - **多状态图标**：为不同的交互状态（normal、hover、pressed、disabled）创建不同的图像
 - **多色调支持**：为浅色和深色主题创建不同的色调变体
 - **多缩放因子**：为不同的显示密度创建多种尺寸
 - **批量处理**：一次性创建包含多个图像的完整 DCI 文件
+- **背景色处理**：使用新的背景色选项解决透明图像的显示问题
 
 ## 工作流程示例
 
@@ -251,6 +312,12 @@ LoadImage (pressed)→ DCI Image (pressed)──┘           └─→ DCI Prev
 ```
 Binary File Loader → DCI Preview
                   └→ Binary File Saver
+```
+
+### 调试工作流程
+```
+LoadImage → DCI Image → DCI Image Debug
+                     └→ DCI File → DCI Preview
 ```
 
 ## DCI 格式规范
