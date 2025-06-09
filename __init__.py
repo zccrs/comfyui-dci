@@ -11,41 +11,44 @@ This extension provides complete DCI specification support including:
 - Binary data handling and file operations
 """
 
-from .py.nodes import (
-    DCIImageExporter,
-    DCIImageExporterAdvanced,
-    DCIPreviewNode,
-    DCIMetadataExtractor,
-    DCIImage,
-    DCIFileNode,
-    DCIPreviewFromBinary,
-    BinaryFileLoader,
-    BinaryFileSaver
-)
+# Try relative imports first, fall back to absolute imports
+try:
+    from .py.nodes import (
+        DCIPreviewNode,
+        DCIImage,
+        DCIFileNode,
+        BinaryFileLoader,
+        BinaryFileSaver
+    )
+except ImportError:
+    # Fallback for when module is loaded directly
+    import sys
+    import os
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    sys.path.insert(0, current_dir)
+    from py.nodes import (
+        DCIPreviewNode,
+        DCIImage,
+        DCIFileNode,
+        BinaryFileLoader,
+        BinaryFileSaver
+    )
 
 # ComfyUI Node Registration
 # Using DCI prefix to ensure unique node names and avoid conflicts
 NODE_CLASS_MAPPINGS = {
-    "DCI_ImageExporter": DCIImageExporter,
-    "DCI_ImageExporterAdvanced": DCIImageExporterAdvanced,
     "DCI_PreviewNode": DCIPreviewNode,
-    "DCI_MetadataExtractor": DCIMetadataExtractor,
     "DCI_Image": DCIImage,
     "DCI_FileNode": DCIFileNode,
-    "DCI_PreviewFromBinary": DCIPreviewFromBinary,
     "DCI_BinaryFileLoader": BinaryFileLoader,
     "DCI_BinaryFileSaver": BinaryFileSaver,
 }
 
 # Display names for ComfyUI interface
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "DCI_ImageExporter": "DCI Image Exporter",
-    "DCI_ImageExporterAdvanced": "DCI Image Exporter (Advanced)",
     "DCI_PreviewNode": "DCI Preview",
-    "DCI_MetadataExtractor": "DCI Metadata Extractor",
     "DCI_Image": "DCI Image",
     "DCI_FileNode": "DCI File",
-    "DCI_PreviewFromBinary": "DCI Preview (Binary)",
     "DCI_BinaryFileLoader": "Binary File Loader",
     "DCI_BinaryFileSaver": "Binary File Saver",
 }

@@ -5,8 +5,19 @@ import os
 import tempfile
 import struct
 from io import BytesIO
-from .dci_format import create_dci_icon, DCIIconBuilder, DCIFile
-from .dci_reader import DCIReader, DCIPreviewGenerator
+
+# Try relative imports first, fall back to absolute imports
+try:
+    from .dci_format import create_dci_icon, DCIIconBuilder, DCIFile
+    from .dci_reader import DCIReader, DCIPreviewGenerator
+except ImportError:
+    # Fallback for when module is loaded directly
+    import sys
+    import os
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    sys.path.insert(0, current_dir)
+    from dci_format import create_dci_icon, DCIIconBuilder, DCIFile
+    from dci_reader import DCIReader, DCIPreviewGenerator
 
 
 class DCIPreviewNode:

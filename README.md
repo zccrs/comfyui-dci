@@ -8,13 +8,9 @@
 - ✅ **多状态图标支持**：正常、悬停、按下、禁用状态
 - ✅ **多色调支持**：浅色和深色调变体
 - ✅ **高级预览系统**：基于网格的可视化与元数据覆盖
-- ✅ **全面的分析工具**：详细的元数据提取和过滤
 - ✅ **模块化节点架构**：重构为更灵活的组合式节点
 - ✅ **二进制数据流**：支持节点间二进制数据传递
-- ✅ **二进制文件处理**：专用的二进制文件加载、保存和上传节点
-- ✅ **规范化目录结构**：遵循ComfyUI扩展最佳实践的目录组织
-- ✅ **国际化支持**：多语言本地化文件
-- ✅ **自动化安装**：跨平台安装脚本
+- ✅ **二进制文件处理**：专用的二进制文件加载和保存节点
 - ✅ **生产就绪**：通过示例工作流程全面测试
 
 ## 目录结构
@@ -27,21 +23,11 @@ comfyui-dci/
 │   ├── dci_reader.py           # DCI文件读取器
 │   └── nodes.py                # ComfyUI节点定义
 ├── locales/                     # 国际化文件
-│   ├── en.json                 # 英文本地化
-│   └── zh-CN.json              # 中文本地化
 ├── resources/                   # 静态资源
-│   └── README.md               # 资源说明
 ├── tools/                       # 开发工具
-│   ├── commit_helper.py        # Git提交助手
-│   └── README.md               # 工具说明
 ├── tests/                       # 测试文件
-│   ├── test_*.py               # 各种测试
-│   └── README.md               # 测试说明
 ├── examples/                    # 示例工作流
-│   ├── example_*.json          # 示例工作流文件
-│   └── README.md               # 示例说明
 ├── web_version/                 # Web组件（预留）
-│   └── README.md               # Web组件说明
 ├── __init__.py                  # 扩展入口点
 ├── README.md                    # 项目文档
 ├── requirements.txt             # Python依赖
@@ -54,26 +40,22 @@ comfyui-dci/
 ## 功能特性
 
 ### 导出功能
-- **基础 DCI 导出**：将单个图像转换为 DCI 格式，支持自定义参数
-- **高级多状态导出**：创建包含多个图标状态的 DCI 文件（正常、悬停、按下、禁用）
+- **DCI 图像创建**：将单个图像转换为 DCI 图像数据，支持自定义参数
+- **DCI 文件组合**：将多个 DCI 图像组合成完整的 DCI 文件
 - **多种缩放因子**：支持 1x、2x、3x 缩放和自定义缩放组合
 - **格式支持**：WebP、PNG 和 JPEG 格式
 - **色调支持**：浅色和深色调变体
 - **可自定义图标尺寸**：从 16x16 到 1024x1024 像素
 
-### 预览和分析功能
+### 预览功能
 - **可视化预览**：生成 DCI 文件中所有图像的网格预览
 - **元数据显示**：显示每个图像的全面元数据，包括尺寸、状态、色调、缩放、格式
-- **目录结构分析**：检查 DCI 文件的内部目录结构
-- **过滤功能**：按状态、色调、缩放因子或格式过滤图像
-- **文件信息**：显示文件大小、图像尺寸和其他技术详细信息
+- **节点内显示**：直接在节点界面中显示预览内容
 
 ### 二进制文件处理功能
 - **文件加载**：从文件系统加载任意二进制文件，专为 DCI 图标文件优化
 - **文件保存**：将二进制数据保存到指定位置，支持自定义输出目录
-- **文件浏览**：浏览和选择目录中的文件，支持文件模式匹配
 - **数据结构化**：提供统一的二进制数据结构，包含内容、元数据和路径信息
-- **无缝集成**：与现有 DCI 节点完美配合，支持完整的工作流程
 
 ## 安装
 
@@ -112,33 +94,26 @@ pip install -r requirements.txt
 
 3. 重启 ComfyUI
 
-4. 安装完成后，所有 DCI 节点将出现在 ComfyUI 节点菜单的 **"DCI"** 分类下，按功能分为 Export、Preview、Analysis、Files 四个子分类
+4. 安装完成后，所有 DCI 节点将出现在 ComfyUI 节点菜单的 **"DCI"** 分类下
 
 ## ComfyUI 节点详细说明
 
-本扩展提供了 11 个 ComfyUI 节点，所有节点都统一归类在 **"DCI"** 分组下，并按功能分为四个子分类，便于在 ComfyUI 界面中快速找到和使用。每个节点都有详细的输入输出规范和参数说明。
+本扩展提供了 5 个 ComfyUI 节点，所有节点都统一归类在 **"DCI"** 分组下，并按功能分为三个子分类：
 
 ### 节点分组
-所有 DCI 扩展节点都位于 ComfyUI 节点菜单的 **"DCI"** 分类下，按功能分为四个子分类。所有节点名称都使用 "DCI_" 前缀以确保唯一性并避免与其他扩展冲突：
 
 #### DCI/Export（导出）
-- DCI_ImageExporter (DCI Image Exporter)
-- DCI_ImageExporterAdvanced (DCI Image Exporter Advanced)
 - DCI_Image (DCI Image)
 - DCI_FileNode (DCI File)
 
 #### DCI/Preview（预览）
 - DCI_PreviewNode (DCI Preview)
-- DCI_PreviewFromBinary (DCI Preview Binary)
-
-#### DCI/Analysis（分析）
-- DCI_MetadataExtractor (DCI Metadata Extractor)
 
 #### DCI/Files（文件处理）
 - DCI_BinaryFileLoader (Binary File Loader)
 - DCI_BinaryFileSaver (Binary File Saver)
 
-### 新增重构节点（推荐使用）
+### 可用节点详细说明
 
 #### 1. DCI Image（DCI 图像）
 **节点类别**：`DCI/Export`
@@ -169,37 +144,33 @@ pip install -r requirements.txt
 - **`dci_binary_data`** (DCI_BINARY_DATA)：DCI文件的二进制数据
 - **`file_path`** (STRING)：文件路径（如果保存到文件）
 
-#### 3. DCI Preview (Binary)（DCI 预览 - 二进制）
+#### 3. DCI Preview（DCI 预览）
 **节点类别**：`DCI/Preview`
-**功能描述**：从二进制 DCI 数据创建可视化预览，可与 DCI File 节点配合使用。
-
-**必需输入参数：**
-- **`dci_binary_data`** (DCI_BINARY_DATA)：DCI文件的二进制数据
+**功能描述**：直接在节点内显示 DCI 文件内容的可视化网格预览和元数据信息。支持文件路径和二进制数据两种输入方式。
 
 **可选输入参数：**
+- **`dci_file_path`** (STRING)：要预览的 DCI 文件的完整路径，默认空
+- **`dci_binary_data`** (BINARY_DATA)：DCI 文件的二进制数据
 - **`grid_columns`** (INT)：网格列数（1-10），默认4
 - **`show_metadata`** (BOOLEAN)：显示元数据，默认True
 
-**输出：**
-- **`preview_image`** (IMAGE)：预览图像
-- **`metadata_summary`** (STRING)：元数据摘要
+**节点内预览功能：**
+- **图像网格预览**：直接在节点界面中显示所有图像的网格布局
+- **元数据摘要**：在节点内显示详细的文件信息
 
-### 二进制文件处理节点（新增）
+**输出：**
+- 无输出（所有预览内容直接在节点内显示）
 
 #### 4. Binary File Loader（二进制文件加载器）
 **节点类别**：`DCI/Files`
-**功能描述**：从文件系统加载二进制文件，专为处理 DCI 图标文件等二进制数据设计。支持通过其他节点输入文件路径，提供更灵活的工作流程。
+**功能描述**：从文件系统加载二进制文件，专为处理 DCI 图标文件等二进制数据设计。
 
 **可选输入参数：**
-- **`file_path`** (STRING)：要加载的文件路径，可通过其他节点输入或手动输入，默认空字符串
+- **`file_path`** (STRING)：要加载的文件路径，默认空字符串
 
 **输出：**
 - **`binary_data`** (BINARY_DATA)：文件的二进制内容（bytes 类型）
 - **`file_path`** (STRING)：加载文件的完整路径
-
-**数据格式：**
-- `binary_data` 直接输出文件的二进制内容，不包含任何元数据包装
-- 适用于需要直接处理二进制数据的场景
 
 #### 5. Binary File Saver（二进制文件保存器）
 **节点类别**：`DCI/Files`
@@ -207,7 +178,7 @@ pip install -r requirements.txt
 
 **必需输入参数：**
 - **`binary_data`** (BINARY_DATA)：要保存的二进制数据
-- **`file_path`** (STRING)：目标文件路径
+- **`file_name`** (STRING)：目标文件名，默认"binary_file"
 
 **可选输入参数：**
 - **`output_directory`** (STRING)：输出目录，默认使用 ComfyUI 输出目录
@@ -215,300 +186,50 @@ pip install -r requirements.txt
 **输出：**
 - **`saved_path`** (STRING)：实际保存的文件路径
 
-
-
-### 传统节点（向后兼容）
-
-### 导出节点
-
-#### 1. DCI Image Exporter（DCI 图像导出器）
-**节点类别**：`DCI/Export`
-**功能描述**：将单个图像转换为 DCI 格式的基础导出节点，支持单一状态和色调的图标创建。
-
-**必需输入参数：**
-- **`image`** (IMAGE)
-  - **类型**：ComfyUI 图像张量
-  - **描述**：要转换为 DCI 格式的输入图像
-  - **格式**：支持 RGB、RGBA 和灰度图像
-  - **尺寸**：任意尺寸（将自动缩放到目标尺寸）
-
-- **`filename`** (STRING)
-  - **默认值**：`"icon"`
-  - **描述**：输出 DCI 文件的文件名（不包含 .dci 扩展名）
-  - **限制**：不能包含路径分隔符，文件名长度不超过 62 字符
-
-- **`icon_size`** (INT)
-  - **默认值**：`256`
-  - **范围**：16 - 1024 像素
-  - **步长**：1
-  - **描述**：目标图标的像素尺寸（正方形）
-  - **常用值**：16, 32, 48, 64, 128, 256, 512, 1024
-
-- **`icon_state`** (COMBO)
-  - **选项**：`["normal", "disabled", "hover", "pressed"]`
-  - **默认值**：`"normal"`
-  - **描述**：图标的交互状态
-    - `normal`：默认状态
-    - `disabled`：禁用状态（通常较暗或灰色）
-    - `hover`：鼠标悬停状态
-    - `pressed`：按下状态
-
-- **`tone_type`** (COMBO)
-  - **选项**：`["light", "dark"]`
-  - **默认值**：`"dark"`
-  - **描述**：图标的色调类型
-    - `dark`：深色调，适用于浅色背景
-    - `light`：浅色调，适用于深色背景
-
-- **`image_format`** (COMBO)
-  - **选项**：`["webp", "png", "jpg"]`
-  - **默认值**：`"webp"`
-  - **描述**：输出图像格式
-    - `webp`：现代格式，文件小，质量高（推荐）
-    - `png`：无损格式，支持透明度
-    - `jpg`：有损格式，文件小但不支持透明度
-
-**可选输入参数：**
-- **`scale_factors`** (STRING)
-  - **默认值**：`"1,2,3"`
-  - **描述**：逗号分隔的缩放因子列表
-  - **示例**：`"1,2"` 或 `"1,2,3,4"`
-  - **用途**：为不同 DPI 显示器生成多种尺寸
-
-- **`output_directory`** (STRING)
-  - **默认值**：`""`（空字符串）
-  - **描述**：可选的输出目录路径
-  - **行为**：为空时使用 ComfyUI 默认输出目录
-
-**输出：**
-- **`file_path`** (STRING)：创建的 DCI 文件的完整路径
-
----
-
-#### 2. DCI Image Exporter (Advanced)（DCI 图像导出器 - 高级版）
-**节点类别**：`DCI/Export`
-**功能描述**：支持多状态、多色调的高级 DCI 导出节点，可以为不同交互状态使用不同的图像。
-
-**必需输入参数：**
-- **`image`** (IMAGE)
-  - **类型**：ComfyUI 图像张量
-  - **描述**：基础图像，当特定状态图像未提供时使用
-  - **用途**：作为所有状态的默认图像
-
-- **`filename`** (STRING)
-  - **默认值**：`"icon"`
-  - **描述**：输出 DCI 文件名（不含扩展名）
-
-- **`icon_size`** (INT)
-  - **默认值**：`256`
-  - **范围**：16 - 1024 像素
-  - **描述**：目标图标尺寸
-
-- **`image_format`** (COMBO)
-  - **选项**：`["webp", "png", "jpg"]`
-  - **默认值**：`"webp"`
-  - **描述**：输出图像格式
-
-**可选输入参数（状态图像）：**
-- **`normal_image`** (IMAGE)
-  - **描述**：正常状态的专用图像
-  - **行为**：未连接时使用基础图像
-
-- **`disabled_image`** (IMAGE)
-  - **描述**：禁用状态的专用图像
-  - **建议**：通常是灰色或低对比度版本
-
-- **`hover_image`** (IMAGE)
-  - **描述**：悬停状态的专用图像
-  - **建议**：通常是高亮或发光版本
-
-- **`pressed_image`** (IMAGE)
-  - **描述**：按下状态的专用图像
-  - **建议**：通常是较暗或内陷效果版本
-
-**可选输入参数（色调控制）：**
-- **`include_light_tone`** (BOOLEAN)
-  - **默认值**：`False`
-  - **描述**：是否包含浅色调变体
-  - **用途**：为深色主题生成图标
-
-- **`include_dark_tone`** (BOOLEAN)
-  - **默认值**：`True`
-  - **描述**：是否包含深色调变体
-  - **用途**：为浅色主题生成图标
-
-**可选输入参数（其他）：**
-- **`scale_factors`** (STRING)
-  - **默认值**：`"1,2,3"`
-  - **描述**：缩放因子列表
-
-- **`output_directory`** (STRING)
-  - **默认值**：`""`
-  - **描述**：输出目录路径
-
-**输出：**
-- **`file_path`** (STRING)：创建的 DCI 文件路径
-
----
-
-### 预览和分析节点
-
-#### 3. DCI Preview（DCI 预览）
-**节点类别**：`DCI/Preview`
-**功能描述**：直接在节点内显示 DCI 文件内容的可视化网格预览和元数据信息。无需外部输出，所有预览内容都在节点界面中展示。支持文件路径和二进制数据两种输入方式。
-
-**可选输入参数：**
-- **`dci_file_path`** (STRING)
-  - **默认值**：`""`
-  - **描述**：要预览的 DCI 文件的完整路径
-  - **验证**：节点会检查文件是否存在和可读
-
-- **`dci_binary_data`** (BINARY_DATA)
-  - **描述**：DCI 文件的二进制数据
-  - **用途**：可直接从 Binary File Loader 或其他二进制数据源获取
-
-**可选输入参数：**
-- **`grid_columns`** (INT)
-  - **默认值**：`4`
-  - **范围**：1 - 10
-  - **步长**：1
-  - **描述**：预览网格的列数
-  - **影响**：控制预览图像的布局密度
-
-- **`show_metadata`** (BOOLEAN)
-  - **默认值**：`True`
-  - **描述**：是否在节点内显示元数据摘要
-  - **内容**：显示尺寸、状态、色调、缩放、格式等信息
-
-**节点内预览功能：**
-- **图像网格预览**：直接在节点界面中显示所有图像的网格布局
-- **元数据摘要**：在节点内显示详细的文件信息，包括：
-  - 📁 DCI 源文件名
-  - 🖼️ 图像总数和文件大小
-  - 📏 支持的图标尺寸
-  - 🎭 包含的状态类型
-  - 🎨 支持的色调
-  - 🔍 缩放因子
-  - 🗂️ 图像格式
-
-**输出：**
-- 无输出（所有预览内容直接在节点内显示）
-
----
-
-#### 4. DCI Metadata Extractor（DCI 元数据提取器）
-**节点类别**：`DCI/Analysis`
-**功能描述**：提取和分析 DCI 文件的详细元数据，支持多种过滤条件。支持文件路径和二进制数据两种输入方式。
-
-**可选输入参数：**
-- **`dci_file_path`** (STRING)
-  - **默认值**：`""`
-  - **描述**：要分析的 DCI 文件路径
-
-- **`dci_binary_data`** (BINARY_DATA)
-  - **描述**：DCI 文件的二进制数据
-  - **用途**：可直接从 Binary File Loader 或其他二进制数据源获取
-
-**可选输入参数（过滤器）：**
-- **`filter_by_state`** (COMBO)
-  - **选项**：`["all", "normal", "disabled", "hover", "pressed"]`
-  - **默认值**：`"all"`
-  - **描述**：按图标状态过滤结果
-  - **用途**：只显示特定状态的图像信息
-
-- **`filter_by_tone`** (COMBO)
-  - **选项**：`["all", "light", "dark"]`
-  - **默认值**：`"all"`
-  - **描述**：按色调类型过滤结果
-
-- **`filter_by_scale`** (STRING)
-  - **默认值**：`"all"`
-  - **描述**：按缩放因子过滤结果
-  - **格式**：
-    - `"all"`：显示所有缩放因子
-    - `"1,2"`：只显示 1x 和 2x 缩放
-    - `"3"`：只显示 3x 缩放
-
-**输出：**
-- **`detailed_metadata`** (STRING)
-  - **描述**：过滤后图像的详细元数据
-  - **内容**：每个图像的路径、文件名、尺寸、状态、色调、缩放、格式、优先级、文件大小、图像尺寸、颜色模式等
-
-- **`directory_structure`** (STRING)
-  - **描述**：DCI 文件的内部目录结构
-  - **格式**：树状结构显示，包含文件大小信息
-  - **用途**：了解 DCI 文件的组织方式
-
-- **`file_list`** (STRING)
-  - **描述**：匹配过滤条件的文件列表
-  - **格式**：每行一个文件，包含完整路径和文件大小
-  - **用途**：快速查看符合条件的文件
-
----
-
-## 节点连接和工作流程
-
-### 数据类型说明
-- **IMAGE**：ComfyUI 标准图像张量格式 [batch, height, width, channels]，值范围 0-1
-- **STRING**：文本字符串，支持文件路径、参数设置等
-- **INT**：整数，用于尺寸、数量等数值参数
-- **BOOLEAN**：布尔值，用于开关选项
-- **COMBO**：下拉选择框，预定义选项列表
-
-### 典型连接模式
-1. **图像输入**：LoadImage → DCI Image Exporter
-2. **二进制文件处理**：Binary File Loader → DCI Preview/DCI Metadata Extractor
-3. **预览显示**：DCI Preview → PreviewImage (preview_image) + ShowText (metadata_summary)
-4. **元数据分析**：DCI Metadata Extractor → ShowText (三个输出分别连接)
-
-### 节点分类在 ComfyUI 中的位置
-所有 DCI 扩展节点都统一位于 **`DCI`** 分类下，按功能分为四个子分类：
-- **DCI/Export**：DCI Image Exporter、DCI Image Exporter (Advanced)、DCI Image、DCI File
-- **DCI/Preview**：DCI Preview、DCI Preview (Binary)
-- **DCI/Analysis**：DCI Metadata Extractor
-- **DCI/Files**：Binary File Loader、Binary File Saver、Binary File Uploader
-
 ## 使用示例
 
-### 基础 DCI 导出
-1. 使用 `LoadImage` 加载图像
-2. 连接到 `DCI Image Exporter`
-3. 配置导出参数
-4. 执行以创建 DCI 文件
+### 基本工作流程
 
-### DCI 预览工作流程
-1. 使用 `Binary File Loader` 加载 DCI 文件
-2. 连接到 `DCI Preview` 节点
-3. 调整网格列数和元数据显示选项
-4. 查看生成的预览图像和元数据摘要
+1. **创建 DCI 图像**：
+   - 使用 `DCI Image` 节点将 ComfyUI 图像转换为 DCI 图像数据
+   - 设置图标尺寸、状态、色调、缩放因子和格式
 
-### 高级分析
-1. 使用 `Binary File Loader` 加载 DCI 文件
-2. 连接到 `DCI Metadata Extractor`
-3. 应用过滤器以专注于特定图像
-4. 检查详细元数据、目录结构和文件列表
+2. **组合 DCI 文件**：
+   - 使用 `DCI File` 节点将多个 DCI 图像组合成完整的 DCI 文件
+   - 可选择保存到文件或仅输出二进制数据
 
-### 多状态图标创建
-1. 为每个状态加载不同的图像（正常、悬停、按下、禁用）
-2. 连接到 `DCI Image Exporter (Advanced)`
-3. 配置色调选项和缩放因子
-4. 生成全面的多状态 DCI 文件
+3. **预览 DCI 内容**：
+   - 使用 `DCI Preview` 节点查看 DCI 文件的内容和元数据
 
-## 示例工作流程
+4. **文件操作**：
+   - 使用 `Binary File Loader` 加载现有的 DCI 文件
+   - 使用 `Binary File Saver` 保存二进制数据到文件
 
-### 基础导出和预览
+### 高级用法
+
+- **多状态图标**：为不同的交互状态（normal、hover、pressed、disabled）创建不同的图像
+- **多色调支持**：为浅色和深色主题创建不同的色调变体
+- **多缩放因子**：为不同的显示密度创建多种尺寸
+- **批量处理**：一次性创建包含多个图像的完整 DCI 文件
+
+## 工作流程示例
+
+### 基础工作流程
 ```
-LoadImage → DCI Image Exporter → DCI Preview → PreviewImage
-                                      ↓
-                                 ShowText (metadata)
+LoadImage → DCI Image → DCI File → DCI Preview
 ```
 
-### 高级多状态分析
+### 多图像工作流程
 ```
-LoadImage (normal) ──┐
-LoadImage (hover) ───┼─→ DCI Image Exporter (Advanced) → DCI Metadata Extractor → ShowText
-LoadImage (pressed) ─┘                                           ↓
-                                                            DCI Preview → PreviewImage
+LoadImage (normal) → DCI Image (normal) ──┐
+LoadImage (hover)  → DCI Image (hover)  ──┼─→ DCI File → Binary File Saver
+LoadImage (pressed)→ DCI Image (pressed)──┘
+```
+
+### 文件处理工作流程
+```
+Binary File Loader → DCI Preview
+                  └→ Binary File Saver
 ```
 
 ## DCI 格式规范
@@ -520,44 +241,6 @@ LoadImage (pressed) ─┘                                           ↓
 - **支持的状态**：normal、disabled、hover、pressed
 - **支持的色调**：light、dark
 - **支持的格式**：WebP、PNG、JPEG
-
-## 文件结构
-
-```
-comfyui-deepin/
-├── __init__.py              # ComfyUI 扩展注册
-├── nodes.py                 # 所有 ComfyUI 节点（导出 + 预览）
-├── dci_format.py           # DCI 文件创建和构建
-├── dci_reader.py           # DCI 文件读取和解析
-├── commit_helper.py        # 用于正确提交格式的开发工具
-├── test_dci.py             # 基础 DCI 导出测试
-├── test_dci_preview.py     # DCI 预览功能测试
-├── example_workflow.json   # 基础导出工作流程示例
-├── example_dci_preview_workflow.json  # 预览工作流程示例
-├── requirements.txt        # Python 依赖项
-├── preliminary-design.md   # 高级架构设计
-├── detailed-design.md      # 实现细节和规范
-└── README.md              # 本文档
-```
-
-## 测试
-
-### 测试 DCI 导出
-```bash
-python test_dci.py
-```
-
-### 测试 DCI 预览
-```bash
-python test_dci_preview.py
-```
-
-预览测试将：
-1. 创建包含多个状态、色调和缩放的全面测试 DCI 文件
-2. 测试 DCI 文件读取和解析
-3. 生成不同列布局的预览网格
-4. 测试元数据提取和过滤
-5. 显示目录结构分析
 
 ## 技术细节
 
@@ -586,177 +269,25 @@ size/                    # 图标尺寸（16、32、64、128、256、512、1024�
         └── layer.format # priority.padding.palette.hue.saturation.brightness.red.green.blue.alpha.format
 ```
 
-### 高级功能
-
-**图像处理**：
-- **Lanczos 重采样**：保持细节的高质量图像缩放
-- **格式优化**：WebP 默认质量=90，PNG 无损，JPEG 带 RGB 转换
-- **内存高效**：大文件的流式处理
-- **批处理**：同时处理多个缩放因子
-
-**预览生成**：
-- **自适应网格布局**：基于图像数量自动计算行/列
-- **智能缩放**：在最大化单元格利用率的同时保持纵横比
-- **丰富的元数据显示**：显示尺寸、状态、色调、缩放、格式和文件大小
-- **字体回退系统**：从系统字体到内置默认字体的优雅降级
-
-**元数据分析**：
-- **深度结构解析**：带有完整路径重建的递归目录分析
-- **多条件过滤**：按状态、色调和缩放同时过滤
-- **统计摘要**：全面的文件计数、大小分布和格式分析
-- **自然排序**：智能字母数字排序（1、2、10 vs 1、10、2）
-
 ## 依赖项
 
 - **Pillow**：图像处理和操作
 - **NumPy**：ComfyUI 张量转换的数组操作
 - **PyTorch**：ComfyUI 张量兼容性
 
-## 性能特征
-
-### 基准测试
-- **小图标**（≤256px）：每个缩放因子约 10ms 处理时间
-- **大图标**（≥512px）：每个缩放因子约 50ms 处理时间
-- **内存使用**：处理期间约为图像大小的 2-3 倍（临时 PIL 对象）
-- **文件大小**：WebP 通常比等效 PNG 小 60-80%
-
-### 优化功能
-- **流式 I/O**：大型 DCI 文件分块处理
-- **延迟加载**：仅在预览需要时加载图像
-- **高效缓存**：缓存元数据以避免重复解析
-- **并行处理**：独立操作并发运行
-
 ## 故障排除
 
-### 常见问题
+如果在 ComfyUI 中看不到 DCI 节点：
 
-1. **"DCI file not found"**：
-   - 验证文件路径是绝对路径或相对于 ComfyUI 工作目录
-   - 检查文件权限和可访问性
-   - 确保包含 `.dci` 扩展名
-
-2. **"Failed to read DCI file"**：
-   - 使用十六进制编辑器验证 DCI 魔术头（'DCI\0'）
-   - 检查文件大小与预期内容的文件损坏
-   - 验证文件是使用兼容的 DCI 写入器创建的
-
-3. **"No images found"**：
-   - DCI 文件可能具有无效的目录结构
-   - 检查图像是否在预期的 `size/state.tone/scale/` 层次结构中
-   - 验证图像文件具有支持的格式（webp/png/jpg）
-
-4. **预览生成失败**：
-   - 大型 DCI 文件可能超出内存限制
-   - 尝试减少网格列数或过滤图像
-   - 检查 ComfyUI 控制台以获取详细错误消息
-
-5. **字体渲染问题**：
-   - 扩展自动回退到默认字体
-   - 安装系统字体以获得更好的文本渲染
-   - 字体问题不影响核心功能
-
-### 调试信息
-
-**控制台输出**：检查 ComfyUI 控制台以获取详细的处理日志
-**错误处理**：所有异常都被捕获并记录上下文
-**验证**：输入参数通过有用的错误消息进行验证
-
-### 性能调优
-
-**对于大文件**：
-- 使用过滤处理图像子集
-- 减少预览生成的网格列数
-- 考虑分批处理较小的批次
-
-**对于内存约束**：
-- 关闭未使用的预览窗口
-- 长时间会话定期重启 ComfyUI
-- 监控系统内存使用情况
-
-## 开发指南
-
-### 提交消息格式
-
-此项目遵循严格的提交消息格式以维护清晰的项目历史：
-
-**结构**：
-```
-type: Brief description (50 chars max)
-
-- Detailed change description (72 chars max per line)
-- Use bullet points for multiple changes
-- Wrap long lines appropriately
-- Include technical details and rationale
-
-类型：简短描述（中文标题）
-
-- 详细变更描述（每行最多72字符）
-- 使用项目符号列出多个变更
-- 适当换行处理长行
-- 包含技术细节和理由
-```
-
-**提交类型**：
-- `feat`：新功能
-- `fix`：错误修复
-- `docs`：文档更改
-- `style`：代码样式更改（格式等）
-- `refactor`：代码重构
-- `test`：添加或更新测试
-- `tools`：开发工具和脚本
-- `perf`：性能改进
-- `chore`：维护任务
-
-**示例**：
-```
-feat: Add DCI preview functionality
-
-- Add DCIReader class for parsing DCI file format
-- Add DCIPreviewGenerator for creating visual previews
-- Support grid-based preview with metadata overlay
-- Support filtering by state, tone, scale, and format
-- Add comprehensive test suite for preview functionality
-
-功能：添加DCI预览功能
-
-- 添加DCIReader类用于解析DCI文件格式
-- 添加DCIPreviewGenerator用于创建可视化预览
-- 支持带有元数据覆盖的网格预览
-- 支持按状态、色调、缩放和格式过滤
-- 为预览功能添加全面的测试套件
-```
-
-**可用工具**：
-- 使用 `commit_helper.py` 生成正确格式的提交消息
-- 脚本确保正确的换行和格式合规性
-- 自动验证标题长度和正文格式
-
-### 代码质量标准
-
-- 遵循 SOLID 原则和设计模式
-- 维护全面的文档和注释
-- 确保所有功能的良好测试覆盖率
-- 添加新功能时审查架构设计
-- 遵循现有的代码样式和约定
-- 优先考虑代码重用并避免重复
-- 每次提交进行最小的、集中的更改
-- 仅修改与当前需求相关的代码
+1. 确保已正确安装所有依赖项
+2. 重启 ComfyUI
+3. 检查 ComfyUI 控制台是否有错误信息
+4. 确保扩展文件夹位于正确的 `custom_nodes` 目录中
 
 ## 贡献
 
-1. Fork 仓库
-2. 创建功能分支，遵循命名约定：`feature/description` 或 `fix/description`
-3. 按照上述开发指南进行更改
-4. 为新功能添加测试
-5. 使用 `commit_helper.py` 正确格式化提交消息
-6. 提交带有清晰描述的拉取请求
+欢迎贡献！请提交 Pull Request 或创建 Issue 来报告问题或建议新功能。
 
 ## 许可证
 
-此项目根据 MIT 许可证授权 - 有关详细信息，请参阅 LICENSE 文件。
-
-## 致谢
-
-- 基于 DCI 格式的桌面规范
-- 受 dtkcore 中 Qt/C++ 实现的启发
-- 为 ComfyUI 生态系统构建
+本项目采用 MIT 许可证。详见 LICENSE 文件。
