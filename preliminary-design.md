@@ -91,7 +91,7 @@ Format Conversion → DCI Builder → Directory Structure → DCI File
 
 ### 3.2 重构导出流程（推荐）
 ```
-Input Image → DCIImage Node → DCI_IMAGE_DATA → DCIFileNode → DCI_BINARY_DATA
+Input Image → DCIImage Node → DCI_IMAGE_DATA → DCIFileNode → BINARY_DATA
                                     ↓
 Multiple Images → Multiple DCIImage Nodes → Multiple DCI_IMAGE_DATA → DCIFileNode
 ```
@@ -106,7 +106,7 @@ Preview Generation → Metadata Summary → Output Display
 
 #### 二进制预览流程（新增）
 ```
-DCI_BINARY_DATA → Binary Parser → Image Extraction → Grid Layout →
+BINARY_DATA → Binary Parser → Image Extraction → Grid Layout →
 Preview Generation → Metadata Summary → Output Display
 ```
 

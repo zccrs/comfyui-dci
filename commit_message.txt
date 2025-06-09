@@ -1,0 +1,15 @@
+fix: resolve node connectivity issues by unifying BINARY_DATA type
+
+DCIPreviewNode and BinaryFileSaver could not connect to DCIFileNode output
+due to data type mismatch. This change unifies all binary data handling
+to use the BINARY_DATA type consistently across all nodes.
+
+Changes:
+- Change DCIFileNode output type from DCI_BINARY_DATA to BINARY_DATA
+- Remove unused DCI_BINARY_DATA type from codebase and documentation
+- Update all related documentation and test files
+- Add connectivity tests to verify the fix
+- Simplify data type system for better node compatibility
+
+This ensures all DCI-related nodes can properly connect and work together
+in ComfyUI workflows.

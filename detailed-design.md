@@ -392,7 +392,7 @@ DCI_IMAGE_DATA = {
 - 无需文件系统操作
 
 **输入参数**:
-- `dci_binary_data`: DCI文件的二进制数据
+- `dci_binary_data`: DCI文件的二进制数据 (BINARY_DATA)
 - `grid_columns`: 网格列数 (1-10)
 - `show_metadata`: 显示元数据
 
@@ -466,50 +466,16 @@ DCI_IMAGE_DATA = {
 }
 ```
 
-#### DCI_BINARY_DATA 类型
-```python
-DCI_BINARY_DATA = {
-    'data': bytes,           # 完整的DCI文件二进制数据
-    'metadata': {            # 文件级元数据
-        'file_count': int,   # 文件总数
-        'total_size': int,   # 总文件大小
-        'magic': bytes,      # 魔数标识
-        'version': int,      # 格式版本
-        'images': [          # 图像元数据列表
-            {
-                'path': str,
-                'filename': str,
-                'size': int,
-                'state': str,
-                'tone': str,
-                'scale': int,
-                'format': str,
-                'file_size': int,
-                'image_dimensions': tuple
-            }
-        ],
-        'directory_structure': {  # 目录结构映射
-            'size_dirs': list,    # 尺寸目录列表
-            'state_tone_dirs': list,  # 状态.色调目录列表
-            'scale_dirs': list,   # 缩放目录列表
-            'supported_formats': list,  # 支持的格式列表
-            'statistics': {       # 统计信息
-                'total_images': int,
-                'unique_sizes': int,
-                'unique_states': int,
-                'unique_tones': int,
-                'unique_scales': int,
-                'format_distribution': dict
-            }
-        }
-    }
-}
-```
-
 #### BINARY_DATA 类型
 ```python
-BINARY_DATA = bytes         # 直接的二进制数据内容，不包含元数据包装
+BINARY_DATA = bytes         # 直接的二进制数据内容，适用于所有二进制文件包括DCI文件
 ```
+
+**说明**：
+- `BINARY_DATA` 是统一的二进制数据类型，用于所有节点间的二进制数据传递
+- 包含完整的文件二进制内容，可以是DCI文件、图像文件或其他任何二进制文件
+- 不包含额外的元数据包装，保持数据的纯净性和通用性
+- 所有二进制处理节点（DCIFileNode、DCIPreviewNode、BinaryFileLoader、BinaryFileSaver）都使用此类型
 
 #### 1.3.3 二进制文件处理节点（新增）
 
@@ -583,14 +549,14 @@ else:
 #### 节点间数据传递
 ```
 # 主要工作流程
-DCIImage → DCI_IMAGE_DATA → DCIFileNode → DCI_BINARY_DATA → DCIPreviewFromBinary
+DCIImage → DCI_IMAGE_DATA → DCIFileNode → BINARY_DATA → DCIPreviewNode
 
 # 二进制文件处理工作流程
 BinaryFileLoader → BINARY_DATA → BinaryFileSaver
 
 # 混合工作流程
-BinaryFileLoader → BINARY_DATA → DCIPreviewFromBinary (如果是DCI文件)
-DCIFileNode → DCI_BINARY_DATA → BinaryFileSaver (保存DCI文件)
+BinaryFileLoader → BINARY_DATA → DCIPreviewNode (如果是DCI文件)
+DCIFileNode → BINARY_DATA → BinaryFileSaver (保存DCI文件)
 ```
 
 #### 数据类型注册
@@ -598,15 +564,14 @@ DCIFileNode → DCI_BINARY_DATA → BinaryFileSaver (保存DCI文件)
 # ComfyUI 自定义数据类型注册
 NODE_CLASS_MAPPINGS = {
     "DCI_IMAGE_DATA": "DCI_IMAGE_DATA",
-    "DCI_BINARY_DATA": "DCI_BINARY_DATA",
     "BINARY_DATA": "BINARY_DATA"
 }
 ```
 
 #### 数据类型兼容性
-- `BINARY_DATA` 是通用的二进制数据类型，适用于任何二进制文件
-- `DCI_BINARY_DATA` 是专门的 DCI 文件数据类型，包含 DCI 特定的元数据
-- 两种类型可以通过适配器模式进行转换
+- `BINARY_DATA` 是通用的二进制数据类型，适用于任何二进制文件，包括DCI文件
+- `DCI_IMAGE_DATA` 是专门的 DCI 图像数据类型，包含图像内容和元数据
+- 所有节点使用统一的 `BINARY_DATA` 类型进行二进制数据传递，确保完全兼容
 
 ## 3. 算法设计
 

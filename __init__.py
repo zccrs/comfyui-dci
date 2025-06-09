@@ -64,7 +64,6 @@ __description__ = "DCI (DSG Combined Icons) format support for ComfyUI"
 # but won't be displayed in the UI
 CUSTOM_DATA_TYPES = {
     "DCI_IMAGE_DATA": "DCI_IMAGE_DATA",
-    "DCI_BINARY_DATA": "DCI_BINARY_DATA",
     "BINARY_DATA": "BINARY_DATA"
 }
 

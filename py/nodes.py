@@ -267,7 +267,7 @@ class DCIFileNode:
             }
         }
 
-    RETURN_TYPES = ("DCI_BINARY_DATA",)
+    RETURN_TYPES = ("BINARY_DATA",)
     RETURN_NAMES = ("dci_binary_data",)
     FUNCTION = "create_dci_file"
     CATEGORY = "DCI/Export"

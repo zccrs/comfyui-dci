@@ -48,7 +48,7 @@ def test_node_registration():
             print("✅ Found CUSTOM_DATA_TYPES definition")
 
             # Check for expected data types
-            expected_types = ["DCI_IMAGE_DATA", "DCI_BINARY_DATA", "BINARY_DATA"]
+            expected_types = ["DCI_IMAGE_DATA", "BINARY_DATA"]
             for data_type in expected_types:
                 if data_type in content:
                     print(f"✅ Custom data type '{data_type}' is defined")

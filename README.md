@@ -138,7 +138,7 @@ pip install -r requirements.txt
 - **`dci_image_1` 到 `dci_image_12`** (DCI_IMAGE_DATA)：最多12个DCI图像数据
 
 **输出：**
-- **`dci_binary_data`** (DCI_BINARY_DATA)：DCI文件的二进制数据
+- **`dci_binary_data`** (BINARY_DATA)：DCI文件的二进制数据
 
 #### 3. DCI Preview（DCI 预览）
 **节点类别**：`DCI/Preview`
