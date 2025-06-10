@@ -20,11 +20,13 @@ class DCIImage(BaseNode):
                 "image": ("IMAGE",),
                 "icon_size": ("INT", {"default": 256, "min": 16, "max": 1024, "step": 1}),
                 "icon_state": (["normal", "disabled", "hover", "pressed"], {"default": "normal"}),
-                "tone_type": (["light", "dark"], {"default": "light"}),
                 "scale": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 10.0, "step": 0.1}),
-                "image_format": (["webp", "png", "jpg"], {"default": "webp"}),
             },
             "optional": {
+                # Advanced settings (collapsed by default)
+                "tone_type": (["light", "dark"], {"default": "light"}),
+                "image_format": (["webp", "png", "jpg"], {"default": "webp"}),
+
                 # Background color settings
                 "background_color": (["transparent", "white", "black", "custom"], {"default": "transparent"}),
                 "custom_bg_r": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
@@ -52,7 +54,8 @@ class DCIImage(BaseNode):
     FUNCTION = "execute"
     CATEGORY = "DCI/Export"
 
-    def _execute(self, image, icon_size, icon_state, tone_type, scale, image_format,
+    def _execute(self, image, icon_size, icon_state, scale,
+                tone_type="light", image_format="webp",
                 background_color="transparent", custom_bg_r=255, custom_bg_g=255, custom_bg_b=255,
                 layer_priority=1, layer_padding=0, palette_type="none",
                 hue_adjustment=0, saturation_adjustment=0, brightness_adjustment=0,

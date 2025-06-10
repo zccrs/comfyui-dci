@@ -159,11 +159,13 @@ pip install -r requirements.txt
 - **`image`** (IMAGE)：ComfyUI 图像张量
 - **`icon_size`** (INT)：图标尺寸（16-1024像素），默认256
 - **`icon_state`** (COMBO)：图标状态（normal/disabled/hover/pressed），默认normal
-- **`tone_type`** (COMBO)：色调类型（light/dark），默认light
 - **`scale`** (FLOAT)：缩放因子（0.1-10.0），默认1.0，支持小数如1.25
-- **`image_format`** (COMBO)：图像格式（webp/png/jpg），默认webp
 
-**可选输入参数：**
+**可选输入参数（高级设置，默认折叠）：**
+
+*基础设置：*
+- **`tone_type`** (COMBO)：色调类型（light/dark），默认light
+- **`image_format`** (COMBO)：图像格式（webp/png/jpg），默认webp
 
 *背景色设置：*
 - **`background_color`** (COMBO)：背景色处理（transparent/white/black/custom），默认transparent
