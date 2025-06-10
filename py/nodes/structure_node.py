@@ -23,12 +23,6 @@ class DCIStructureNode(BaseNode):
         return {
             "required": {
                 "dci_binary_data": ("BINARY_DATA",),
-            },
-            "optional": {
-                "show_file_details": ("BOOLEAN", {"default": True}),
-                "show_layer_metadata": ("BOOLEAN", {"default": True}),
-                "show_file_sizes": ("BOOLEAN", {"default": True}),
-                "compact_mode": ("BOOLEAN", {"default": False}),
             }
         }
 
@@ -38,7 +32,7 @@ class DCIStructureNode(BaseNode):
     CATEGORY = "DCI/Preview"
     OUTPUT_NODE = True
 
-    def _execute(self, dci_binary_data, show_file_details=True, show_layer_metadata=True, show_file_sizes=True, compact_mode=False):
+    def _execute(self, dci_binary_data):
         """Display DCI file internal structure in tree format"""
 
         # Use binary data
@@ -54,7 +48,7 @@ class DCIStructureNode(BaseNode):
             return {"ui": {"text": ["No images found in DCI file"]}}
 
         # Generate tree structure
-        tree_structure = self._generate_tree_structure(images, show_file_details, show_layer_metadata, show_file_sizes, compact_mode)
+        tree_structure = self._generate_tree_structure(images)
 
         # Generate summary statistics
         summary = self._generate_summary_statistics(images)
@@ -64,7 +58,7 @@ class DCIStructureNode(BaseNode):
 
         return {"ui": {"text": [full_output]}}
 
-    def _generate_tree_structure(self, images, show_file_details, show_layer_metadata, show_file_sizes, compact_mode):
+    def _generate_tree_structure(self, images):
         """Generate tree structure representation of DCI file"""
 
         # Organize images by directory structure
@@ -95,8 +89,7 @@ class DCIStructureNode(BaseNode):
                 }
 
                 # Parse layer metadata from filename if requested
-                if show_layer_metadata:
-                    file_info['layer_metadata'] = self._parse_layer_metadata(img['filename'])
+                file_info['layer_metadata'] = self._parse_layer_metadata(img['filename'])
 
                 structure[size][state_tone][scale].append(file_info)
 
@@ -152,20 +145,17 @@ class DCIStructureNode(BaseNode):
                         # Build file display name
                         filename = file_info['filename']
                         file_display = filename
-
-                        if show_file_sizes:
-                            size_str = self._format_file_size(file_info['file_size'])
-                            file_display += f" ({size_str})"
+                        size_str = self._format_file_size(file_info['file_size'])
+                        file_display += f" ({size_str})"
 
                         lines.append(f"{file_indent}{file_prefix}{file_display}")
 
-                        # Add layer metadata if requested and not in compact mode
-                        if show_layer_metadata and not compact_mode and 'layer_metadata' in file_info:
-                            metadata = file_info['layer_metadata']
-                            if metadata:
-                                metadata_indent = file_indent + ("    " if is_last_file else "│   ")
-                                for meta_line in metadata:
-                                    lines.append(f"{metadata_indent}  {meta_line}")
+                        # Add layer metadata if requested
+                        metadata = file_info['layer_metadata']
+                        if metadata:
+                            metadata_indent = file_indent + ("    " if is_last_file else "│   ")
+                            for meta_line in metadata:
+                                lines.append(f"{metadata_indent}  {meta_line}")
 
         return "\n".join(lines)
 

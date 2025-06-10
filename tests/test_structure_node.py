@@ -25,6 +25,38 @@ sys.path.insert(0, nodes_dir)
 
 from base_node import BaseNode
 
+def create_test_dci_data():
+    """创建测试用的DCI二进制数据"""
+    builder = DCIIconBuilder()
+
+    # 添加不同尺寸、状态、色调的图像
+    test_cases = [
+        # 简单图层
+        (64, "normal", "light", 1, "webp", (255, 100, 100, 255)),
+        (64, "normal", "dark", 1, "webp", (100, 100, 255, 255)),
+        (64, "hover", "light", 1, "png", (100, 255, 100, 255)),
+        (64, "pressed", "light", 1, "webp", (255, 255, 100, 255)),
+
+        # 多缩放比例
+        (128, "normal", "light", 1, "webp", (255, 150, 150, 255)),
+        (128, "normal", "light", 2, "webp", (255, 150, 150, 255)),
+        (128, "normal", "light", 3, "webp", (255, 150, 150, 255)),
+
+        # 不同状态
+        (128, "disabled", "light", 1, "webp", (150, 150, 150, 255)),
+        (128, "hover", "dark", 1, "webp", (150, 150, 255, 255)),
+
+        # 大尺寸图标
+        (256, "normal", "light", 1, "webp", (255, 200, 200, 255)),
+        (256, "normal", "dark", 1, "webp", (200, 200, 255, 255)),
+    ]
+
+    for size, state, tone, scale, format_ext, color in test_cases:
+        image = create_test_image(size, color, f"{size}px")
+        builder.add_icon_image(image, size, state, tone, scale, format_ext)
+
+    return builder.to_binary()
+
 class DCIStructureNode(BaseNode):
     """ComfyUI node for displaying DCI file internal structure in tree format"""
 
@@ -343,98 +375,30 @@ def create_test_image(size=128, color=(255, 0, 0, 255), text="TEST"):
     return image
 
 
-def test_structure_node():
-    """测试DCI结构预览节点"""
+def test_structure_preview():
+    """测试DCI结构预览节点的基本功能"""
     print("=== 测试DCI结构预览节点 ===")
 
-    # 创建复杂的测试DCI数据，包含多种图层类型
-    builder = DCIIconBuilder()
-
-    # 添加不同尺寸、状态、色调的图像
-    test_cases = [
-        # 简单图层（省略格式）
-        (64, "normal", "light", 1, "1.webp", (255, 100, 100, 255)),
-        (64, "normal", "dark", 1, "1.webp", (100, 100, 255, 255)),
-
-        # 复杂图层（完整格式）
-        (64, "hover", "light", 1, "2.5p.0.10_20_30_-10_15_-5_25.png", (100, 255, 100, 255)),
-        (64, "pressed", "light", 1, "3.0p.2.0_0_0_50_-20_10_0.webp.alpha8", (255, 255, 100, 255)),
-
-        # 多缩放比例
-        (128, "normal", "light", 1, "1.webp", (255, 150, 150, 255)),
-        (128, "normal", "light", 2, "1.webp", (255, 150, 150, 255)),
-        (128, "normal", "light", 3, "1.webp", (255, 150, 150, 255)),
-
-        # 不同状态
-        (128, "disabled", "light", 1, "1.0p.-1.0_0_0_-50_0_0_0_0.webp", (150, 150, 150, 255)),
-        (128, "hover", "dark", 1, "2.3p.1.0_0_20_0_0_0_0.webp", (150, 150, 255, 255)),
-
-        # 大尺寸图标
-        (256, "normal", "light", 1, "1.webp", (255, 200, 200, 255)),
-        (256, "normal", "dark", 1, "1.webp", (200, 200, 255, 255)),
-    ]
-
-    for size, state, tone, scale, filename, color in test_cases:
-        image = create_test_image(size, color, f"{size}px")
-        # 从filename中提取格式
-        if '.' in filename:
-            format_ext = filename.split('.')[-1]
-            if format_ext == 'alpha8':
-                # 处理alpha8格式，取倒数第二个扩展名
-                parts = filename.split('.')
-                if len(parts) >= 2:
-                    format_ext = parts[-2]
-                else:
-                    format_ext = 'webp'
-        else:
-            format_ext = 'webp'
-
-        builder.add_icon_image(image, size, state, tone, scale, format_ext)
-
-    # 构建DCI数据
-    dci_data = builder.to_binary()
-    print(f"✓ 创建了 {len(dci_data)} 字节的测试DCI数据")
+    # 创建测试DCI数据
+    dci_binary_data = create_test_dci_data()
+    print(f"✓ 创建了 {len(dci_binary_data)} 字节的测试DCI数据")
 
     # 创建结构预览节点
-    node = DCIStructureNode()
+    structure_node = DCIStructureNode()
 
-    # 测试基本功能
     print("\n=== 测试基本结构预览 ===")
-    result = node._execute(dci_data)
+    result = structure_node._execute(dci_binary_data=dci_binary_data)
 
     if "ui" in result and "text" in result["ui"]:
-        structure_text = result["ui"]["text"][0]
+        output_text = result["ui"]["text"][0]
         print("结构预览生成成功:")
         print("-" * 60)
-        print(structure_text)
+        print(output_text)
         print("-" * 60)
+        return True
     else:
         print("❌ 结构预览生成失败")
         return False
-
-    # 测试不同选项
-    print("\n=== 测试紧凑模式 ===")
-    result_compact = node._execute(dci_data, compact_mode=True)
-    if "ui" in result_compact and "text" in result_compact["ui"]:
-        print("✓ 紧凑模式测试通过")
-    else:
-        print("❌ 紧凑模式测试失败")
-
-    print("\n=== 测试隐藏图层元数据 ===")
-    result_no_metadata = node._execute(dci_data, show_layer_metadata=False)
-    if "ui" in result_no_metadata and "text" in result_no_metadata["ui"]:
-        print("✓ 隐藏图层元数据测试通过")
-    else:
-        print("❌ 隐藏图层元数据测试失败")
-
-    print("\n=== 测试隐藏文件大小 ===")
-    result_no_sizes = node._execute(dci_data, show_file_sizes=False)
-    if "ui" in result_no_sizes and "text" in result_no_sizes["ui"]:
-        print("✓ 隐藏文件大小测试通过")
-    else:
-        print("❌ 隐藏文件大小测试失败")
-
-    return True
 
 
 def test_layer_metadata_parsing():
@@ -532,7 +496,7 @@ if __name__ == "__main__":
     success = True
 
     try:
-        success &= test_structure_node()
+        success &= test_structure_preview()
         success &= test_layer_metadata_parsing()
         success &= test_file_size_formatting()
 
