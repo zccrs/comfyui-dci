@@ -8,7 +8,6 @@ __description__ = "DCI (DSG Combined Icons) format support for ComfyUI"
 # Import core modules
 from .dci_format import DCIFile
 from .dci_reader import DCIReader
-from .nodes import *
 
 __all__ = [
     'DCIFile',

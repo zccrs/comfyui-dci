@@ -8,6 +8,9 @@ This directory contains example workflows and usage demonstrations for the Comfy
 - **example_workflow.json**: Basic DCI export workflow
 - **example_dci_preview_workflow.json**: DCI preview and analysis workflow
 
+### Code Examples
+- **decimal_scale_example.py**: Demonstrates decimal scale factors (1.25x, 1.5x, etc.) for high-DPI displays
+
 ## Usage
 
 ### Loading Examples in ComfyUI
@@ -33,6 +36,13 @@ Demonstrates:
 - Generating visual previews
 - Extracting metadata
 - Analyzing DCI structure
+
+#### Decimal Scale Example (`decimal_scale_example.py`)
+Demonstrates:
+- Using decimal scale factors like 1.25x, 1.5x for high-DPI displays
+- Creating DCI files with mixed integer and decimal scales
+- Benefits of decimal scaling for modern display technologies
+- Programmatic DCI creation with the Python API
 
 ## Customization
 

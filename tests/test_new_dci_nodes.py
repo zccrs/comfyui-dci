@@ -69,19 +69,19 @@ def test_dci_image_node():
     # Create DCIImage node
     dci_image_node = DCIImage()
 
-    # Test creating DCI image data
+    # Test creating DCI image data with decimal scale
     result = dci_image_node.create_dci_image(
         image=test_tensor,
         icon_size=64,
         icon_state='normal',
         tone_type='dark',
-        scale=2,
+        scale=1.25,  # Test decimal scale
         image_format='webp'
     )
 
     dci_image_data = result[0]
 
-    print(f"  Created DCI image data:")
+    print(f"  Created DCI image data with decimal scale:")
     print(f"    Path: {dci_image_data['path']}")
     print(f"    Size: {dci_image_data['size']}px")
     print(f"    State: {dci_image_data['state']}")
@@ -90,6 +90,15 @@ def test_dci_image_node():
     print(f"    Format: {dci_image_data['format']}")
     print(f"    Actual size: {dci_image_data['actual_size']}px")
     print(f"    File size: {dci_image_data['file_size']} bytes")
+
+    # Verify decimal scale calculation
+    expected_actual_size = int(64 * 1.25)  # Should be 80
+    assert dci_image_data['actual_size'] == expected_actual_size, f"Expected actual size {expected_actual_size}, got {dci_image_data['actual_size']}"
+
+    # Verify path contains decimal scale
+    assert "1.25" in dci_image_data['path'], f"Path should contain '1.25', got {dci_image_data['path']}"
+
+    print("  ✓ Decimal scale test passed")
 
     return dci_image_data
 
@@ -101,11 +110,11 @@ def test_dci_file_node():
     # Create multiple test images
     test_images = []
 
-    # Normal state images
-    for scale in [1, 2]:
+    # Normal state images with decimal scales
+    for scale in [1.0, 1.25, 2.0]:
         for tone in ['dark', 'light']:
             color = 'blue' if tone == 'dark' else 'lightblue'
-            text = f'N{scale}x'
+            text = f'N{scale:g}x'
             test_img = create_test_image(color=color, text=text)
             test_tensor = pil_to_tensor(test_img)
 
@@ -129,7 +138,7 @@ def test_dci_file_node():
         icon_size=64,
         icon_state='hover',
         tone_type='dark',
-        scale=1,
+        scale=1.5,  # Test another decimal scale
         image_format='webp'
     )
     test_images.append(result[0])

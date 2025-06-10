@@ -9,7 +9,7 @@ ComfyUI DCI Image Exporter Extension 是一个专为 ComfyUI 设计的扩展插�
 - **DCI 格式导出**: 将图像转换为符合桌面规范的 DCI 格式
 - **多状态图标支持**: 支持 normal、hover、pressed、disabled 四种状态
 - **多色调支持**: 支持 light 和 dark 两种色调
-- **多缩放因子**: 支持 1x、2x、3x 等多种缩放比例
+- **多缩放因子**: 支持小数缩放如 1x、1.25x、1.5x、2x 等多种缩放比例
 - **格式兼容性**: 支持 WebP、PNG、JPEG 三种图像格式
 - **可视化预览**: 提供 DCI 文件内容的网格化预览
 - **元数据分析**: 深度分析 DCI 文件结构和内容
@@ -79,7 +79,6 @@ web_version/        - Web组件（预留）
 #### 2.2.4 二进制文件处理模块 (Binary File I/O Module)
 - **BinaryFileLoader**: 二进制文件加载器
 - **BinaryFileSaver**: 二进制文件保存器
-- **BinaryFileUploader**: 二进制文件上传/浏览器
 - **Binary Data Structure**: 统一的二进制数据结构
 
 ## 3. 数据流设计
@@ -92,7 +91,7 @@ Format Conversion → DCI Builder → Directory Structure → DCI File
 
 ### 3.2 重构导出流程（推荐）
 ```
-Input Image → DCIImage Node → DCI_IMAGE_DATA → DCIFileNode → DCI_BINARY_DATA
+Input Image → DCIImage Node → DCI_IMAGE_DATA → DCIFileNode → BINARY_DATA
                                     ↓
 Multiple Images → Multiple DCIImage Nodes → Multiple DCI_IMAGE_DATA → DCIFileNode
 ```
@@ -107,7 +106,7 @@ Preview Generation → Metadata Summary → Output Display
 
 #### 二进制预览流程（新增）
 ```
-DCI_BINARY_DATA → Binary Parser → Image Extraction → Grid Layout →
+BINARY_DATA → Binary Parser → Image Extraction → Grid Layout →
 Preview Generation → Metadata Summary → Output Display
 ```
 

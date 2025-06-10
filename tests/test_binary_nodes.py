@@ -7,10 +7,10 @@ import os
 import tempfile
 import sys
 
-# Add current directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from nodes import BinaryFileLoader, BinaryFileSaver, BinaryFileUploader
+from py.nodes import BinaryFileLoader, BinaryFileSaver
 
 
 def test_binary_file_operations():
@@ -35,10 +35,11 @@ def test_binary_file_operations():
         result = loader.load_binary_file(temp_file_path)
 
         if result[0] is not None:
-            binary_data = result[0]
-            print(f"✓ Loaded file: {binary_data['filename']}")
-            print(f"✓ File size: {binary_data['size']} bytes")
-            print(f"✓ Content matches: {binary_data['content'] == test_data}")
+            binary_data, loaded_file_path = result
+            print(f"✓ Loaded file: {os.path.basename(loaded_file_path)}")
+            print(f"✓ File size: {len(binary_data)} bytes")
+            print(f"✓ Content matches: {binary_data == test_data}")
+            print(f"✓ File path: {loaded_file_path}")
         else:
             print("✗ Failed to load binary file")
             return False
@@ -64,24 +65,7 @@ def test_binary_file_operations():
             print("✗ Failed to save binary file")
             return False
 
-        # Test 3: Binary File Uploader
-        print("\n3. Testing BinaryFileUploader...")
-        uploader = BinaryFileUploader()
 
-        # Test with the directory containing our temp file
-        search_dir = os.path.dirname(temp_file_path)
-        file_pattern = "*.dci"
-
-        result = uploader.upload_binary_file(search_dir, file_pattern)
-
-        if result[0] is not None:
-            uploaded_data = result[0]
-            print(f"✓ Uploaded file: {uploaded_data['filename']}")
-            print(f"✓ File size: {uploaded_data['size']} bytes")
-            print(f"✓ File path: {result[1]}")
-        else:
-            print("✗ Failed to upload binary file")
-            return False
 
         print("\n" + "=" * 50)
         print("All binary file handling tests passed! ✓")
@@ -123,11 +107,7 @@ def test_error_handling():
     result = saver.save_binary_file(None, "test.dci")
     print(f"✓ Handles invalid data: {result[0] == ''}")
 
-    # Test uploading from non-existent directory
-    print("3. Testing non-existent directory...")
-    uploader = BinaryFileUploader()
-    result = uploader.upload_binary_file("/non/existent/dir", "*.dci")
-    print(f"✓ Handles non-existent directory: {result[0] is None}")
+
 
 
 if __name__ == "__main__":
@@ -140,7 +120,6 @@ if __name__ == "__main__":
         print("\nUsage in ComfyUI:")
         print("- BinaryFileLoader: Load DCI files from file system")
         print("- BinaryFileSaver: Save binary data to DCI files")
-        print("- BinaryFileUploader: Browse and select DCI files from directories")
     else:
         print("\n❌ Some tests failed. Please check the implementation.")
         sys.exit(1)

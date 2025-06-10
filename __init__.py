@@ -11,49 +11,72 @@ This extension provides complete DCI specification support including:
 - Binary data handling and file operations
 """
 
-from .py.nodes import (
-    DCIImageExporter,
-    DCIImageExporterAdvanced,
-    DCIPreviewNode,
-    DCIFileLoader,
-    DCIMetadataExtractor,
-    DCIImage,
-    DCIFileNode,
-    DCIPreviewFromBinary,
-    BinaryFileLoader,
-    BinaryFileSaver,
-    BinaryFileUploader
-)
+# Try relative imports first, fall back to absolute imports
+try:
+    from .py.nodes import (
+        DCIPreviewNode,
+        DCIImage,
+        DCISampleImage,
+        DCIImagePreview,
+        DCIFileNode,
+        BinaryFileLoader,
+        BinaryFileSaver,
+        Base64Decoder,
+        Base64Encoder,
+        DCIFileSaver,
+        DCIAnalysis
+    )
+    from .py.utils.i18n import t
+except ImportError:
+    # Fallback for when module is loaded directly
+    import sys
+    import os
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    sys.path.insert(0, current_dir)
+    from py.nodes import (
+        DCIPreviewNode,
+        DCIImage,
+        DCISampleImage,
+        DCIImagePreview,
+        DCIFileNode,
+        BinaryFileLoader,
+        BinaryFileSaver,
+        Base64Decoder,
+        Base64Encoder,
+        DCIFileSaver,
+        DCIAnalysis
+    )
+    from py.utils.i18n import t
 
 # ComfyUI Node Registration
 # Using DCI prefix to ensure unique node names and avoid conflicts
 NODE_CLASS_MAPPINGS = {
-    "DCI_ImageExporter": DCIImageExporter,
-    "DCI_ImageExporterAdvanced": DCIImageExporterAdvanced,
     "DCI_PreviewNode": DCIPreviewNode,
-    "DCI_FileLoader": DCIFileLoader,
-    "DCI_MetadataExtractor": DCIMetadataExtractor,
     "DCI_Image": DCIImage,
+    "DCI_SampleImage": DCISampleImage,
+    "DCI_ImagePreview": DCIImagePreview,
     "DCI_FileNode": DCIFileNode,
-    "DCI_PreviewFromBinary": DCIPreviewFromBinary,
     "DCI_BinaryFileLoader": BinaryFileLoader,
     "DCI_BinaryFileSaver": BinaryFileSaver,
-    "DCI_BinaryFileUploader": BinaryFileUploader,
+    "DCI_Base64Decoder": Base64Decoder,
+    "DCI_Base64Encoder": Base64Encoder,
+    "DCI_FileSaver": DCIFileSaver,
+    "DCI_Analysis": DCIAnalysis,
 }
 
 # Display names for ComfyUI interface
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "DCI_ImageExporter": "DCI Image Exporter",
-    "DCI_ImageExporterAdvanced": "DCI Image Exporter (Advanced)",
-    "DCI_PreviewNode": "DCI Preview",
-    "DCI_FileLoader": "DCI File Loader",
-    "DCI_MetadataExtractor": "DCI Metadata Extractor",
-    "DCI_Image": "DCI Image",
-    "DCI_FileNode": "DCI File",
-    "DCI_PreviewFromBinary": "DCI Preview (Binary)",
-    "DCI_BinaryFileLoader": "Binary File Loader",
-    "DCI_BinaryFileSaver": "Binary File Saver",
-    "DCI_BinaryFileUploader": "Binary File Uploader",
+    "DCI_PreviewNode": t("DCI Preview"),
+    "DCI_Image": t("DCI Image"),
+    "DCI_SampleImage": t("DCI Sample Image"),
+    "DCI_ImagePreview": t("DCI Image Preview"),
+    "DCI_FileNode": t("DCI File"),
+    "DCI_BinaryFileLoader": t("Binary File Loader"),
+    "DCI_BinaryFileSaver": t("Binary File Saver"),
+    "DCI_Base64Decoder": t("Base64 Decoder"),
+    "DCI_Base64Encoder": t("Base64 Encoder"),
+    "DCI_FileSaver": t("DCI File Saver"),
+    "DCI_Analysis": t("DCI Analysis"),
 }
 
 # Extension metadata
@@ -67,7 +90,6 @@ __description__ = "DCI (DSG Combined Icons) format support for ComfyUI"
 # but won't be displayed in the UI
 CUSTOM_DATA_TYPES = {
     "DCI_IMAGE_DATA": "DCI_IMAGE_DATA",
-    "DCI_BINARY_DATA": "DCI_BINARY_DATA",
     "BINARY_DATA": "BINARY_DATA"
 }
 

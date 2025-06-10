@@ -91,13 +91,14 @@ DCI/
 ├── DCI Image Exporter
 ├── DCI Image Exporter (Advanced)
 ├── DCI Preview
-├── DCI File Loader
+
 ├── DCI Metadata Extractor
 ├── DCI Image
 ├── DCI File
 ├── DCI Preview (Binary)
 ├── Binary File Loader
 ├── Binary File Saver
+├── DCI File Saver
 └── Binary File Uploader
 ```
 
@@ -164,7 +165,7 @@ File Entry (72+ bytes):
 ```
 
 #### 1.1.2 DCIIconBuilder 类
-**职责**: 构建符合图标规范的 DCI 文件
+**职责**: 构建符合图标规范的 DCI 文件，完全支持 DCI 规范中的图层系统
 
 **目录结构规范**:
 ```
@@ -174,26 +175,52 @@ size/
         └── priority.padding.palette.hue.saturation.brightness.red.green.blue.alpha.format
 ```
 
+**图层系统设计**:
+根据 DCI 规范，图层文件名包含完整的图层参数：
+- **priority** (1-100): 图层优先级，数值越大绘制越靠上
+- **padding** (0-100): 外边框值（整数），用于阴影效果等
+- **palette** (-1,0,1,2,3): 调色板类型
+  - -1: none (无调色板)
+  - 0: foreground (前景色)
+  - 1: background (背景色)
+  - 2: highlight_foreground (高亮前景色)
+  - 3: highlight (高亮色)
+- **颜色调整参数** (-100 到 100): 精确控制图标颜色
+  - hue: 色调调整
+  - saturation: 饱和度调整
+  - brightness: 亮度调整
+  - red/green/blue: RGB分量调整
+  - alpha: 透明度调整
+
 **关键方法**:
-- `add_icon_image()`: 添加图标图像
+- `add_icon_image()`: 添加图标图像（支持图层参数）
 - `_add_to_structure()`: 构建目录结构
 - `build()`: 生成最终 DCI 文件
+- `_format_layer_filename()`: 格式化图层文件名
 
 **图像处理流程**:
-1. 验证参数 (状态、色调、格式)
+1. 验证参数 (状态、色调、格式、图层参数)
 2. 计算实际尺寸 (size × scale)
 3. 图像重采样 (Lanczos 算法)
 4. 格式转换和压缩
-5. 添加到目录结构
+5. 生成图层文件名 (包含所有图层参数)
+6. 添加到目录结构
+
+**图层文件名生成示例**:
+```
+# 基础图层: 1.0p.-1.0_0_0_0_0_0_0.webp
+# 高优先级图层: 2.5p.1.10_20_30_0_0_0_0.png
+# 调色板图层: 1.0p.2.0_0_0_50_-20_10_0.webp
+```
 
 ### 1.2 DCI 读取模块 (dci_reader.py)
 
 #### 1.2.1 DCIReader 类
-**职责**: 读取和解析 DCI 文件
+**职责**: 读取和解析 DCI 文件，完全支持图层系统的解析
 
 **解析流程**:
 ```
-Binary Data → Header Validation → File Entries → Directory Structure → Image Extraction
+Binary Data → Header Validation → File Entries → Directory Structure → Image Extraction → Layer Parsing
 ```
 
 **关键方法**:
@@ -201,11 +228,39 @@ Binary Data → Header Validation → File Entries → Directory Structure → I
 - `_read_file_entry()`: 读取单个文件条目
 - `_parse_directory_structure()`: 解析目录结构
 - `get_icon_images()`: 提取所有图标图像
+- `_parse_layer_filename()`: 解析图层文件名参数
 
 **元数据提取**:
 - 从路径解析: size, state, tone, scale
-- 从文件名解析: priority, format
+- 从文件名解析: priority, format, padding, palette, 颜色调整参数
 - 图像属性: 尺寸、文件大小
+- 图层属性: 优先级、外边框、调色板类型、颜色调整值
+
+**图层文件名解析算法**:
+```python
+def _parse_layer_filename(self, filename: str) -> Dict:
+    # 解析格式: priority.padding.palette.hue.saturation.brightness.red.green.blue.alpha.format
+    parts = filename.split('.')
+
+    if len(parts) >= 11:  # 完整图层信息
+        return {
+            'priority': safe_int(parts[0], 1),
+            'padding': safe_float(parts[1], 0.0),
+            'palette': safe_int(parts[2], -1),
+            'hue': safe_int(parts[3], 0),
+            'saturation': safe_int(parts[4], 0),
+            'brightness': safe_int(parts[5], 0),
+            'red': safe_int(parts[6], 0),
+            'green': safe_int(parts[7], 0),
+            'blue': safe_int(parts[8], 0),
+            'alpha': safe_int(parts[9], 0),
+            'format': parts[10],
+            'palette_name': palette_names.get(palette, "unknown")
+        }
+```
+
+**图层数据结构**:
+解析后的图像数据包含完整的图层信息，便于后续处理和显示。
 
 #### 1.2.2 DCIPreviewGenerator 类
 **职责**: 生成 DCI 文件的可视化预览
@@ -267,16 +322,73 @@ state_images = {
 ```
 
 ##### DCIPreviewNode 类
-**职责**: DCI 文件预览功能
+**职责**: DCI 文件内容的节点内预览功能
+
+**设计理念**:
+- 直接在节点界面内显示预览内容，无需外部输出
+- 专门用于预览 DCI 二进制数据，简化输入参数
+- 提供即时的可视化反馈，便于用户验证DCI文件内容
+- 总是显示详细元数据信息，提供完整的文件信息
 
 **预览参数**:
-- `dci_file_path`: DCI 文件路径
-- `grid_columns`: 网格列数 (1-10)
-- `show_metadata`: 显示元数据标签
+- `dci_binary_data`: DCI 二进制数据 (必需)
+- `grid_columns`: 网格列数 (1-10，可选，默认1，单列显示)
+- `background_color`: 预览背景色 (可选，默认light_gray)
+- `custom_bg_r/g/b`: 自定义背景色RGB分量 (0-255，可选)
+- `text_font_size`: 文本字号大小 (8-24像素，可选，默认12)
+
+**节点内显示内容**:
+- **图像网格预览**: 自动生成的网格布局，图像居左对齐显示
+- **图标边框系统**: 为每个图标自动绘制边框，清晰显示图标范围
+  - **智能边框颜色算法**: 基于相对亮度计算对比色边框
+  - **精确像素边界**: 边框紧贴图标边缘，准确显示实际尺寸
+  - **多背景适配**: 在所有背景颜色下保持边框可见性
+- **自适应文本格式**: 根据字体大小调整文本显示格式，较大字体使用更紧凑的布局
+- **文件路径始终显示**: 始终显示完整的DCI文件路径列表（如 /235/normal.light/1/1.0.0.0.0.0.0.0.0.0.webp）
+- **详细元数据显示**: 总是显示，包含全面的文件信息和每个图像的详细属性
+  - 📁 DCI 数据源信息
+  - 🖼️ 图像总数和文件总大小（含KB显示）
+  - 📏 支持的图标尺寸列表
+  - 🎭 包含的状态类型
+  - 🎨 支持的色调类型
+  - 🔍 缩放因子列表
+  - 🗂️ 图像格式列表
+  - 📂 完整的DCI内部路径列表（始终显示）
+  - 📋 每个图像的详细信息：
+    - 完整的DCI内部路径和文件名
+    - 尺寸、状态、色调、缩放
+    - 格式、文件大小、实际尺寸
+    - 优先级等属性
+
+**UI输出机制**:
+- 使用ComfyUI的UI输出系统 (`{"ui": {"images": [...], "text": [...]}}`)
+- 图像保存到临时目录并通过UI显示
+- 文本信息直接在节点内展示，支持中文显示
+- 文本格式会根据字体大小自动调整，提供最佳阅读体验
 
 **输出内容**:
-- `preview_image`: 网格预览图像
-- `metadata_summary`: 元数据摘要文本
+- 无外部输出（所有内容在节点内显示）
+
+**优化特性**:
+- 默认单列布局，便于查看详细信息
+- 图像居左对齐，提供更好的视觉体验
+- 详细的中文元数据显示，包含所有DCI图标属性
+- 智能背景色设置，支持多种预设和自定义RGB颜色
+- 自适应文本格式，根据字体大小调整显示布局
+- 文件路径始终显示，提供完整的DCI内部路径信息
+- 移除了 `dci_file_path` 和 `show_file_paths` 参数，简化节点接口
+- 保留了 `text_font_size` 参数，支持用户自定义文本大小
+
+**图标边框技术实现**:
+- **边框绘制算法**: 在 `DCIPreviewGenerator._draw_image_cell()` 方法中实现
+- **边框颜色计算**: 使用 sRGB 相对亮度公式计算背景亮度
+  ```python
+  luminance = 0.2126 * r_linear + 0.7152 * g_linear + 0.0722 * b_linear
+  ```
+- **对比色选择**: 亮度 > 0.5 使用深色边框 (128,128,128)，否则使用浅色边框 (192,192,192)
+- **边框定位**: 边框坐标为图像位置减1像素，确保完全包围图标
+- **绘制参数**: 使用1像素宽度的矩形边框，保持简洁美观
+- **多背景兼容**: 在所有20种预设背景色下都能提供清晰的边框显示
 
 ##### DCIFileLoader 类
 **职责**: DCI 文件加载器
@@ -301,80 +413,102 @@ state_images = {
 #### 1.3.2 重构节点（推荐使用）
 
 ##### DCIImage 类
-**职责**: 创建单个 DCI 图像数据，输出元数据而不是直接创建文件
+**职责**: 创建单个 DCI 图像数据，输出元数据而不是直接创建文件，完全支持 DCI 规范中的图层系统
 
 **设计理念**:
 - 模块化设计，提供更灵活的工作流程
 - 输出结构化数据而非文件，支持节点间数据传递
 - 支持复杂的多图像组合场景
+- 完整实现 DCI 规范的图层功能，包括优先级、外边框、调色板和颜色调整
 
 **输入参数**:
+
+*基础参数*:
 - `image`: ComfyUI 图像张量
 - `icon_size`: 图标尺寸 (16-1024)
 - `icon_state`: 图标状态 (normal/disabled/hover/pressed)
 - `tone_type`: 色调类型 (light/dark)
-- `scale`: 缩放因子 (1-10)
+- `scale`: 缩放因子 (0.1-10.0，支持小数)
 - `image_format`: 图像格式 (webp/png/jpg)
+
+*背景色设置*:
+- `background_color`: 背景色处理 (transparent/white/black/custom)
+- `custom_bg_r/g/b`: 自定义背景色RGB分量 (0-255)
+
+*图层系统参数（符合 DCI 规范）*:
+- `layer_priority`: 图层优先级 (1-100)，控制绘制顺序
+- `layer_padding`: 外边框值 (0-100)，用于阴影效果
+- `palette_type`: 调色板类型 (none/foreground/background/highlight_foreground/highlight)
+- `hue_adjustment`: 色调调整 (-100 到 100)
+- `saturation_adjustment`: 饱和度调整 (-100 到 100)
+- `brightness_adjustment`: 亮度调整 (-100 到 100)
+- `red_adjustment`: 红色分量调整 (-100 到 100)
+- `green_adjustment`: 绿色分量调整 (-100 到 100)
+- `blue_adjustment`: 蓝色分量调整 (-100 到 100)
+- `alpha_adjustment`: 透明度调整 (-100 到 100)
 
 **输出数据结构**:
 ```python
 DCI_IMAGE_DATA = {
-    'path': str,           # 目录路径
-    'filename': str,       # 文件名
+    'path': str,           # DCI内部路径 (如: "256/normal.light/1.0/1.0.-1.0.0.0.0.0.0.0.webp")
     'content': bytes,      # 图像二进制数据
-    'metadata': {          # 元数据
-        'size': int,
-        'state': str,
-        'tone': str,
-        'scale': int,
-        'format': str,
-        'file_size': int,
-        'image_dimensions': tuple
-    }
+    'size': int,           # 图标尺寸
+    'state': str,          # 图标状态
+    'tone': str,           # 色调类型
+    'scale': float,        # 缩放因子
+    'format': str,         # 图像格式
+    'actual_size': int,    # 实际图像尺寸
+    'file_size': int,      # 文件大小
+    'background_color': str, # 背景色处理方式
+    'pil_image': PIL.Image,  # PIL图像对象（调试用）
+
+    # 图层系统元数据
+    'layer_priority': int,        # 图层优先级
+    'layer_padding': int,         # 外边框值
+    'palette_type': str,          # 调色板类型名称
+    'palette_value': int,         # 调色板数值
+    'hue_adjustment': int,        # 色调调整
+    'saturation_adjustment': int, # 饱和度调整
+    'brightness_adjustment': int, # 亮度调整
+    'red_adjustment': int,        # 红色调整
+    'green_adjustment': int,      # 绿色调整
+    'blue_adjustment': int,       # 蓝色调整
+    'alpha_adjustment': int,      # 透明度调整
 }
 ```
 
 **处理流程**:
 1. 张量转换为 PIL 图像
-2. 图像缩放和格式转换
-3. 生成目录路径和文件名
-4. 创建元数据结构
-5. 返回结构化数据
+2. 处理背景色（如需要）
+3. 图像缩放和格式转换
+4. 转换调色板类型为数值
+5. 生成包含图层参数的 DCI 路径
+6. 创建包含图层信息的元数据结构
+7. 返回完整的结构化数据
+
+**图层文件名生成**:
+根据 DCI 规范，自动生成格式为 `优先级.外边框p.调色板.色调_饱和度_亮度_红_绿_蓝_透明度.格式` 的文件名。
 
 ##### DCIFileNode 类
 **职责**: 接收多个 DCI Image 输出并组合成完整的 DCI 文件
 
 **设计理念**:
 - 支持最多12个图像输入的灵活组合
-- 输出二进制数据流，支持进一步处理
-- 可选文件保存功能
+- 专注于生成二进制数据，遵循单一职责原则
+- 文件保存功能由专门的 Binary File Saver 节点处理
 
 **输入参数**:
 - `dci_image_1` 到 `dci_image_12`: DCI图像数据 (可选)
-- `filename`: 文件名
-- `save_to_file`: 是否保存到文件
-- `output_directory`: 输出目录
 
-**输出数据结构**:
-```python
-DCI_BINARY_DATA = {
-    'data': bytes,         # DCI文件二进制数据
-    'metadata': {          # 文件元数据
-        'file_count': int,
-        'total_size': int,
-        'images': list,    # 图像元数据列表
-        'directory_structure': dict
-    }
-}
-```
+**输出**:
+- `dci_binary_data` (BINARY_DATA): DCI文件的二进制数据
 
 **处理流程**:
 1. 收集所有输入的 DCI 图像数据
 2. 按目录结构组织文件
 3. 创建 DCI 文件对象
 4. 生成二进制数据
-5. 可选保存到文件
-6. 返回二进制数据和路径
+5. 返回二进制数据
 
 ##### DCIPreviewFromBinary 类
 **职责**: 从二进制 DCI 数据创建可视化预览
@@ -385,7 +519,7 @@ DCI_BINARY_DATA = {
 - 无需文件系统操作
 
 **输入参数**:
-- `dci_binary_data`: DCI文件的二进制数据
+- `dci_binary_data`: DCI文件的二进制数据 (BINARY_DATA)
 - `grid_columns`: 网格列数 (1-10)
 - `show_metadata`: 显示元数据
 
@@ -395,6 +529,42 @@ DCI_BINARY_DATA = {
 3. 生成网格预览
 4. 创建元数据摘要
 5. 返回预览图像和摘要
+
+#### 3. DCI Preview（DCI 预览）
+**节点类别**：`DCI/Preview`
+**功能描述**：直接在节点内显示 DCI 文件内容的可视化预览和详细元数据信息。专门用于预览 DCI 二进制数据，现支持将Light和Dark相关内容分开显示。
+
+**必需输入参数：**
+- **`dci_binary_data`** (BINARY_DATA)：DCI 文件的二进制数据
+
+**可选输入参数：**
+- **`light_background_color`** (COMBO)：Light主题预览背景色，默认light_gray
+- **`dark_background_color`** (COMBO)：Dark主题预览背景色，默认dark_gray
+- **`text_font_size`** (INT)：文本字号大小（8-24像素），默认12
+
+**背景颜色选项：**
+支持20种预设颜色，包括：
+- **基础色**：light_gray、dark_gray、white、black
+- **特殊背景**：transparent、checkerboard
+- **彩色选项**：blue、green、red、yellow、cyan、magenta、orange、purple、pink、brown、navy、teal、olive、maroon
+
+**节点内预览功能：**
+- **双列布局**：Light主题图标在左列，Dark主题图标在右列
+- **独立背景设置**：Light和Dark主题可设置不同的背景颜色
+- **丰富背景色选项**：每种主题支持20种预设背景色，包括特殊的透明和棋盘格背景
+- **自适应文本格式**：根据字体大小调整文本显示格式，较大字体使用更紧凑的布局
+- **文件路径分组显示**：Light、Dark和其他色调图标的路径分别显示
+- **详细元数据显示**：在节点内显示全面的文件信息，包括：
+  - 图标尺寸、状态、色调、缩放因子
+  - 图像格式、文件大小、实际尺寸
+  - 完整的DCI内部路径和文件名
+  - 每个图像的优先级和详细属性
+  - 统计汇总信息和文件路径列表
+
+**输出：**
+- 无输出（所有预览内容直接在节点内显示）
+
+**注意**：此节点专门用于处理二进制数据输入，不再需要手动设置列数，默认将Light和Dark内容分开显示在两列。Light主题图标固定在左侧列，Dark主题图标固定在右侧列。文本格式会根据字体大小自动调整，提供最佳阅读体验。背景颜色选择简化为预设选项，移除了自定义RGB设置以提供更好的用户体验。
 
 ## 2. 数据结构设计
 
@@ -441,7 +611,7 @@ DCI_IMAGE_DATA = {
         'size': int,         # 图标尺寸
         'state': str,        # 图标状态
         'tone': str,         # 色调类型
-        'scale': int,        # 缩放因子
+        'scale': float,      # 缩放因子（支持小数）
         'format': str,       # 图像格式
         'file_size': int,    # 文件大小
         'image_dimensions': tuple,  # 图像尺寸 (width, height)
@@ -459,55 +629,16 @@ DCI_IMAGE_DATA = {
 }
 ```
 
-#### DCI_BINARY_DATA 类型
-```python
-DCI_BINARY_DATA = {
-    'data': bytes,           # 完整的DCI文件二进制数据
-    'metadata': {            # 文件级元数据
-        'file_count': int,   # 文件总数
-        'total_size': int,   # 总文件大小
-        'magic': bytes,      # 魔数标识
-        'version': int,      # 格式版本
-        'images': [          # 图像元数据列表
-            {
-                'path': str,
-                'filename': str,
-                'size': int,
-                'state': str,
-                'tone': str,
-                'scale': int,
-                'format': str,
-                'file_size': int,
-                'image_dimensions': tuple
-            }
-        ],
-        'directory_structure': {  # 目录结构映射
-            'size_dirs': list,    # 尺寸目录列表
-            'state_tone_dirs': list,  # 状态.色调目录列表
-            'scale_dirs': list,   # 缩放目录列表
-            'supported_formats': list,  # 支持的格式列表
-            'statistics': {       # 统计信息
-                'total_images': int,
-                'unique_sizes': int,
-                'unique_states': int,
-                'unique_tones': int,
-                'unique_scales': int,
-                'format_distribution': dict
-            }
-        }
-    }
-}
-```
-
 #### BINARY_DATA 类型
 ```python
-BINARY_DATA = {
-    'content': bytes,        # 文件的二进制内容
-    'filename': str,         # 文件名
-    'size': int,            # 文件大小（字节）
-    'source_path': str      # 原始文件路径
-}
+BINARY_DATA = bytes         # 直接的二进制数据内容，适用于所有二进制文件包括DCI文件
 ```
+
+**说明**：
+- `BINARY_DATA` 是统一的二进制数据类型，用于所有节点间的二进制数据传递
+- 包含完整的文件二进制内容，可以是DCI文件、图像文件或其他任何二进制文件
+- 不包含额外的元数据包装，保持数据的纯净性和通用性
+- 所有二进制处理节点（DCIFileNode、DCIPreviewNode、BinaryFileLoader、BinaryFileSaver）都使用此类型
 
 #### 1.3.3 二进制文件处理节点（新增）
 
@@ -518,19 +649,20 @@ BINARY_DATA = {
 - 提供通用的二进制文件加载能力
 - 支持任意二进制文件格式，特别优化 DCI 文件
 - 输出结构化的二进制数据，便于后续节点处理
+- 支持通过其他节点输入文件路径，提供更灵活的工作流程
 
 **输入参数**:
-- `file_path`: 要加载的文件路径 (STRING)
+- `file_path`: 要加载的文件路径 (STRING, 可选)，可通过其他节点输入或手动输入，默认空字符串
 
 **输出数据**:
-- `binary_data`: 包含文件内容和元数据的二进制数据结构 (BINARY_DATA)
+- `binary_data`: 文件的二进制内容 (BINARY_DATA)
+- `file_path`: 加载文件的完整路径 (STRING)
 
 **处理流程**:
 1. 验证文件路径的有效性和可读性
 2. 读取文件的二进制内容
-3. 提取文件元数据（文件名、大小、路径）
-4. 构建 BINARY_DATA 结构
-5. 返回结构化的二进制数据
+3. 直接返回二进制数据，不进行任何包装或元数据添加
+4. 返回文件路径用于后续处理
 
 **错误处理**:
 - 文件不存在或无法读取时返回错误信息
@@ -573,64 +705,19 @@ else:
     final_path = os.path.join(output_dir, file_path)
 ```
 
-##### BinaryFileUploader 类
-**职责**: 浏览和选择目录中的二进制文件，提供文件发现和选择功能
-
-**设计理念**:
-- 提供文件浏览和选择功能
-- 支持文件模式匹配和过滤
-- 与 ComfyUI 的输入目录系统集成
-
-**输入参数**:
-- `search_directory`: 搜索目录，可选 (STRING)
-- `file_pattern`: 文件匹配模式，可选 (STRING)
-
-**输出数据**:
-- `binary_data`: 选中文件的二进制数据 (BINARY_DATA)
-- `file_path`: 选中文件的完整路径 (STRING)
-
-**处理流程**:
-1. 确定搜索目录
-   - 如果指定了 search_directory，使用该目录
-   - 否则使用 ComfyUI 的默认输入目录
-2. 应用文件模式匹配
-   - 支持通配符模式（如 *.dci, *.png）
-   - 默认匹配所有文件（*）
-3. 扫描目录并列出匹配的文件
-4. 选择第一个匹配的文件（或提供选择机制）
-5. 加载选中文件的二进制数据
-6. 返回文件数据和路径
-
-**文件发现算法**:
-```python
-import glob
-import os
-
-def discover_files(search_dir, pattern):
-    search_pattern = os.path.join(search_dir, pattern)
-    matching_files = glob.glob(search_pattern)
-    return sorted(matching_files)  # 按名称排序
-```
-
-**使用示例**:
-- 设置 `file_pattern` 为 `"*.dci"` 来只查找 DCI 文件
-- 设置 `search_directory` 指定特定的搜索目录
-- 节点会自动选择匹配的第一个文件并显示可用文件列表
-
 ### 2.3 数据流转换
 
 #### 节点间数据传递
 ```
 # 主要工作流程
-DCIImage → DCI_IMAGE_DATA → DCIFileNode → DCI_BINARY_DATA → DCIPreviewFromBinary
+DCIImage → DCI_IMAGE_DATA → DCIFileNode → BINARY_DATA → DCIPreviewNode
 
 # 二进制文件处理工作流程
 BinaryFileLoader → BINARY_DATA → BinaryFileSaver
-BinaryFileUploader → BINARY_DATA → BinaryFileSaver
 
 # 混合工作流程
-BinaryFileLoader → BINARY_DATA → DCIPreviewFromBinary (如果是DCI文件)
-DCIFileNode → DCI_BINARY_DATA → BinaryFileSaver (保存DCI文件)
+BinaryFileLoader → BINARY_DATA → DCIPreviewNode (如果是DCI文件)
+DCIFileNode → BINARY_DATA → BinaryFileSaver (保存DCI文件)
 ```
 
 #### 数据类型注册
@@ -638,15 +725,14 @@ DCIFileNode → DCI_BINARY_DATA → BinaryFileSaver (保存DCI文件)
 # ComfyUI 自定义数据类型注册
 NODE_CLASS_MAPPINGS = {
     "DCI_IMAGE_DATA": "DCI_IMAGE_DATA",
-    "DCI_BINARY_DATA": "DCI_BINARY_DATA",
     "BINARY_DATA": "BINARY_DATA"
 }
 ```
 
 #### 数据类型兼容性
-- `BINARY_DATA` 是通用的二进制数据类型，适用于任何二进制文件
-- `DCI_BINARY_DATA` 是专门的 DCI 文件数据类型，包含 DCI 特定的元数据
-- 两种类型可以通过适配器模式进行转换
+- `BINARY_DATA` 是通用的二进制数据类型，适用于任何二进制文件，包括DCI文件
+- `DCI_IMAGE_DATA` 是专门的 DCI 图像数据类型，包含图像内容和元数据
+- 所有节点使用统一的 `BINARY_DATA` 类型进行二进制数据传递，确保完全兼容
 
 ## 3. 算法设计
 
@@ -765,3 +851,128 @@ class PreviewRenderer:
         """渲染单个预览单元格"""
         pass
 ```
+
+## 8. 发布与分发设计
+
+### 8.1 ComfyUI Registry 发布
+
+#### 8.1.1 发布配置
+项目已配置完整的 ComfyUI Registry 发布支持：
+
+**pyproject.toml 配置**:
+```toml
+[project]
+name = "comfyui-dci"
+description = "A comprehensive ComfyUI extension for creating, previewing, and analyzing DCI (DSG Combined Icons) format files."
+version = "1.0.0"
+license = { file = "LICENSE" }
+dependencies = ["Pillow>=8.0.0", "numpy>=1.19.0"]
+
+[tool.comfy]
+PublisherId = ""  # 需要填入实际的发布者ID
+DisplayName = "DCI Image Export Extension"
+Icon = "https://raw.githubusercontent.com/your-username/comfyui-dci/master/resources/icon.svg"
+```
+
+**许可证文件**: MIT License，确保开源兼容性
+
+**项目图标**: SVG格式图标，符合Registry要求
+
+#### 8.1.2 自动化发布流程
+**GitHub Actions 工作流**:
+- 监听 `pyproject.toml` 文件变更
+- 自动触发发布到 ComfyUI Registry
+- 支持手动触发发布
+- 使用安全的 API 密钥管理
+
+**版本管理策略**:
+- 遵循语义化版本规范 (SemVer)
+- 主版本号：重大架构变更
+- 次版本号：新功能添加
+- 修订版本号：错误修复和小改进
+
+#### 8.1.3 发布前检查清单
+1. **代码质量**:
+   - 所有测试通过
+   - 代码风格一致
+   - 文档完整更新
+
+2. **功能验证**:
+   - 所有节点正常工作
+   - 示例工作流可执行
+   - 错误处理正确
+
+3. **兼容性测试**:
+   - 多版本 ComfyUI 兼容
+   - 依赖库版本兼容
+   - 操作系统兼容性
+
+### 8.2 分发策略
+
+#### 8.2.1 多渠道分发
+1. **ComfyUI Registry** (主要渠道):
+   - 官方推荐安装方式
+   - 自动更新支持
+   - 用户发现性最佳
+
+2. **GitHub Releases** (备用渠道):
+   - 直接下载支持
+   - 版本历史完整
+   - 开发者友好
+
+3. **ComfyUI Manager** (集成渠道):
+   - 通过 Registry 自动集成
+   - 一键安装体验
+   - 依赖管理自动化
+
+#### 8.2.2 安装方式设计
+**优先级排序**:
+1. ComfyUI Manager 一键安装 (推荐)
+2. 自动安装脚本 (install.sh/install.bat)
+3. 手动安装 (高级用户)
+
+**安装脚本特性**:
+- 自动检测 Python 环境
+- 智能依赖安装
+- 错误处理和回滚
+- 跨平台兼容
+
+### 8.3 用户支持设计
+
+#### 8.3.1 文档体系
+1. **README.md**: 快速入门和基本使用
+2. **PUBLISHING.md**: 发布流程详细说明
+3. **detailed-design.md**: 技术实现细节
+4. **examples/**: 实际使用示例
+
+#### 8.3.2 问题反馈机制
+- GitHub Issues: 错误报告和功能请求
+- 详细的错误信息输出
+- 调试模式支持
+- 社区支持渠道
+
+#### 8.3.3 更新通知
+- Registry 自动更新通知
+- 版本变更日志
+- 重要更新公告
+- 兼容性说明
+
+### 8.4 质量保证
+
+#### 8.4.1 发布前测试
+- 自动化测试套件
+- 手动功能验证
+- 性能基准测试
+- 兼容性测试矩阵
+
+#### 8.4.2 发布后监控
+- 用户反馈收集
+- 错误报告分析
+- 使用统计分析
+- 性能监控
+
+#### 8.4.3 维护策略
+- 定期安全更新
+- 依赖库更新
+- 功能改进迭代
+- 社区贡献集成

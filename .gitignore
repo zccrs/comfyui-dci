@@ -153,3 +153,5 @@ temp/
 
 # Spec story files (if not needed in version control)
 .specstory/
+
+ddciicon.cpp
