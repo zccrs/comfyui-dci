@@ -139,10 +139,8 @@ pip install -r requirements.txt
 
 #### DCI/Preview（预览）
 - DCI_PreviewNode (DCI Preview)
-- DCI_StructureNode (DCI Structure Preview)
-
-#### Preview（预览）
 - DCI_ImagePreview (DCI Image Preview)
+- DCI_StructureNode (DCI Structure Preview)
 
 #### DCI/Files（文件处理）
 - DCI_BinaryFileLoader (Binary File Loader)
@@ -284,7 +282,7 @@ pip install -r requirements.txt
 **注意**：此节点专门用于处理二进制数据输入。不需要手动设置列数，默认将Light和Dark内容分开显示在两列，Light主题图标固定在左侧列，Dark主题图标固定在右侧列。文本格式会根据字体大小自动调整，提供最佳阅读体验。背景颜色选择简化为预设选项，移除了自定义RGB设置以提供更好的用户体验。
 
 #### 5. DCI Image Preview（DCI 图像预览）
-**节点类别**：`Preview`
+**节点类别**：`DCI/Preview`
 **功能描述**：专门用于预览单个 DCI 图像数据，提供简洁的图像预览功能。
 
 **必需输入参数：**

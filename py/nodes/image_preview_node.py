@@ -26,7 +26,7 @@ class DCIImagePreview(BaseNode):
     RETURN_TYPES = ()
     RETURN_NAMES = ()
     FUNCTION = "execute"
-    CATEGORY = "Preview"
+    CATEGORY = "DCI/Preview"
     OUTPUT_NODE = True
 
     def _execute(self, dci_image_data, preview_background="checkerboard"):
