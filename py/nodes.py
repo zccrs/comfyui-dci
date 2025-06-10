@@ -36,7 +36,6 @@ class DCIPreviewNode:
                 "custom_bg_g": ("INT", {"default": 240, "min": 0, "max": 255, "step": 1}),
                 "custom_bg_b": ("INT", {"default": 240, "min": 0, "max": 255, "step": 1}),
                 "text_font_size": ("INT", {"default": 12, "min": 8, "max": 24, "step": 1}),
-                "show_file_paths": ("BOOLEAN", {"default": True}),
             }
         }
 
@@ -46,7 +45,7 @@ class DCIPreviewNode:
     CATEGORY = "DCI/Preview"
     OUTPUT_NODE = True
 
-    def preview_dci(self, dci_binary_data, grid_columns=1, background_color="light_gray", custom_bg_r=240, custom_bg_g=240, custom_bg_b=240, text_font_size=12, show_file_paths=True):
+    def preview_dci(self, dci_binary_data, grid_columns=1, background_color="light_gray", custom_bg_r=240, custom_bg_g=240, custom_bg_b=240, text_font_size=12):
         """Preview DCI file contents with in-node display"""
 
         try:
@@ -74,7 +73,7 @@ class DCIPreviewNode:
             preview_base64 = self._pil_to_base64(preview_image)
 
             # Generate detailed metadata summary
-            summary_text = self._format_detailed_summary(images, source_name, text_font_size, show_file_paths)
+            summary_text = self._format_detailed_summary(images, source_name, text_font_size)
 
             # Create UI output with image and text
             ui_output = {
@@ -148,7 +147,7 @@ class DCIPreviewNode:
             "type": "temp"
         }
 
-    def _format_detailed_summary(self, images, source_name, font_size=12, show_file_paths=True):
+    def _format_detailed_summary(self, images, source_name, text_font_size=12):
         """Format detailed metadata summary as text with comprehensive information"""
         if not images:
             return "No images available"
@@ -165,50 +164,48 @@ class DCIPreviewNode:
         formats = sorted(set(img['format'] for img in images))
         paths = sorted(set(img['path'] for img in images))
 
-        # Create font size style tag for HTML formatting
-        font_style = f'<span style="font-size: {font_size}px; font-family: monospace;">'
-        font_end = '</span>'
+        # Adjust spacing based on font size
+        # For smaller font sizes, use more detailed format; for larger fonts use more compact format
+        spacing = "" if text_font_size <= 10 else "\n"
+        indentation = "   " if text_font_size <= 14 else " "
+        separator = "=" * max(20, 50 - text_font_size)
 
-        # Build detailed summary with HTML formatting
+        # Build detailed summary with font size adaptations
         lines = [
-            font_style,
-            f"📁 DCI 数据源: {source_name}",
+            f"📁 DCI 数据源: {source_name} (字体大小: {text_font_size})",
             f"🖼️  图像总数: {total_images}",
             f"📊 文件总大小: {total_file_size:,} 字节 ({total_file_size/1024:.1f} KB)",
             "",
             "📏 图标尺寸:",
-            f"   {', '.join(f'{size}px' for size in sizes)}",
+            f"{indentation}{', '.join(f'{size}px' for size in sizes)}",
             "",
             "🎭 图标状态:",
-            f"   {', '.join(states)}",
+            f"{indentation}{', '.join(states)}",
             "",
             "🎨 色调类型:",
-            f"   {', '.join(tones)}",
+            f"{indentation}{', '.join(tones)}",
             "",
             "🔍 缩放因子:",
-            f"   {', '.join(f'{scale:g}x' for scale in scales)}",
+            f"{indentation}{', '.join(f'{scale:g}x' for scale in scales)}",
             "",
             "🗂️  图像格式:",
-            f"   {', '.join(formats)}",
+            f"{indentation}{', '.join(formats)}",
+            "",
+            "📂 文件路径列表:",
         ]
 
-        # Add file paths section if enabled
-        if show_file_paths:
-            lines.extend([
-                "",
-                "📂 文件路径列表:",
-            ])
-            # Sort images for consistent display and extract full paths
-            sorted_images = sorted(images, key=lambda x: (x['size'], x['state'], x['tone'], x['scale']))
-            for img in sorted_images:
-                # Construct full DCI path like /235/normal.light/1/1.0.0.0.0.0.0.0.0.0.webp
-                full_path = f"/{img['path']}/{img['filename']}"
-                lines.append(f"   {full_path}")
+        # Always show file paths
+        # Sort images for consistent display and extract full paths
+        sorted_images = sorted(images, key=lambda x: (x['size'], x['state'], x['tone'], x['scale']))
+        for img in sorted_images:
+            # Construct full DCI path like /235/normal.light/1/1.0.0.0.0.0.0.0.0.0.webp
+            full_path = f"/{img['path']}/{img['filename']}"
+            lines.append(f"{indentation}{full_path}")
 
         lines.extend([
             "",
             "📋 详细图像信息:",
-            "=" * 50
+            separator
         ])
 
         # Sort images for consistent display
@@ -219,22 +216,32 @@ class DCIPreviewNode:
             # Construct full DCI path
             full_path = f"/{img['path']}/{img['filename']}"
 
-            image_info = [
-                f"图像 #{i}:",
-                f"  📁 完整路径: {full_path}",
-                f"  📏 图标尺寸: {img['size']}px",
-                f"  🎭 状态: {img['state']}",
-                f"  🎨 色调: {img['tone']}",
-                f"  🔍 缩放因子: {img['scale']:g}x",
-                f"  🗂️  图像格式: {img['format']}",
-                f"  📊 文件大小: {img['file_size']:,} 字节",
-                f"  🖼️  实际尺寸: {img['image'].size[0]}×{img['image'].size[1]}px",
-                f"  🎯 优先级: {img.get('priority', 1)}",
-                ""
-            ]
+            # Adjust detail level based on font size
+            if text_font_size >= 16:
+                # More compact format for larger fonts
+                image_info = [
+                    f"图像 #{i}: {img['size']}px {img['state']}.{img['tone']} {img['scale']:g}x {img['format']}",
+                    f"{indentation}路径: {full_path}",
+                    f"{indentation}大小: {img['file_size']:,}字节 ({img['image'].size[0]}×{img['image'].size[1]}px)",
+                    ""
+                ]
+            else:
+                # Detailed format for smaller fonts
+                image_info = [
+                    f"图像 #{i}:",
+                    f"{indentation}📁 完整路径: {full_path}",
+                    f"{indentation}📏 图标尺寸: {img['size']}px",
+                    f"{indentation}🎭 状态: {img['state']}",
+                    f"{indentation}🎨 色调: {img['tone']}",
+                    f"{indentation}🔍 缩放因子: {img['scale']:g}x",
+                    f"{indentation}🗂️  图像格式: {img['format']}",
+                    f"{indentation}📊 文件大小: {img['file_size']:,} 字节",
+                    f"{indentation}🖼️  实际尺寸: {img['image'].size[0]}×{img['image'].size[1]}px",
+                    f"{indentation}🎯 优先级: {img.get('priority', 1)}",
+                    ""
+                ]
             lines.extend(image_info)
 
-        lines.append(font_end)
         return "\n".join(lines)
 
 
