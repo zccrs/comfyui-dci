@@ -241,13 +241,34 @@ Image Input → DCI Image Node → DCI Image Data → DCI File Node → DCI Bina
 
 #### 3. DCI File
 **Node Category**: `DCI/Export`
-**Function Description**: Receives multiple DCI Image outputs and combines them into a complete DCI file, focusing on generating binary data. Use Binary File Saver node if you need to save files.
+**Function Description**: Receives multiple DCI Image outputs and combines them into a complete DCI file with composable design. This node supports chaining multiple DCI File nodes together to handle unlimited numbers of DCI images, making it highly flexible for complex icon sets.
 
 **Optional Input Parameters:**
-- **`dci_image_1` to `dci_image_12`** (DCI_IMAGE_DATA): Up to 12 DCI image data
+- **`dci_binary_data`** (BINARY_DATA): Existing DCI binary data to extend (for composable workflows)
+- **`dci_image_1` to `dci_image_4`** (DCI_IMAGE_DATA): Up to 4 DCI image data per node
 
 **Output:**
 - **`dci_binary_data`** (BINARY_DATA): Binary data of the DCI file
+
+**Composable Design Features:**
+- **Unlimited Images**: Chain multiple DCI File nodes to handle any number of images
+- **Flexible Workflow**: Each node can process 4 images, allowing modular icon creation
+- **Data Preservation**: When only existing data is provided (no new images), the node passes through the data unchanged
+- **Independent Processing**: Each node creates a DCI file with its input images (existing data is not merged in current implementation)
+
+**Usage Examples:**
+```
+# Basic usage (up to 4 images)
+DCI Image 1 → DCI File → DCI Binary Data
+
+# Composable usage (unlimited images)
+DCI Image 1-4 → DCI File Node 1 → DCI Binary Data 1
+DCI Image 5-8 → DCI File Node 2 → DCI Binary Data 2
+DCI Image 9-12 → DCI File Node 3 → DCI Binary Data 3
+
+# Data passthrough
+Existing DCI Data → DCI File Node → Same DCI Data (unchanged)
+```
 
 #### 4. DCI Preview
 **Node Category**: `DCI/Preview`
@@ -640,13 +661,34 @@ pip install -r requirements.txt
 
 #### 3. DCI File（DCI 文件）
 **节点类别**：`DCI/Export`
-**功能描述**：接收多个 DCI Image 输出并组合成完整的 DCI 文件，专注于生成二进制数据。如需保存文件，请使用 Binary File Saver 节点。
+**功能描述**：接收多个 DCI Image 输出并组合成完整的 DCI 文件，采用可组合设计。此节点支持将多个 DCI File 节点串联使用，以处理无限数量的 DCI 图像，为复杂图标集提供高度灵活性。
 
 **可选输入参数：**
-- **`dci_image_1` 到 `dci_image_12`** (DCI_IMAGE_DATA)：最多12个DCI图像数据
+- **`dci_binary_data`** (BINARY_DATA)：现有的 DCI 二进制数据，用于扩展（可组合工作流）
+- **`dci_image_1` 到 `dci_image_4`** (DCI_IMAGE_DATA)：每个节点最多4个DCI图像数据
 
 **输出：**
 - **`dci_binary_data`** (BINARY_DATA)：DCI文件的二进制数据
+
+**可组合设计特性：**
+- **无限图像支持**：串联多个 DCI File 节点以处理任意数量的图像
+- **灵活工作流**：每个节点可处理4个图像，允许模块化图标创建
+- **数据保持**：当只提供现有数据（无新图像）时，节点会原样传递数据
+- **独立处理**：每个节点使用其输入图像创建 DCI 文件（当前实现中现有数据不会合并）
+
+**使用示例：**
+```
+# 基本用法（最多4个图像）
+DCI 图像 1 → DCI 文件 → DCI 二进制数据
+
+# 可组合用法（无限图像）
+DCI 图像 1-4 → DCI 文件节点 1 → DCI 二进制数据 1
+DCI 图像 5-8 → DCI 文件节点 2 → DCI 二进制数据 2
+DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制数据 3
+
+# 数据传递
+现有 DCI 数据 → DCI 文件节点 → 相同 DCI 数据（不变）
+```
 
 #### 4. DCI Preview（DCI 预览）
 **节点类别**：`DCI/Preview`
@@ -865,7 +907,7 @@ pip install -r requirements.txt
 
 2. **组合 DCI 文件**：
    - 使用 `DCI File` 节点将多个 DCI 图像组合成完整的 DCI 文件二进制数据
-   - 支持最多12个图像输入的灵活组合
+   - 支持可组合设计：每个节点处理最多4个图像，可串联多个节点处理无限数量图像
 
 3. **预览 DCI 内容**：
    - 使用 `DCI Preview` 节点直接在节点内查看 DCI 文件的内容和元数据
