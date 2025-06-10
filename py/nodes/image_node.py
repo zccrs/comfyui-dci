@@ -124,6 +124,35 @@ class DCIImage(BaseNode):
         # Resize image to target size
         resized_image = pil_image.resize((actual_size, actual_size), Image.Resampling.LANCZOS)
 
+        # Convert translated values back to original English for DCI path
+        # DCI file structure must use original English values, not translations
+        def _translate_to_original(value, value_type):
+            """Convert translated UI values back to original English for DCI file structure"""
+            if value_type == "state":
+                state_map = {
+                    t("normal"): "normal",
+                    t("disabled"): "disabled",
+                    t("hover"): "hover",
+                    t("pressed"): "pressed"
+                }
+                return state_map.get(value, value)  # fallback to original if not found
+            elif value_type == "tone":
+                tone_map = {
+                    t("light"): "light",
+                    t("dark"): "dark"
+                }
+                return tone_map.get(value, value)  # fallback to original if not found
+            elif value_type == "palette":
+                palette_map = {
+                    t("none"): "none",
+                    t("foreground"): "foreground",
+                    t("background"): "background",
+                    t("highlight_foreground"): "highlight_foreground",
+                    t("highlight"): "highlight"
+                }
+                return palette_map.get(value, value)  # fallback to original if not found
+            return value
+
         # Convert palette type to numeric value according to DCI specification
         # Use original English values for palette mapping
         original_palette_type = _translate_to_original(palette_type, "palette")
@@ -163,35 +192,6 @@ class DCIImage(BaseNode):
             resized_image.save(img_bytes, format='JPEG', quality=90)
 
         img_content = img_bytes.getvalue()
-
-        # Convert translated values back to original English for DCI path
-        # DCI file structure must use original English values, not translations
-        def _translate_to_original(value, value_type):
-            """Convert translated UI values back to original English for DCI file structure"""
-            if value_type == "state":
-                state_map = {
-                    t("normal"): "normal",
-                    t("disabled"): "disabled",
-                    t("hover"): "hover",
-                    t("pressed"): "pressed"
-                }
-                return state_map.get(value, value)  # fallback to original if not found
-            elif value_type == "tone":
-                tone_map = {
-                    t("light"): "light",
-                    t("dark"): "dark"
-                }
-                return tone_map.get(value, value)  # fallback to original if not found
-            elif value_type == "palette":
-                palette_map = {
-                    t("none"): "none",
-                    t("foreground"): "foreground",
-                    t("background"): "background",
-                    t("highlight_foreground"): "highlight_foreground",
-                    t("highlight"): "highlight"
-                }
-                return palette_map.get(value, value)  # fallback to original if not found
-            return value
 
         # Convert values to original English for DCI path
         original_icon_state = _translate_to_original(icon_state, "state")
