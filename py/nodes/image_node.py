@@ -148,9 +148,43 @@ class DCIImage(BaseNode):
 
         img_content = img_bytes.getvalue()
 
-        # Create DCI path with layer parameters
+        # Convert translated values back to original English for DCI path
+        # DCI file structure must use original English values, not translations
+        def _translate_to_original(value, value_type):
+            """Convert translated UI values back to original English for DCI file structure"""
+            if value_type == "state":
+                state_map = {
+                    t("normal"): "normal",
+                    t("disabled"): "disabled",
+                    t("hover"): "hover",
+                    t("pressed"): "pressed"
+                }
+                return state_map.get(value, value)  # fallback to original if not found
+            elif value_type == "tone":
+                tone_map = {
+                    t("light"): "light",
+                    t("dark"): "dark"
+                }
+                return tone_map.get(value, value)  # fallback to original if not found
+            elif value_type == "palette":
+                palette_map = {
+                    t("none"): "none",
+                    t("foreground"): "foreground",
+                    t("background"): "background",
+                    t("highlight_foreground"): "highlight_foreground",
+                    t("highlight"): "highlight"
+                }
+                return palette_map.get(value, value)  # fallback to original if not found
+            return value
+
+        # Convert values to original English for DCI path
+        original_icon_state = _translate_to_original(icon_state, "state")
+        original_tone_type = _translate_to_original(tone_type, "tone")
+        original_palette_type = _translate_to_original(palette_type, "palette")
+
+        # Create DCI path with layer parameters using original English values
         dci_path = format_dci_path(
-            icon_size, icon_state, tone_type, scale, image_format,
+            icon_size, original_icon_state, original_tone_type, scale, image_format,
             priority=layer_priority, padding=layer_padding, palette=palette_value,
             hue=hue_adjustment, saturation=saturation_adjustment, brightness=brightness_adjustment,
             red=red_adjustment, green=green_adjustment, blue=blue_adjustment, alpha=alpha_adjustment
