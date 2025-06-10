@@ -9,6 +9,9 @@ except ImportError as e:
 from ..utils.ui_utils import format_image_info
 from .base_node import BaseNode
 from ..utils.i18n import t
+from ..utils.enums import (
+    PreviewBackground, translate_ui_to_enum, get_enum_ui_options, get_enum_default_ui_value
+)
 
 try:
     from ..dci_reader import DCIReader, DCIPreviewGenerator
@@ -29,8 +32,8 @@ class DCIPreviewNode(BaseNode):
                 t("dci_binary_data"): ("BINARY_DATA",),
             },
             "optional": {
-                t("light_background_color"): ([t("light_gray"), t("dark_gray"), t("white"), t("black"), t("transparent"), t("checkerboard"), t("blue"), t("green"), t("red"), t("yellow"), t("cyan"), t("magenta"), t("orange"), t("purple"), t("pink"), t("brown"), t("navy"), t("teal"), t("olive"), t("maroon")], {"default": t("light_gray")}),
-                t("dark_background_color"): ([t("light_gray"), t("dark_gray"), t("white"), t("black"), t("transparent"), t("checkerboard"), t("blue"), t("green"), t("red"), t("yellow"), t("cyan"), t("magenta"), t("orange"), t("purple"), t("pink"), t("brown"), t("navy"), t("teal"), t("olive"), t("maroon")], {"default": t("dark_gray")}),
+                t("light_background_color"): (get_enum_ui_options(PreviewBackground, t), {"default": get_enum_default_ui_value(PreviewBackground.LIGHT_GRAY, t)}),
+                t("dark_background_color"): (get_enum_ui_options(PreviewBackground, t), {"default": get_enum_default_ui_value(PreviewBackground.DARK_GRAY, t)}),
                 t("text_font_size"): ("INT", {"default": 18, "min": 8, "max": 50, "step": 1}),
             }
         }
@@ -43,18 +46,20 @@ class DCIPreviewNode(BaseNode):
 
     def _execute(self, **kwargs):
         """Preview DCI file contents with in-node display"""
-        # Extract parameters with translation support
+        # Extract parameters with translation support and convert to enums
         # Try both translated and original parameter names for compatibility
         dci_binary_data = kwargs.get(t("dci_binary_data")) if t("dci_binary_data") in kwargs else kwargs.get("dci_binary_data")
-        light_background_color = kwargs.get(t("light_background_color")) if t("light_background_color") in kwargs else kwargs.get("light_background_color", t("light_gray"))
-        dark_background_color = kwargs.get(t("dark_background_color")) if t("dark_background_color") in kwargs else kwargs.get("dark_background_color", t("dark_gray"))
+
+        # Convert UI values to enums for type safety
+        light_bg_ui = kwargs.get(t("light_background_color")) if t("light_background_color") in kwargs else kwargs.get("light_background_color")
+        light_background_color = translate_ui_to_enum(light_bg_ui, PreviewBackground, t) if light_bg_ui else PreviewBackground.LIGHT_GRAY
+
+        dark_bg_ui = kwargs.get(t("dark_background_color")) if t("dark_background_color") in kwargs else kwargs.get("dark_background_color")
+        dark_background_color = translate_ui_to_enum(dark_bg_ui, PreviewBackground, t) if dark_bg_ui else PreviewBackground.DARK_GRAY
+
         text_font_size = kwargs.get(t("text_font_size")) if t("text_font_size") in kwargs else kwargs.get("text_font_size", 18)
 
-        # Convert translated color names back to internal English names for processing
-        light_bg_internal = self._translate_color_to_internal(light_background_color)
-        dark_bg_internal = self._translate_color_to_internal(dark_background_color)
-
-        return self._execute_impl(dci_binary_data, light_bg_internal, dark_bg_internal, text_font_size)
+        return self._execute_impl(dci_binary_data, light_background_color, dark_background_color, text_font_size)
 
     def _translate_color_to_internal(self, translated_color):
         """Convert translated color name back to internal English name"""
@@ -83,7 +88,7 @@ class DCIPreviewNode(BaseNode):
         }
         return color_mapping.get(translated_color, translated_color)
 
-    def _execute_impl(self, dci_binary_data, light_background_color="light_gray", dark_background_color="dark_gray", text_font_size=18):
+    def _execute_impl(self, dci_binary_data, light_background_color: PreviewBackground = PreviewBackground.LIGHT_GRAY, dark_background_color: PreviewBackground = PreviewBackground.DARK_GRAY, text_font_size=18):
         """Preview DCI file contents with in-node display"""
         try:
             if not _image_support:
@@ -160,25 +165,25 @@ class DCIPreviewNode(BaseNode):
             other_images = [img for img in images if img['tone'].lower() not in ('light', 'dark')]
 
             # 确定背景颜色
-            light_bg_color = self._get_background_color(light_background_color)
-            dark_bg_color = self._get_background_color(dark_background_color)
+            light_bg_color = self._get_background_color(str(light_background_color))
+            dark_bg_color = self._get_background_color(str(dark_background_color))
 
             # 生成预览图像
             generator = DCIPreviewGenerator(font_size=text_font_size)
 
             # 为Light和Dark分别生成单列预览
-            light_preview = self._create_preview_with_special_background(generator, light_images, 1, light_background_color, light_bg_color) if light_images else None
-            dark_preview = self._create_preview_with_special_background(generator, dark_images, 1, dark_background_color, dark_bg_color) if dark_images else None
+            light_preview = self._create_preview_with_special_background(generator, light_images, 1, str(light_background_color), light_bg_color) if light_images else None
+            dark_preview = self._create_preview_with_special_background(generator, dark_images, 1, str(dark_background_color), dark_bg_color) if dark_images else None
 
             # 如果有其他色调，将它们添加到默认组(Light)
             if other_images:
                 if light_preview:
                     # 如果已有Light预览，合并到Light预览中
                     combined_images = light_images + other_images
-                    light_preview = self._create_preview_with_special_background(generator, combined_images, 1, light_background_color, light_bg_color)
+                    light_preview = self._create_preview_with_special_background(generator, combined_images, 1, str(light_background_color), light_bg_color)
                 else:
                     # 否则创建新的预览
-                    light_preview = self._create_preview_with_special_background(generator, other_images, 1, light_background_color, light_bg_color)
+                    light_preview = self._create_preview_with_special_background(generator, other_images, 1, str(light_background_color), light_bg_color)
 
             # 合并Light和Dark预览（如果两者都存在）
             if light_preview and dark_preview:
@@ -189,7 +194,7 @@ class DCIPreviewNode(BaseNode):
                 preview_image = dark_preview
             else:
                 # 创建空预览
-                preview_image = self._create_preview_with_special_background(generator, [], 1, light_background_color, light_bg_color)
+                preview_image = self._create_preview_with_special_background(generator, [], 1, str(light_background_color), light_bg_color)
 
             # Convert PIL image to base64 for UI display
             preview_base64 = pil_to_comfyui_format(preview_image, "dci_preview")

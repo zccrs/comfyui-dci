@@ -9,6 +9,10 @@ except ImportError as e:
 from io import BytesIO
 from ..utils.ui_utils import format_dci_path
 from ..utils.i18n import t
+from ..utils.enums import (
+    ImageFormat, IconState, ToneType, BackgroundColor, PaletteType,
+    translate_ui_to_enum, get_enum_ui_options, get_enum_default_ui_value
+)
 from .base_node import BaseNode
 
 class DCIImage(BaseNode):
@@ -20,16 +24,16 @@ class DCIImage(BaseNode):
             "required": {
                 t("image"): ("IMAGE",),
                 t("icon_size"): ("INT", {"default": 256, "min": 16, "max": 1024, "step": 1}),
-                t("icon_state"): ([t("normal"), t("disabled"), t("hover"), t("pressed")], {"default": t("normal")}),
+                t("icon_state"): (get_enum_ui_options(IconState, t), {"default": get_enum_default_ui_value(IconState.NORMAL, t)}),
                 t("scale"): ("FLOAT", {"default": 1.0, "min": 0.1, "max": 10.0, "step": 0.1}),
-                t("tone_type"): ([t("light"), t("dark")], {"default": t("light")}),
+                t("tone_type"): (get_enum_ui_options(ToneType, t), {"default": get_enum_default_ui_value(ToneType.LIGHT, t)}),
             },
             "optional": {
                 # Basic format setting
-                t("image_format"): (["webp", "png", "jpg"], {"default": "webp"}),
+                t("image_format"): ([fmt.value for fmt in ImageFormat], {"default": ImageFormat.WEBP.value}),
 
                 # Background color settings
-                t("background_color"): ([t("transparent"), t("white"), t("black"), t("custom")], {"default": t("transparent")}),
+                t("background_color"): (get_enum_ui_options(BackgroundColor, t), {"default": get_enum_default_ui_value(BackgroundColor.TRANSPARENT, t)}),
                 t("custom_bg_r"): ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
                 t("custom_bg_g"): ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
                 t("custom_bg_b"): ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
@@ -37,7 +41,7 @@ class DCIImage(BaseNode):
                 # Layer properties
                 t("layer_priority"): ("INT", {"default": 1, "min": 1, "max": 100, "step": 1}),
                 t("layer_padding"): ("INT", {"default": 0, "min": 0, "max": 100, "step": 1}),
-                t("palette_type"): ([t("none"), t("foreground"), t("background"), t("highlight_foreground"), t("highlight")], {"default": t("none")}),
+                t("palette_type"): (get_enum_ui_options(PaletteType, t), {"default": get_enum_default_ui_value(PaletteType.NONE, t)}),
 
                 # Color adjustments
                 t("hue_adjustment"): ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
@@ -57,21 +61,35 @@ class DCIImage(BaseNode):
 
     def _execute(self, **kwargs):
         """Create DCI image metadata and data with layer support"""
-        # Extract parameters with translation support
+        # Extract parameters with translation support and convert to enums
         # Try both translated and original parameter names for compatibility
         image = kwargs.get(t("image")) if t("image") in kwargs else kwargs.get("image")
         icon_size = kwargs.get(t("icon_size")) if t("icon_size") in kwargs else kwargs.get("icon_size")
-        icon_state = kwargs.get(t("icon_state")) if t("icon_state") in kwargs else kwargs.get("icon_state")
+
+        # Convert UI values to enums for type safety
+        icon_state_ui = kwargs.get(t("icon_state")) if t("icon_state") in kwargs else kwargs.get("icon_state")
+        icon_state = translate_ui_to_enum(icon_state_ui, IconState, t) if icon_state_ui else IconState.NORMAL
+
         scale = kwargs.get(t("scale")) if t("scale") in kwargs else kwargs.get("scale")
-        tone_type = kwargs.get(t("tone_type")) if t("tone_type") in kwargs else kwargs.get("tone_type", "light")
-        image_format = kwargs.get(t("image_format")) if t("image_format") in kwargs else kwargs.get("image_format", "webp")
-        background_color = kwargs.get(t("background_color")) if t("background_color") in kwargs else kwargs.get("background_color", "transparent")
+
+        tone_type_ui = kwargs.get(t("tone_type")) if t("tone_type") in kwargs else kwargs.get("tone_type")
+        tone_type = translate_ui_to_enum(tone_type_ui, ToneType, t) if tone_type_ui else ToneType.LIGHT
+
+        image_format_ui = kwargs.get(t("image_format")) if t("image_format") in kwargs else kwargs.get("image_format", ImageFormat.WEBP.value)
+        image_format = ImageFormat(image_format_ui) if image_format_ui else ImageFormat.WEBP
+
+        background_color_ui = kwargs.get(t("background_color")) if t("background_color") in kwargs else kwargs.get("background_color")
+        background_color = translate_ui_to_enum(background_color_ui, BackgroundColor, t) if background_color_ui else BackgroundColor.TRANSPARENT
+
         custom_bg_r = kwargs.get(t("custom_bg_r")) if t("custom_bg_r") in kwargs else kwargs.get("custom_bg_r", 255)
         custom_bg_g = kwargs.get(t("custom_bg_g")) if t("custom_bg_g") in kwargs else kwargs.get("custom_bg_g", 255)
         custom_bg_b = kwargs.get(t("custom_bg_b")) if t("custom_bg_b") in kwargs else kwargs.get("custom_bg_b", 255)
         layer_priority = kwargs.get(t("layer_priority")) if t("layer_priority") in kwargs else kwargs.get("layer_priority", 1)
         layer_padding = kwargs.get(t("layer_padding")) if t("layer_padding") in kwargs else kwargs.get("layer_padding", 0)
-        palette_type = kwargs.get(t("palette_type")) if t("palette_type") in kwargs else kwargs.get("palette_type", "none")
+
+        palette_type_ui = kwargs.get(t("palette_type")) if t("palette_type") in kwargs else kwargs.get("palette_type")
+        palette_type = translate_ui_to_enum(palette_type_ui, PaletteType, t) if palette_type_ui else PaletteType.NONE
+
         hue_adjustment = kwargs.get(t("hue_adjustment")) if t("hue_adjustment") in kwargs else kwargs.get("hue_adjustment", 0)
         saturation_adjustment = kwargs.get(t("saturation_adjustment")) if t("saturation_adjustment") in kwargs else kwargs.get("saturation_adjustment", 0)
         brightness_adjustment = kwargs.get(t("brightness_adjustment")) if t("brightness_adjustment") in kwargs else kwargs.get("brightness_adjustment", 0)
@@ -86,10 +104,10 @@ class DCIImage(BaseNode):
                                  hue_adjustment, saturation_adjustment, brightness_adjustment,
                                  red_adjustment, green_adjustment, blue_adjustment, alpha_adjustment)
 
-    def _execute_impl(self, image, icon_size, icon_state, scale, tone_type="light",
-                     image_format="webp",
-                     background_color="transparent", custom_bg_r=255, custom_bg_g=255, custom_bg_b=255,
-                     layer_priority=1, layer_padding=0, palette_type="none",
+    def _execute_impl(self, image, icon_size, icon_state: IconState, scale, tone_type: ToneType = ToneType.LIGHT,
+                     image_format: ImageFormat = ImageFormat.WEBP,
+                     background_color: BackgroundColor = BackgroundColor.TRANSPARENT, custom_bg_r=255, custom_bg_g=255, custom_bg_b=255,
+                     layer_priority=1, layer_padding=0, palette_type: PaletteType = PaletteType.NONE,
                      hue_adjustment=0, saturation_adjustment=0, brightness_adjustment=0,
                      red_adjustment=0, green_adjustment=0, blue_adjustment=0, alpha_adjustment=0):
         """Create DCI image metadata and data with layer support"""
@@ -99,24 +117,10 @@ class DCIImage(BaseNode):
         # Convert ComfyUI image tensor to PIL Image
         pil_image = tensor_to_pil(image)
 
-        # Convert translated background color to original English for apply_background function
-        def _translate_background_to_original(value):
-            """Convert translated UI background values back to original English"""
-            background_map = {
-                t("transparent"): "transparent",
-                t("white"): "white",
-                t("black"): "black",
-                t("custom"): "custom"
-            }
-            return background_map.get(value, value)  # fallback to original if not found
-
-        # Convert background value to original English
-        original_background_color = _translate_background_to_original(background_color)
-
         # Handle background color for images with transparency
-        if original_background_color != "transparent" and pil_image.mode in ('RGBA', 'LA'):
-            bg_color = (custom_bg_r, custom_bg_g, custom_bg_b) if original_background_color == "custom" else None
-            pil_image = apply_background(pil_image, original_background_color, bg_color)
+        if background_color != BackgroundColor.TRANSPARENT and pil_image.mode in ('RGBA', 'LA'):
+            bg_color = (custom_bg_r, custom_bg_g, custom_bg_b) if background_color == BackgroundColor.CUSTOM else None
+            pil_image = apply_background(pil_image, str(background_color), bg_color)
 
         # Calculate actual size with scale
         actual_size = int(icon_size * scale)
@@ -124,52 +128,14 @@ class DCIImage(BaseNode):
         # Resize image to target size
         resized_image = pil_image.resize((actual_size, actual_size), Image.Resampling.LANCZOS)
 
-        # Convert translated values back to original English for DCI path
-        # DCI file structure must use original English values, not translations
-        def _translate_to_original(value, value_type):
-            """Convert translated UI values back to original English for DCI file structure"""
-            if value_type == "state":
-                state_map = {
-                    t("normal"): "normal",
-                    t("disabled"): "disabled",
-                    t("hover"): "hover",
-                    t("pressed"): "pressed"
-                }
-                return state_map.get(value, value)  # fallback to original if not found
-            elif value_type == "tone":
-                tone_map = {
-                    t("light"): "light",
-                    t("dark"): "dark"
-                }
-                return tone_map.get(value, value)  # fallback to original if not found
-            elif value_type == "palette":
-                palette_map = {
-                    t("none"): "none",
-                    t("foreground"): "foreground",
-                    t("background"): "background",
-                    t("highlight_foreground"): "highlight_foreground",
-                    t("highlight"): "highlight"
-                }
-                return palette_map.get(value, value)  # fallback to original if not found
-            return value
-
         # Convert palette type to numeric value according to DCI specification
-        # Use original English values for palette mapping
-        original_palette_type = _translate_to_original(palette_type, "palette")
-        palette_map = {
-            "none": -1,
-            "foreground": 0,
-            "background": 1,
-            "highlight_foreground": 2,
-            "highlight": 3
-        }
-        palette_value = palette_map.get(original_palette_type, -1)
+        palette_value = palette_type.to_numeric()
 
         # Convert to bytes
         img_bytes = BytesIO()
-        if image_format == 'webp':
+        if image_format == ImageFormat.WEBP:
             # For WebP, preserve transparency if available
-            if resized_image.mode == 'RGBA' and original_background_color == "transparent":
+            if resized_image.mode == 'RGBA' and background_color == BackgroundColor.TRANSPARENT:
                 resized_image.save(img_bytes, format='WEBP', quality=90, lossless=True)
             else:
                 # Convert to RGB for lossy WebP
@@ -178,10 +144,10 @@ class DCIImage(BaseNode):
                     rgb_image.paste(resized_image, mask=resized_image.split()[-1] if resized_image.mode == 'RGBA' else None)
                     resized_image = rgb_image
                 resized_image.save(img_bytes, format='WEBP', quality=90)
-        elif image_format == 'png':
+        elif image_format == ImageFormat.PNG:
             # PNG supports transparency
             resized_image.save(img_bytes, format='PNG')
-        elif image_format == 'jpg':
+        elif image_format == ImageFormat.JPG:
             # Convert to RGB if necessary for JPEG (JPEG doesn't support transparency)
             if resized_image.mode in ('RGBA', 'LA', 'P'):
                 rgb_image = Image.new('RGB', resized_image.size, (255, 255, 255))
@@ -193,37 +159,38 @@ class DCIImage(BaseNode):
 
         img_content = img_bytes.getvalue()
 
-        # Convert values to original English for DCI path
-        original_icon_state = _translate_to_original(icon_state, "state")
-        original_tone_type = _translate_to_original(tone_type, "tone")
-        # original_palette_type already defined above for palette mapping
-
-        # Create DCI path with layer parameters using original English values
+        # Create DCI path with layer parameters using enum string values
         dci_path = format_dci_path(
-            icon_size, original_icon_state, original_tone_type, scale, image_format,
+            icon_size, str(icon_state), str(tone_type), scale, str(image_format),
             priority=layer_priority, padding=layer_padding, palette=palette_value,
             hue=hue_adjustment, saturation=saturation_adjustment, brightness=brightness_adjustment,
             red=red_adjustment, green=green_adjustment, blue=blue_adjustment, alpha=alpha_adjustment
         )
 
         # Create metadata dictionary with layer information
+        # Store enum values for internal use, but also store UI-friendly translated strings
         dci_image_data = {
             'path': dci_path,
             'content': img_content,
             'size': icon_size,
-            'state': icon_state,
-            'tone': tone_type,
+            'state': icon_state,  # Store enum for internal use
+            'state_ui': t(str(icon_state)),  # Store translated string for UI display
+            'tone': tone_type,  # Store enum for internal use
+            'tone_ui': t(str(tone_type)),  # Store translated string for UI display
             'scale': scale,
-            'format': image_format,
+            'format': image_format,  # Store enum for internal use
+            'format_ui': str(image_format),  # Store string for UI display
             'actual_size': actual_size,
             'file_size': len(img_content),
-            'background_color': background_color,
+            'background_color': background_color,  # Store enum for internal use
+            'background_color_ui': t(str(background_color)),  # Store translated string for UI display
             'pil_image': resized_image,  # Store PIL image for debug purposes
 
             # Layer metadata
             'layer_priority': layer_priority,
             'layer_padding': layer_padding,
-            'palette_type': palette_type,
+            'palette_type': palette_type,  # Store enum for internal use
+            'palette_type_ui': t(str(palette_type)),  # Store translated string for UI display
             'palette_value': palette_value,
             'hue_adjustment': hue_adjustment,
             'saturation_adjustment': saturation_adjustment,
@@ -235,7 +202,7 @@ class DCIImage(BaseNode):
         }
 
         print(f"{t('Created DCI image with layers')}: {dci_path} ({len(img_content)} {t('bytes')})")
-        print(f"  {t('Layer priority')}: {layer_priority}, {t('padding')}: {layer_padding}, {t('palette')}: {palette_type}")
+        print(f"  {t('Layer priority')}: {layer_priority}, {t('padding')}: {layer_padding}, {t('palette')}: {t(str(palette_type))}")
         print(f"  {t('Color adjustments')} - H:{hue_adjustment} S:{saturation_adjustment} B:{brightness_adjustment}")
         print(f"  {t('RGBA adjustments')} - R:{red_adjustment} G:{green_adjustment} B:{blue_adjustment} A:{alpha_adjustment}")
 

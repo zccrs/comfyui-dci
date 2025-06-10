@@ -9,18 +9,23 @@ except ImportError as e:
 from io import BytesIO
 from .base_node import BaseNode
 from ..utils.i18n import t
+from ..utils.enums import (
+    BackgroundColor, translate_ui_to_enum, get_enum_ui_options, get_enum_default_ui_value
+)
 
 class DCIImagePreview(BaseNode):
     """ComfyUI node for previewing DCI Image data"""
 
     @classmethod
     def INPUT_TYPES(cls):
+        # Filter BackgroundColor enum to only include preview-relevant options
+        preview_backgrounds = [BackgroundColor.TRANSPARENT, BackgroundColor.WHITE, BackgroundColor.BLACK, BackgroundColor.CHECKERBOARD]
         return {
             "required": {
                 t("dci_image_data"): ("DCI_IMAGE_DATA",),
             },
             "optional": {
-                t("preview_background"): ([t("transparent"), t("white"), t("black"), t("checkerboard")], {"default": t("checkerboard")}),
+                t("preview_background"): ([t(bg.value) for bg in preview_backgrounds], {"default": t(BackgroundColor.CHECKERBOARD.value)}),
             }
         }
 
@@ -32,14 +37,17 @@ class DCIImagePreview(BaseNode):
 
     def _execute(self, **kwargs):
         """Preview DCI Image data"""
-        # Extract parameters with translation support
+        # Extract parameters with translation support and convert to enums
         # Try both translated and original parameter names for compatibility
         dci_image_data = kwargs.get(t("dci_image_data")) if t("dci_image_data") in kwargs else kwargs.get("dci_image_data")
-        preview_background = kwargs.get(t("preview_background")) if t("preview_background") in kwargs else kwargs.get("preview_background", "checkerboard")
+
+        # Convert UI value to enum for type safety
+        preview_bg_ui = kwargs.get(t("preview_background")) if t("preview_background") in kwargs else kwargs.get("preview_background")
+        preview_background = translate_ui_to_enum(preview_bg_ui, BackgroundColor, t) if preview_bg_ui else BackgroundColor.CHECKERBOARD
 
         return self._execute_impl(dci_image_data, preview_background)
 
-    def _execute_impl(self, dci_image_data, preview_background="checkerboard"):
+    def _execute_impl(self, dci_image_data, preview_background: BackgroundColor = BackgroundColor.CHECKERBOARD):
         """Preview DCI image data"""
         if not _image_support:
             return {"ui": {"text": ["Image support not available - missing PIL/torch dependencies"]}}
@@ -57,22 +65,8 @@ class DCIImagePreview(BaseNode):
             else:
                 return {"ui": {"text": ["No image data found in DCI image"]}}
 
-        # Convert translated background value to original English for apply_background function
-        def _translate_background_to_original(value):
-            """Convert translated UI background values back to original English"""
-            background_map = {
-                t("transparent"): "transparent",
-                t("white"): "white",
-                t("black"): "black",
-                t("checkerboard"): "checkerboard"
-            }
-            return background_map.get(value, value)  # fallback to original if not found
-
-        # Convert background value to original English
-        original_background = _translate_background_to_original(preview_background)
-
-        # Create preview image with background
-        preview_image = apply_background(pil_image, original_background)
+        # Create preview image with background using enum string value
+        preview_image = apply_background(pil_image, str(preview_background))
 
         # Convert to ComfyUI format
         preview_base64 = pil_to_comfyui_format(preview_image, "dci_preview")
