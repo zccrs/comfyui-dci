@@ -109,8 +109,8 @@ pip install -r requirements.txt
 #### DCI/Preview（预览）
 - DCI_PreviewNode (DCI Preview)
 
-#### DCI/Debug（调试）
-- DCI_ImageDebug (DCI Image Debug)
+#### Preview（预览）
+- DCI_ImagePreview (DCI Image Preview)
 
 #### DCI/Files（文件处理）
 - DCI_BinaryFileLoader (Binary File Loader)
@@ -191,38 +191,29 @@ pip install -r requirements.txt
 
 **注意**：此节点专门用于处理二进制数据输入。不需要手动设置列数，默认将Light和Dark内容分开显示在两列，Light主题图标固定在左侧列，Dark主题图标固定在右侧列。文本格式会根据字体大小自动调整，提供最佳阅读体验。背景颜色选择简化为预设选项，移除了自定义RGB设置以提供更好的用户体验。
 
-#### 4. DCI Image Debug（DCI 图像调试）
-**节点类别**：`DCI/Debug`
-**功能描述**：专门用于调试和预览单个 DCI 图像数据的详细信息，提供全面的元数据分析和可视化预览。
+#### 4. DCI Image Preview（DCI 图像预览）
+**节点类别**：`Preview`
+**功能描述**：专门用于预览单个 DCI 图像数据，提供简洁的图像预览功能。
 
 **必需输入参数：**
 - **`dci_image_data`** (DCI_IMAGE_DATA)：DCI 图像数据
 
 **可选输入参数：**
-- **`show_metadata`** (BOOLEAN)：是否显示元数据信息，默认True
-- **`show_binary_info`** (BOOLEAN)：是否显示二进制数据信息，默认True
 - **`preview_background`** (COMBO)：预览背景类型（transparent/white/black/checkerboard），默认checkerboard
 
-**节点内调试功能：**
+**节点功能特性：**
 - **图像预览**：直接在节点界面中显示处理后的图像
 - **智能背景显示**：支持透明、白色、黑色和棋盘格背景，便于查看透明图像
-- **详细元数据分析**：显示完整的DCI图像信息，包括：
-  - DCI路径、图标尺寸、状态、色调、缩放因子
-  - 图像格式、实际尺寸、背景处理方式
-  - 二进制数据大小、数据类型、十六进制预览
-  - PIL图像信息（尺寸、颜色模式、格式）
-  - 数据完整性验证状态
-- **二进制数据分析**：显示文件大小、数据类型和前16字节的十六进制预览
-- **验证状态检查**：自动检查DCI图像数据的完整性和有效性
+- **简洁界面**：专注于图像显示，不显示复杂的调试信息
 
 **输出：**
-- 无输出（所有调试信息直接在节点内显示）
+- 无输出（图像预览直接在节点内显示）
 
 **使用场景：**
-- 调试DCI图像创建过程中的问题
-- 验证图像数据的正确性和完整性
-- 分析背景色处理效果
-- 检查二进制数据的生成结果
+- 快速预览DCI图像的最终效果
+- 验证图像背景处理效果
+- 检查图像质量和显示效果
+- 在工作流程中进行图像效果确认
 
 #### 5. Binary File Loader（二进制文件加载器）
 **节点类别**：`DCI/Files`
@@ -279,15 +270,15 @@ pip install -r requirements.txt
 
 ### 调试工作流程
 
-1. **调试单个 DCI 图像**：
-   - 使用 `DCI Image Debug` 节点检查单个 DCI 图像的详细信息
+1. **预览单个 DCI 图像**：
+   - 使用 `DCI Image Preview` 节点快速查看单个 DCI 图像的最终效果
    - 验证背景色处理效果和图像质量
-   - 分析二进制数据的生成结果
+   - 检查图像的视觉效果
 
-2. **问题排查**：
-   - 当图像背景出现问题时，使用调试节点检查背景色处理设置
-   - 验证图像数据的完整性和格式正确性
-   - 检查DCI路径和元数据的生成结果
+2. **工作流程验证**：
+   - 在DCI图像创建后立即预览结果
+   - 验证图像处理效果是否符合预期
+   - 检查不同背景下的图像显示效果
 
 ### 高级用法
 
@@ -317,9 +308,9 @@ Binary File Loader → DCI Preview
                   └→ Binary File Saver
 ```
 
-### 调试工作流程
+### 预览工作流程
 ```
-LoadImage → DCI Image → DCI Image Debug
+LoadImage → DCI Image → DCI Image Preview
                      └→ DCI File → DCI Preview
 ```
 
