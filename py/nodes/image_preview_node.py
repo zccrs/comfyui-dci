@@ -57,8 +57,22 @@ class DCIImagePreview(BaseNode):
             else:
                 return {"ui": {"text": ["No image data found in DCI image"]}}
 
+        # Convert translated background value to original English for apply_background function
+        def _translate_background_to_original(value):
+            """Convert translated UI background values back to original English"""
+            background_map = {
+                t("transparent"): "transparent",
+                t("white"): "white",
+                t("black"): "black",
+                t("checkerboard"): "checkerboard"
+            }
+            return background_map.get(value, value)  # fallback to original if not found
+
+        # Convert background value to original English
+        original_background = _translate_background_to_original(preview_background)
+
         # Create preview image with background
-        preview_image = apply_background(pil_image, preview_background)
+        preview_image = apply_background(pil_image, original_background)
 
         # Convert to ComfyUI format
         preview_base64 = pil_to_comfyui_format(preview_image, "dci_preview")
