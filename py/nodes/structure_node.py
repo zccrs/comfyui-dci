@@ -124,13 +124,17 @@ class DCIAnalysis(BaseNode):
                         file_indent = scale_indent + ("    " if is_last_scale else "│   ")
                         file_prefix = "└── " if is_last_file else "├── "
 
-                        # Build file display with metadata
+                                                # Build file display with metadata
                         filename = file_info['filename']
                         metadata = file_info['metadata']
                         metadata_str = self._format_metadata(metadata)
 
-                        file_display = f"{filename}: {metadata_str}"
-                        lines.append(f"{file_indent}{file_prefix}{file_display}")
+                        # Add filename
+                        lines.append(f"{file_indent}{file_prefix}{filename}")
+
+                        # Add metadata on next line with proper indentation
+                        metadata_indent = file_indent + ("    " if is_last_file else "│   ")
+                        lines.append(f"{metadata_indent}    {metadata_str}")
 
         return "\n".join(lines)
 
