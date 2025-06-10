@@ -94,9 +94,12 @@ comfyui-dci/
 - **In-node Display**: Display preview content directly in the node interface
 
 ### Binary File Processing Functions
-- **File Loading**: Load arbitrary binary files from the file system, optimized for DCI icon files
-- **File Saving**: Save binary data to specified locations with custom output directory support
+- **Universal File Loading**: Load arbitrary binary files from the file system (DCI, images, archives, etc.)
+- **Flexible File Saving**: Save binary data to specified locations with custom output directory support
+- **Base64 Encoding/Decoding**: Convert binary data to/from base64 text format for data transfer and storage
 - **Data Structuring**: Provide unified binary data structures including content, metadata, and path information
+- **Cross-Format Support**: Works with any file type, not limited to DCI format
+- **Workflow Integration**: Seamlessly integrate file operations into ComfyUI workflows
 
 ### Internationalization Support
 - **Complete Chinese Interface**: All node names, parameter names, and output names support Chinese display
@@ -180,6 +183,8 @@ This extension provides 8 ComfyUI nodes, all unified under the **"DCI"** group a
 - DCI_BinaryFileLoader (Binary File Loader)
 - DCI_BinaryFileSaver (Binary File Saver)
 - DCI_FileSaver (DCI File Saver)
+- DCI_Base64Encoder (Base64 Encoder)
+- DCI_Base64Decoder (Base64 Decoder)
 
 ### Available Node Detailed Description
 
