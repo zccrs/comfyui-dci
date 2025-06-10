@@ -24,7 +24,7 @@ class TestNodeConnectivity(unittest.TestCase):
             RETURN_TYPES = ("BINARY_DATA",)
             RETURN_NAMES = ("dci_binary_data",)
 
-        class MockDCIAnalysisNode:
+        class MockDCIPreviewNode:
             @classmethod
             def INPUT_TYPES(cls):
                 return {
@@ -51,21 +51,21 @@ class TestNodeConnectivity(unittest.TestCase):
 
         # 创建节点实例
         dci_file_node = MockDCIFileNode()
-        analysis_node = MockDCIAnalysisNode()
+        preview_node = MockDCIPreviewNode()
         saver_node = MockBinaryFileSaver()
 
         # 获取类型信息
         dci_output_type = dci_file_node.RETURN_TYPES[0]
-        analysis_input_type = analysis_node.INPUT_TYPES()['required']['dci_binary_data'][0]
+        preview_input_type = preview_node.INPUT_TYPES()['required']['dci_binary_data'][0]
         saver_input_type = saver_node.INPUT_TYPES()['required']['binary_data'][0]
 
         # 验证类型匹配
         self.assertEqual(dci_output_type, "BINARY_DATA", "DCIFileNode应该输出BINARY_DATA类型")
-        self.assertEqual(analysis_input_type, "BINARY_DATA", "DCIAnalysisNode应该接受BINARY_DATA类型")
+        self.assertEqual(preview_input_type, "BINARY_DATA", "DCIPreviewNode应该接受BINARY_DATA类型")
         self.assertEqual(saver_input_type, "BINARY_DATA", "BinaryFileSaver应该接受BINARY_DATA类型")
 
         # 验证连接兼容性
-        self.assertEqual(dci_output_type, analysis_input_type, "DCIFileNode输出应该与DCIAnalysisNode输入兼容")
+        self.assertEqual(dci_output_type, preview_input_type, "DCIFileNode输出应该与DCIPreviewNode输入兼容")
         self.assertEqual(dci_output_type, saver_input_type, "DCIFileNode输出应该与BinaryFileSaver输入兼容")
 
     def test_data_type_consistency(self):
@@ -76,7 +76,7 @@ class TestNodeConnectivity(unittest.TestCase):
         # 这些是应该使用BINARY_DATA类型的节点
         binary_data_nodes = [
             "DCIFileNode",
-            "DCIAnalysisNode",
+            "DCIPreviewNode",
             "BinaryFileLoader",
             "BinaryFileSaver"
         ]
@@ -93,7 +93,7 @@ class TestNodeConnectivity(unittest.TestCase):
         workflows = [
             {
                 "name": "DCI创建和预览",
-                "flow": "DCIImage -> DCIFileNode -> DCIAnalysisNode",
+                "flow": "DCIImage -> DCIFileNode -> DCIPreviewNode",
                 "types": ["DCI_IMAGE_DATA", "BINARY_DATA", "BINARY_DATA"]
             },
             {
@@ -103,7 +103,7 @@ class TestNodeConnectivity(unittest.TestCase):
             },
             {
                 "name": "DCI加载和预览",
-                "flow": "BinaryFileLoader -> DCIAnalysisNode",
+                "flow": "BinaryFileLoader -> DCIPreviewNode",
                 "types": ["BINARY_DATA", "BINARY_DATA"]
             }
         ]

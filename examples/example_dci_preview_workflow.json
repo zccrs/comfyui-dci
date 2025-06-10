@@ -58,7 +58,7 @@
     },
     {
       "id": 4,
-      "type": "DCIAnalysisNode",
+      "type": "DCIPreviewNode",
       "pos": [1100, 50],
       "size": {"0": 315, "1": 154},
       "flags": {},
@@ -68,7 +68,7 @@
         {"name": "dci_binary_data", "type": "BINARY_DATA", "link": 3}
       ],
       "outputs": [],
-      "properties": {"Node name for S&R": "DCIAnalysisNode"},
+      "properties": {"Node name for S&R": "DCIPreviewNode"},
       "widgets_values": [4]
     },
     {
@@ -147,7 +147,7 @@
     },
     {
       "id": 9,
-      "type": "DCIAnalysisNode",
+      "type": "DCIPreviewNode",
       "pos": [1100, 450],
       "size": {"0": 315, "1": 154},
       "flags": {},
@@ -157,7 +157,7 @@
         {"name": "dci_binary_data", "type": "BINARY_DATA", "link": 7}
       ],
       "outputs": [],
-      "properties": {"Node name for S&R": "DCIAnalysisNode"},
+      "properties": {"Node name for S&R": "DCIPreviewNode"},
       "widgets_values": [4]
     },
     {

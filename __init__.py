@@ -14,7 +14,7 @@ This extension provides complete DCI specification support including:
 # Try relative imports first, fall back to absolute imports
 try:
     from .py.nodes import (
-        DCIAnalysisNode,
+        DCIPreviewNode,
         DCIImage,
         DCISampleImage,
         DCIImagePreview,
@@ -30,7 +30,7 @@ except ImportError:
     current_dir = os.path.dirname(os.path.abspath(__file__))
     sys.path.insert(0, current_dir)
     from py.nodes import (
-        DCIAnalysisNode,
+        DCIPreviewNode,
         DCIImage,
         DCISampleImage,
         DCIImagePreview,
@@ -43,7 +43,7 @@ except ImportError:
 # ComfyUI Node Registration
 # Using DCI prefix to ensure unique node names and avoid conflicts
 NODE_CLASS_MAPPINGS = {
-    "DCI_AnalysisNode": DCIAnalysisNode,
+    "DCI_PreviewNode": DCIPreviewNode,
     "DCI_Image": DCIImage,
     "DCI_SampleImage": DCISampleImage,
     "DCI_ImagePreview": DCIImagePreview,
@@ -55,7 +55,7 @@ NODE_CLASS_MAPPINGS = {
 
 # Display names for ComfyUI interface
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "DCI_AnalysisNode": "DCI Analysis",
+    "DCI_PreviewNode": "DCI Preview",
     "DCI_Image": "DCI Image",
     "DCI_SampleImage": "DCI Sample Image",
     "DCI_ImagePreview": "DCI Image Preview",
