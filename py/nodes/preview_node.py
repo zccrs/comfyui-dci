@@ -30,7 +30,7 @@ class DCIPreviewNode(BaseNode):
             "optional": {
                 "light_background_color": (["light_gray", "dark_gray", "white", "black", "transparent", "checkerboard", "blue", "green", "red", "yellow", "cyan", "magenta", "orange", "purple", "pink", "brown", "navy", "teal", "olive", "maroon"], {"default": "light_gray"}),
                 "dark_background_color": (["light_gray", "dark_gray", "white", "black", "transparent", "checkerboard", "blue", "green", "red", "yellow", "cyan", "magenta", "orange", "purple", "pink", "brown", "navy", "teal", "olive", "maroon"], {"default": "dark_gray"}),
-                "text_font_size": ("INT", {"default": 12, "min": 8, "max": 24, "step": 1}),
+                "text_font_size": ("INT", {"default": 18, "min": 8, "max": 50, "step": 1}),
             }
         }
 
@@ -40,7 +40,7 @@ class DCIPreviewNode(BaseNode):
     CATEGORY = "DCI/Preview"
     OUTPUT_NODE = True
 
-    def _execute(self, dci_binary_data, light_background_color="light_gray", dark_background_color="dark_gray", text_font_size=12):
+    def _execute(self, dci_binary_data, light_background_color="light_gray", dark_background_color="dark_gray", text_font_size=18):
         """Preview DCI file contents with in-node display"""
         if not _image_support:
             return {"ui": {"text": ["Image support not available - missing PIL/torch dependencies"]}}
@@ -68,7 +68,7 @@ class DCIPreviewNode(BaseNode):
         dark_bg_color = self._get_background_color(dark_background_color)
 
         # 生成预览图像
-        generator = DCIPreviewGenerator()
+        generator = DCIPreviewGenerator(font_size=text_font_size)
 
         # 为Light和Dark分别生成单列预览
         light_preview = self._create_preview_with_special_background(generator, light_images, 1, light_background_color, light_bg_color) if light_images else None
@@ -174,7 +174,7 @@ class DCIPreviewNode(BaseNode):
 
         return combined
 
-    def _format_detailed_summary(self, images, source_name, text_font_size=12):
+    def _format_detailed_summary(self, images, source_name, text_font_size=18):
         """Format detailed metadata summary as text"""
         if not images:
             return "No images available"

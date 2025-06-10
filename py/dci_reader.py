@@ -262,8 +262,8 @@ class DCIReader:
 class DCIPreviewGenerator:
     """Generate preview images with metadata annotations"""
 
-    def __init__(self, background_color=(240, 240, 240)):
-        self.font_size = 12
+    def __init__(self, background_color=(240, 240, 240), font_size=12):
+        self.font_size = font_size
         self.margin = 10
         self.label_height = 80
         self.background_color = background_color

@@ -20,7 +20,7 @@ class DCIImage(BaseNode):
                 "image": ("IMAGE",),
                 "icon_size": ("INT", {"default": 256, "min": 16, "max": 1024, "step": 1}),
                 "icon_state": (["normal", "disabled", "hover", "pressed"], {"default": "normal"}),
-                "tone_type": (["light", "dark"], {"default": "dark"}),
+                "tone_type": (["light", "dark"], {"default": "light"}),
                 "scale": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 10.0, "step": 0.1}),
                 "image_format": (["webp", "png", "jpg"], {"default": "webp"}),
             },

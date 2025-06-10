@@ -165,7 +165,7 @@ pip install -r requirements.txt
 **可选输入参数：**
 - **`light_background_color`** (COMBO)：Light主题预览背景色，默认light_gray
 - **`dark_background_color`** (COMBO)：Dark主题预览背景色，默认dark_gray
-- **`text_font_size`** (INT)：文本字号大小（8-24像素），默认12
+- **`text_font_size`** (INT)：文本字号大小（8-50像素），默认18，同时控制预览图像中的字体大小和文本摘要的格式
 
 **背景颜色选项：**
 支持20种预设颜色，包括：
