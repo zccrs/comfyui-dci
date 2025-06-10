@@ -1,3 +1,394 @@
+# ComfyUI DCI Extension
+
+**Language / 语言**: [English](#english) | [中文](#中文)
+
+---
+
+## English
+
+# ComfyUI DCI Image Export Extension
+
+A comprehensive ComfyUI extension for creating, previewing, and analyzing DCI (DSG Combined Icons) format files. This extension implements the complete DCI specification, supporting multi-state icons, multi-tone variants, scaling factors, and advanced metadata analysis.
+
+## DCI Specification Documentation
+
+This project is designed and implemented strictly based on the **DCI (DSG Combined Icons) standard format documentation**.
+
+### Official Specification Documents
+- **Official Specification**: [Desktop Spec Group - Icon File Specification](https://desktopspec.org/unstable/%E5%9B%BE%E6%A0%87%E6%96%87%E4%BB%B6%E8%A7%84%E8%8C%83.html)
+- **Local Documentation**: **[dci-specification.md](./dci-specification.md)**
+
+### Documentation Features
+
+The `dci-specification.md` document in this project is based on the official specification and optimized for practical use:
+
+- 📋 **Complete DCI file format description**: Binary structure, file headers, metadata formats
+- 📝 **Detailed layer file naming conventions**: Optimized naming formats and parameter descriptions
+- 🎨 **Color adjustment algorithm explanations**: Precise color calculation formulas and examples
+- 💡 **Practical application examples**: Complete directory structures and filename examples
+- 🔍 **Lookup rules and fallback mechanisms**: Icon resource matching and selection logic
+- ⚡ **Alpha8 format in-depth analysis**: Technical details based on [dtkgui implementation](https://github.com/linuxdeepin/dtkgui)
+
+### Standard Compatibility
+
+This tool fully complies with DCI standard specifications:
+- ✅ **File format compatibility**: Generated DCI files fully conform to official binary format specifications
+- ✅ **Directory structure standards**: Strictly follows `<icon_size>/<icon_state>.<tone_type>/<scale_factor>/<layer_file>` structure
+- ✅ **File naming conventions**: Complete support for `priority.paddingp.palette.hue_saturation_brightness_red_green_blue_alpha.format[.alpha8]` format
+- ✅ **Filename omission rules**: Supports DCI specification filename optimization strategies, default values can be omitted (e.g., `1.webp`)
+- ✅ **Layer system support**: Complete implementation of priority, padding, palette, and color adjustment features
+- ✅ **Alpha8 optimization**: Supports alpha channel storage optimization based on grayscale format
+- ✅ **Backward compatibility**: Supports both simplified and complete filename formats
+
+## Project Status
+
+- ✅ **Complete DCI format implementation**: Full support for DCI file creation and reading
+- ✅ **Multi-state icon support**: Normal, hover, pressed, disabled states
+- ✅ **Multi-tone support**: Light and dark tone variants
+- ✅ **Advanced preview system**: Grid-based visualization with metadata overlay
+- ✅ **Modular node architecture**: Refactored into more flexible composable nodes
+- ✅ **Binary data flow**: Support for inter-node binary data transfer
+- ✅ **Binary file processing**: Dedicated binary file loading and saving nodes
+- ✅ **Complete Chinese localization**: All interface elements fully support Chinese display
+- ✅ **Enhanced error handling**: Detailed error reporting and debugging information
+- ✅ **Checkerboard background support**: Checkerboard backgrounds for transparent image preview
+- ✅ **Production ready**: Thoroughly tested with example workflows
+
+## Directory Structure
+
+```
+comfyui-dci/
+├── py/                          # Core Python modules
+│   ├── __init__.py             # Module initialization
+│   ├── dci_format.py           # DCI format implementation
+│   ├── dci_reader.py           # DCI file reader
+│   └── nodes.py                # ComfyUI node definitions
+├── locales/                     # Internationalization files
+├── resources/                   # Static resources
+├── tools/                       # Development tools
+├── tests/                       # Test files
+├── examples/                    # Example workflows
+├── web_version/                 # Web components (reserved)
+├── __init__.py                  # Extension entry point
+├── README.md                    # Project documentation
+├── requirements.txt             # Python dependencies
+├── install.sh                   # Linux/Mac installation script
+├── install.bat                  # Windows installation script
+├── preliminary-design.md        # Preliminary design
+└── detailed-design.md           # Detailed design
+```
+
+## Features
+
+### Export Functions
+- **DCI Image Creation**: Convert single images to DCI image data with custom parameters
+- **DCI File Composition**: Combine multiple DCI images into complete DCI files
+- **Multiple Scale Factors**: Support decimal scaling like 1x, 1.25x, 1.5x, 2x, etc.
+- **Format Support**: WebP, PNG, and JPEG formats
+- **Tone Support**: Light and dark tone variants
+- **Customizable Icon Sizes**: From 16x16 to 1024x1024 pixels
+
+### Preview Functions
+- **Visual Preview**: Generate grid previews of all images in DCI files
+- **Metadata Display**: Show comprehensive metadata for each image including size, state, tone, scale, format
+- **In-node Display**: Display preview content directly in the node interface
+
+### Binary File Processing Functions
+- **File Loading**: Load arbitrary binary files from the file system, optimized for DCI icon files
+- **File Saving**: Save binary data to specified locations with custom output directory support
+- **Data Structuring**: Provide unified binary data structures including content, metadata, and path information
+
+### Internationalization Support
+- **Complete Chinese Interface**: All node names, parameter names, and output names support Chinese display
+- **Bilingual Support**: Support switching between Chinese and English interfaces
+- **Localized Translation**: All user interface elements are professionally translated
+- **Color Name Translation**: 20 color names fully localized (Light Gray, Blue, Red, etc.)
+- **Option Value Translation**: All dropdown options and default values support Chinese display
+
+### Error Handling & Debugging
+- **Detailed Error Reporting**: Display detailed error messages and solution suggestions directly in the interface
+- **Visual Error Preview**: DCI preview node generates red preview images with error information when errors occur
+- **Analysis Node Debugging**: DCI analysis node outputs detailed error logs and data status
+- **Parameter Compatibility**: Support both translated and original parameter names for backward compatibility
+
+## Installation
+
+### Automatic Installation (Recommended)
+
+1. Clone this repository to your ComfyUI custom nodes directory:
+```bash
+cd ComfyUI/custom_nodes/
+git clone https://github.com/your-username/comfyui-dci.git
+```
+
+2. Run the installation script:
+
+**Linux/Mac:**
+```bash
+cd comfyui-dci
+chmod +x install.sh
+./install.sh
+```
+
+**Windows:**
+```cmd
+cd comfyui-dci
+install.bat
+```
+
+### Manual Installation
+
+1. Clone the repository (same as above)
+
+2. Manually install dependencies:
+```bash
+cd comfyui-dci
+pip install -r requirements.txt
+```
+
+3. Restart ComfyUI
+
+4. After installation, all DCI nodes will appear in the ComfyUI node menu under the **"DCI"** category
+
+## ComfyUI Node Detailed Description
+
+This extension provides 8 ComfyUI nodes, all unified under the **"DCI"** group and divided into three functional subcategories:
+
+### Node Groups
+
+#### DCI/Export
+- DCI_Image (DCI Image) - Full-featured DCI image creation node
+- DCI_SampleImage (DCI Sample Image) - Simplified DCI image creation node
+- DCI_FileNode (DCI File)
+
+#### DCI/Preview
+- DCI_PreviewNode (DCI Preview)
+- DCI_ImagePreview (DCI Image Preview)
+
+#### DCI/Analysis
+- DCI_Analysis (DCI Analysis)
+
+#### DCI/Files
+- DCI_BinaryFileLoader (Binary File Loader)
+- DCI_BinaryFileSaver (Binary File Saver)
+- DCI_FileSaver (DCI File Saver)
+
+### Available Node Detailed Description
+
+#### 1. DCI Image
+**Node Category**: `DCI/Export`
+**Function Description**: Create single DCI image data, output metadata instead of directly creating files, providing more flexible workflows. Fully supports the layer system in DCI specification, including priority, padding, palette, and color adjustment features.
+
+**Required Input Parameters:**
+- **`image`** (IMAGE): ComfyUI image tensor
+- **`icon_size`** (INT): Icon size (16-1024 pixels), default 256
+- **`icon_state`** (COMBO): Icon state (normal/disabled/hover/pressed), default normal
+- **`scale`** (FLOAT): Scale factor (0.1-10.0), default 1.0, supports decimals like 1.25
+
+**Optional Input Parameters (Advanced Settings):**
+
+*Basic Settings:*
+- **`image_format`** (COMBO): Image format (webp/png/jpg), default webp
+
+*Background Color Settings:*
+- **`background_color`** (COMBO): Background color processing (transparent/white/black/custom), default transparent
+- **`custom_bg_r`** (INT): Custom background red component (0-255), default 255
+- **`custom_bg_g`** (INT): Custom background green component (0-255), default 255
+- **`custom_bg_b`** (INT): Custom background blue component (0-255), default 255
+
+*Layer Settings (DCI Specification Compliant):*
+- **`layer_priority`** (INT): Layer priority (1-100), default 1, higher values draw on top
+- **`layer_padding`** (INT): Padding value (0-100), default 0, used for shadow effects etc.
+- **`palette_type`** (COMBO): Palette type (none/foreground/background/highlight_foreground/highlight), default none
+
+*Color Adjustment Parameters (-100 to 100):*
+- **`hue_adjustment`** (INT): Hue adjustment, default 0
+- **`saturation_adjustment`** (INT): Saturation adjustment, default 0
+- **`brightness_adjustment`** (INT): Brightness adjustment, default 0
+- **`red_adjustment`** (INT): Red channel adjustment, default 0
+- **`green_adjustment`** (INT): Green channel adjustment, default 0
+- **`blue_adjustment`** (INT): Blue channel adjustment, default 0
+- **`alpha_adjustment`** (INT): Alpha channel adjustment, default 0
+
+**Output:**
+- **`dci_image_data`** (DCI_IMAGE_DATA): DCI image metadata structure
+
+**Usage Example:**
+```
+Image Input → DCI Image Node → DCI Image Data → DCI File Node → DCI Binary Data
+```
+
+#### 2. DCI Sample Image
+**Node Category**: `DCI/Export`
+**Function Description**: Create simplified DCI image data with only the most basic parameter settings, suitable for most common use cases. Compared to the full DCI Image node, this node has a cleaner interface with fewer parameters.
+
+**Required Input Parameters:**
+- **`image`** (IMAGE): ComfyUI image tensor
+- **`icon_size`** (INT): Icon size (16-1024 pixels), default 256
+- **`icon_state`** (COMBO): Icon state (normal/disabled/hover/pressed), default normal
+- **`scale`** (FLOAT): Scale factor (0.1-10.0), default 1.0, supports decimals like 1.25
+- **`tone_type`** (COMBO): Tone type (light/dark), default light
+- **`image_format`** (COMBO): Image format (webp/png/jpg), default webp
+
+**Output:**
+- **`dci_image_data`** (DCI_IMAGE_DATA): Dictionary data containing path, content, and metadata
+
+**Node Features:**
+- **Simplified Interface**: Only shows the 5 most commonly used basic parameters, clean and easy to use
+- **Default Settings**: All advanced parameters use reasonable defaults (priority 1, no padding, no palette, no color adjustments)
+- **Transparent Background**: Maintains original image transparency by default, suitable for most icon creation scenarios
+- **Quick Creation**: Suitable for quickly creating standard DCI images without complex configuration
+
+#### 3. DCI File
+**Node Category**: `DCI/Export`
+**Function Description**: Receives multiple DCI Image outputs and combines them into a complete DCI file, focusing on generating binary data. Use Binary File Saver node if you need to save files.
+
+**Optional Input Parameters:**
+- **`dci_image_1` to `dci_image_12`** (DCI_IMAGE_DATA): Up to 12 DCI image data
+
+**Output:**
+- **`dci_binary_data`** (BINARY_DATA): Binary data of the DCI file
+
+#### 4. DCI Preview
+**Node Category**: `DCI/Preview`
+**Function Description**: Display visual preview and detailed metadata information of DCI file content directly within the node. Specialized for previewing DCI binary data, now supports separate display of Light and Dark related content.
+
+**Required Input Parameters:**
+- **`dci_binary_data`** (BINARY_DATA): Binary data of the DCI file
+
+**Optional Input Parameters:**
+- **`light_background_color`** (COMBO): Light theme preview background color, default light_gray
+- **`dark_background_color`** (COMBO): Dark theme preview background color, default dark_gray
+- **`text_font_size`** (INT): Text font size (8-50 pixels), default 18, controls both font size in preview images and text summary format
+
+**Background Color Options:**
+Supports 20 preset colors including:
+- **Basic Colors**: light_gray, dark_gray, white, black
+- **Special Backgrounds**: transparent, checkerboard
+- **Color Options**: blue, green, red, yellow, cyan, magenta, orange, purple, pink, brown, navy, teal, olive, maroon
+
+#### 5. DCI Image Preview
+**Node Category**: `DCI/Preview`
+**Function Description**: Specialized for previewing single DCI image data, providing clean image preview functionality.
+
+**Required Input Parameters:**
+- **`dci_image_data`** (DCI_IMAGE_DATA): DCI image data
+
+**Optional Input Parameters:**
+- **`preview_background`** (COMBO): Preview background type (transparent/white/black/checkerboard), default checkerboard
+
+#### 6. Binary File Loader
+**Node Category**: `DCI/Files`
+**Function Description**: Load binary files from the file system, designed for handling DCI icon files and other binary data.
+
+**Optional Input Parameters:**
+- **`file_path`** (STRING): File path to load, default empty string
+
+**Output:**
+- **`binary_data`** (BINARY_DATA): Binary content of the file (bytes type)
+- **`file_path`** (STRING): Complete path of the loaded file
+
+#### 7. Binary File Saver
+**Node Category**: `DCI/Files`
+**Function Description**: Save binary data to the file system, supports custom output paths and directories.
+
+**Required Input Parameters:**
+- **`binary_data`** (BINARY_DATA): Binary data to save
+- **`file_name`** (STRING): Target filename, default "binary_file"
+
+**Optional Input Parameters:**
+- **`output_directory`** (STRING): Output directory, defaults to ComfyUI output directory
+
+**Output:**
+- **`saved_path`** (STRING): Actual saved file path
+
+#### 8. DCI File Saver
+**Node Category**: `DCI/Files`
+**Function Description**: Advanced file saver specialized for saving DCI files, with intelligent filename parsing, prefix/suffix support, and cross-platform path handling.
+
+**Required Input Parameters:**
+- **`binary_data`** (BINARY_DATA): DCI binary data to save
+- **`input_filename`** (STRING): Input filename or path, default "icon.png"
+
+**Optional Input Parameters:**
+- **`output_directory`** (STRING): Output directory, defaults to ComfyUI output directory
+- **`filename_prefix`** (STRING): Filename prefix, default empty string
+- **`filename_suffix`** (STRING): Filename suffix, default empty string
+
+**Output:**
+- **`saved_filename`** (STRING): Saved filename (without path)
+- **`saved_full_path`** (STRING): Complete saved file path
+
+#### 9. DCI Analysis
+**Node Category**: `DCI/Analysis`
+**Function Description**: Analyze DCI file internal organization structure and metadata in detail with tree structure, output text format analysis results, specialized for analyzing and debugging DCI file content.
+
+**Required Input Parameters:**
+- **`dci_binary_data`** (BINARY_DATA): Binary data of the DCI file
+
+**Output:**
+- **`analysis_text`** (STRING): Detailed analysis text in tree structure format
+
+## Example Workflows
+
+### Basic DCI Creation Workflow
+```
+Image Input → DCI Image → DCI File → Binary File Saver
+```
+
+### Advanced Multi-State Icon Workflow
+```
+Normal Image → DCI Image (state: normal) ┐
+Hover Image → DCI Image (state: hover)   ├→ DCI File → DCI Preview
+Press Image → DCI Image (state: pressed) ┘
+```
+
+### DCI Analysis and Debug Workflow
+```
+Binary File Loader → DCI Analysis (text output)
+                  └→ DCI Preview (visual output)
+```
+
+## Technical Implementation
+
+### DCI Format Support
+- **Binary Structure**: Complete implementation of DCI binary format
+- **Directory Hierarchy**: Support for nested directory structures
+- **File Metadata**: Comprehensive metadata handling
+- **Layer System**: Full layer priority and composition support
+
+### Performance Optimization
+- **Memory Efficient**: Optimized binary data handling
+- **Streaming Support**: Large file processing capabilities
+- **Caching**: Intelligent caching for repeated operations
+
+### Error Handling
+- **Graceful Degradation**: Continues operation when possible
+- **Detailed Logging**: Comprehensive error reporting
+- **User Feedback**: Clear error messages in UI
+
+## Contributing
+
+We welcome contributions! Please see our contributing guidelines for details on:
+- Code style and standards
+- Testing requirements
+- Pull request process
+- Issue reporting
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- ComfyUI team for the excellent framework
+- Desktop Spec Group for the DCI specification
+- dtkgui project for Alpha8 format insights
+
+---
+
+## 中文
+
 # ComfyUI DCI 图像导出扩展
 
 一个全面的 ComfyUI 扩展，用于创建、预览和分析 DCI（DSG Combined Icons）格式文件。此扩展实现了完整的 DCI 规范，支持多状态图标、多色调、缩放因子和高级元数据分析。
@@ -164,8 +555,6 @@ pip install -r requirements.txt
 - DCI_BinaryFileLoader (Binary File Loader)
 - DCI_BinaryFileSaver (Binary File Saver)
 - DCI_FileSaver (DCI File Saver)
-
-
 
 ### 可用节点详细说明
 
@@ -585,6 +974,103 @@ wrapped_lines = self._wrap_text(line, text_width, font, draw)
 DCI Image 节点现在采用更清晰的参数组织方式，提升用户体验：
 
 **主要改进**：
+- **核心参数前置**：将最常用的参数（icon_size、icon_state、scale、tone_type）放在必需参数区域
+- **高级参数分组**：所有高级选项使用 `adv_` 前缀标识，便于识别和管理
+- **简化界面**：默认情况下只显示核心参数，减少界面复杂度
+- **逻辑分组**：高级参数按功能分为背景色设置、图层设置、颜色调整三个逻辑组
+
+**参数组织结构**：
+```
+必需参数：
+├── image (图像输入)
+├── icon_size (图标尺寸)
+├── icon_state (图标状态)
+├── scale (缩放因子)
+└── tone_type (色调类型)
+
+可选参数：
+├── image_format (图像格式)
+└── 高级设置 (adv_ 前缀)
+    ├── 背景色设置
+    ├── 图层属性
+    └── 颜色调整
+```
+
+**使用建议**：
+- 🎯 **新用户**：只需关注必需参数和 image_format，即可创建基本的DCI图像
+- 🎯 **高级用户**：使用 adv_ 前缀参数进行精细控制和专业定制
+- 🎯 **批量处理**：核心参数的简化使得批量创建图标更加高效
+
+### DCI 文件格式实现
+扩展实现了完整的 DCI 规范：
+
+**二进制结构**：
+```
+DCI 头部（8 字节）：
+├── 魔术（4 字节）：'DCI\0'
+├── 版本（1 字节）：1
+└── 文件计数（3 字节）：文件数量
+
+文件条目（每个文件 72+ 字节）：
+├── 文件类型（1 字节）：1=文件，2=目录
+├── 文件名（63 字节）：以空字符结尾的 UTF-8
+├── 内容大小（8 字节）：小端序 uint64
+└── 内容（可变）：文件数据或目录内容
+```
+
+**目录结构**：
+```
+size/                    # 图标尺寸（16、32、64、128、256、512、1024）
+└── state.tone/          # state: normal|disabled|hover|pressed
+    └── scale/           # 缩放因子（1、1.25、1.5、2 等，支持小数）
+        └── layer.format # priority.padding.palette.hue.saturation.brightness.red.green.blue.alpha.format
+```
+
+## 依赖项
+
+- **Pillow**：图像处理和操作
+- **NumPy**：ComfyUI 张量转换的数组操作
+- **PyTorch**：ComfyUI 张量兼容性
+
+## 故障排除
+
+如果在 ComfyUI 中看不到 DCI 节点：
+
+1. 确保已正确安装所有依赖项
+2. 重启 ComfyUI
+3. 检查 ComfyUI 控制台是否有错误信息
+4. 确保扩展文件夹位于正确的 `custom_nodes` 目录中
+
+### 已知问题和修复
+
+#### DCIAnalysis 节点输出为空（已修复）
+**问题描述**：DCIAnalysis 节点在某些情况下可能输出空字符串，无法显示DCI文件的树形结构。
+
+**原因**：节点期望的路径格式与DCIReader实际返回的数据结构不匹配。DCIReader将目录路径和文件名分别存储在`path`和`filename`字段中，而不是组合在一起。
+
+**修复方案**：
+- 更新路径解析逻辑，正确处理独立的`path`和`filename`字段
+- 调整路径组件解析，期望3个部分（size/state.tone/scale）而不是4个
+- 确保与DCIReader的数据结构完全兼容
+
+**修复状态**：✅ 已在最新版本中修复
+
+**验证方法**：
+```python
+# 测试DCIAnalysis节点是否正常工作
+from py.nodes.structure_node import DCIAnalysis
+analysis_node = DCIAnalysis()
+result = analysis_node._execute(dci_binary_data)
+# 应该返回包含树形结构的非空字符串
+```
+
+## 贡献
+
+欢迎贡献！请提交 Pull Request 或创建 Issue 来报告问题或建议新功能。
+
+## 许可证
+
+本项目采用 MIT 许可证。详见 LICENSE 文件。
 - **核心参数前置**：将最常用的参数（icon_size、icon_state、scale、tone_type）放在必需参数区域
 - **高级参数分组**：所有高级选项使用 `adv_` 前缀标识，便于识别和管理
 - **简化界面**：默认情况下只显示核心参数，减少界面复杂度
