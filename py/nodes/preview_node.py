@@ -253,16 +253,42 @@ class DCIPreviewNode(BaseNode):
     def _create_preview_with_special_background(self, generator, images, grid_cols, background_name, background_color):
         """Create preview with special handling for transparent and checkerboard backgrounds"""
         if background_name == "transparent":
-            # For transparent, use a light gray background but preserve transparency info
-            preview = generator.create_preview_grid(images, grid_cols, (240, 240, 240))
-            return preview
+            # For transparent, create preview with white background first
+            # Then convert to RGBA with transparent background
+            preview = generator.create_preview_grid(images, grid_cols, (255, 255, 255))
+            return self._apply_transparent_background(preview)
         elif background_name == "checkerboard":
-            # For checkerboard, create preview with light gray first, then apply checkerboard to transparent areas
-            preview = generator.create_preview_grid(images, grid_cols, (240, 240, 240))
+            # For checkerboard, create preview with white background first, then apply checkerboard
+            preview = generator.create_preview_grid(images, grid_cols, (255, 255, 255))
             return self._apply_checkerboard_to_preview(preview)
         else:
             # Normal color background
             return generator.create_preview_grid(images, grid_cols, background_color)
+
+    def _apply_transparent_background(self, preview_image):
+        """Apply transparent background to preview image"""
+        # Convert RGB to RGBA with transparent background
+        if preview_image.mode != 'RGBA':
+            # Convert to RGBA
+            rgba_image = Image.new('RGBA', preview_image.size, (255, 255, 255, 0))
+            # For transparent background, we need to identify the background areas
+            # Since the generator uses white background, we'll make white areas transparent
+            preview_rgba = preview_image.convert('RGBA')
+
+            # Create a mask where white pixels become transparent
+            pixels = preview_rgba.load()
+            for y in range(preview_rgba.height):
+                for x in range(preview_rgba.width):
+                    r, g, b, a = pixels[x, y]
+                    # If pixel is close to white (background), make it transparent
+                    if r > 250 and g > 250 and b > 250:
+                        pixels[x, y] = (255, 255, 255, 0)  # Transparent
+                    else:
+                        pixels[x, y] = (r, g, b, 255)  # Keep original color
+
+            return preview_rgba
+        else:
+            return preview_image
 
     def _apply_checkerboard_to_preview(self, preview_image):
         """Apply checkerboard pattern to preview image background"""
@@ -270,26 +296,59 @@ class DCIPreviewNode(BaseNode):
         width, height = preview_image.size
         checkerboard = Image.new('RGB', (width, height), (255, 255, 255))
 
-        # Create checkerboard pattern
+        # Create checkerboard pattern with better contrast
         checker_size = 16  # Size of each checker square
+        light_color = (240, 240, 240)  # Light gray
+        dark_color = (200, 200, 200)   # Darker gray
+
         for y in range(0, height, checker_size):
             for x in range(0, width, checker_size):
                 # Determine if this square should be light or dark
                 is_dark = ((x // checker_size) + (y // checker_size)) % 2 == 1
-                color = (200, 200, 200) if is_dark else (255, 255, 255)
+                color = dark_color if is_dark else light_color
 
-                # Draw the checker square
-                for py in range(y, min(y + checker_size, height)):
-                    for px in range(x, min(x + checker_size, width)):
+                # Draw the checker square more efficiently
+                x1, y1 = x, y
+                x2, y2 = min(x + checker_size, width), min(y + checker_size, height)
+
+                # Fill the rectangle
+                for py in range(y1, y2):
+                    for px in range(x1, x2):
                         checkerboard.putpixel((px, py), color)
 
-        # If the preview image has transparency, composite it over the checkerboard
-        if preview_image.mode == 'RGBA':
-            checkerboard.paste(preview_image, (0, 0), preview_image)
-            return checkerboard
+        # Always composite the preview over the checkerboard
+        # Convert preview to RGBA if needed for proper compositing
+        if preview_image.mode != 'RGBA':
+            preview_rgba = preview_image.convert('RGBA')
         else:
-            # If no transparency, just return the original
-            return preview_image
+            preview_rgba = preview_image
+
+        # Create a mask to identify background areas (white pixels)
+        mask = Image.new('L', preview_image.size, 0)
+        pixels = preview_image.load()
+        mask_pixels = mask.load()
+
+        for y in range(preview_image.height):
+            for x in range(preview_image.width):
+                if preview_image.mode == 'RGB':
+                    r, g, b = pixels[x, y]
+                    # If pixel is close to white (background), make it transparent in mask
+                    if r > 250 and g > 250 and b > 250:
+                        mask_pixels[x, y] = 0  # Transparent
+                    else:
+                        mask_pixels[x, y] = 255  # Opaque
+                else:  # RGBA
+                    r, g, b, a = pixels[x, y]
+                    if a < 128 or (r > 250 and g > 250 and b > 250):
+                        mask_pixels[x, y] = 0  # Transparent
+                    else:
+                        mask_pixels[x, y] = 255  # Opaque
+
+        # Composite preview over checkerboard using the mask
+        result = checkerboard.copy()
+        result.paste(preview_image, (0, 0), mask)
+
+        return result
 
     def _create_error_preview_image(self, error_msg, font_size=18):
         """Create an error preview image with the error message"""
