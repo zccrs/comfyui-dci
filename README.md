@@ -145,6 +145,7 @@ pip install -r requirements.txt
 #### DCI/Files（文件处理）
 - DCI_BinaryFileLoader (Binary File Loader)
 - DCI_BinaryFileSaver (Binary File Saver)
+- DCI_FileSaver (DCI File Saver)
 
 
 
@@ -315,7 +316,60 @@ pip install -r requirements.txt
 **输出：**
 - **`saved_path`** (STRING)：实际保存的文件路径
 
-#### 8. DCI Structure Preview（DCI 结构预览）
+#### 8. DCI File Saver（DCI 文件保存器）
+**节点类别**：`DCI/Files`
+**功能描述**：专门用于保存DCI文件的高级文件保存器，具有智能文件名解析、前缀后缀支持和跨平台路径处理功能。
+
+**必需输入参数：**
+- **`binary_data`** (BINARY_DATA)：要保存的DCI二进制数据
+- **`input_filename`** (STRING)：输入文件名或路径，默认"icon.png"
+
+**可选输入参数：**
+- **`output_directory`** (STRING)：输出目录，默认使用 ComfyUI 输出目录
+- **`filename_prefix`** (STRING)：文件名前缀，默认空字符串
+- **`filename_suffix`** (STRING)：文件名后缀，默认空字符串
+
+**输出：**
+- **`saved_filename`** (STRING)：保存后的文件名（不含路径）
+- **`saved_full_path`** (STRING)：保存后的完整文件路径
+
+**智能文件名解析功能：**
+
+*路径处理：*
+- **跨平台兼容**：自动处理Windows（`\`）和Linux（`/`）路径分隔符
+- **路径提取**：从完整路径中自动提取文件名部分
+- **示例**：`/home/user/icon.png` → `icon.dci`，`C:\Users\test\image.webp` → `image.dci`
+
+*扩展名处理：*
+- **智能替换**：自动识别并移除常见图像扩展名（webp、png、jpg、jpeg、apng、gif、bmp、tiff、tif）
+- **大小写不敏感**：支持大写和小写扩展名（如PNG、jpg、JPEG等）
+- **DCI扩展名**：自动添加`.dci`扩展名
+- **示例**：`a.png` → `a.dci`，`icon.WEBP` → `icon.dci`
+
+*前缀后缀功能：*
+- **灵活命名**：支持为文件名添加自定义前缀和后缀
+- **示例**：输入`a.png`，前缀`prefix-`，后缀`-suffix` → `prefix-a-suffix.dci`
+- **空值处理**：前缀或后缀为空时自动忽略
+
+*特殊情况处理：*
+- **空输入**：输入为空时使用默认文件名`icon.dci`
+- **纯路径**：输入只是路径分隔符时使用默认文件名
+- **无扩展名**：没有扩展名的文件名直接添加`.dci`扩展名
+- **非图像扩展名**：保留非图像扩展名，如`file.txt` → `file.txt.dci`
+
+**使用场景：**
+- **批量DCI文件保存**：根据原始图像文件名自动生成对应的DCI文件名
+- **工作流程自动化**：在图像处理工作流中自动保存DCI文件
+- **文件名标准化**：统一DCI文件的命名规范，添加项目前缀或版本后缀
+- **跨平台开发**：在不同操作系统间保持一致的文件名处理逻辑
+
+**技术特性：**
+- **路径安全**：自动处理路径分隔符，避免跨平台兼容性问题
+- **文件名清理**：确保生成的文件名符合文件系统要求
+- **错误处理**：对无效输入提供友好的默认处理
+- **双输出设计**：同时提供文件名和完整路径，满足不同使用需求
+
+#### 9. DCI Structure Preview（DCI 结构预览）
 **节点类别**：`DCI/Preview`
 **功能描述**：以树状结构详细展示DCI文件的内部组织结构和元信息，专门用于分析和调试DCI文件内容。
 
