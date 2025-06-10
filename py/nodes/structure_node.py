@@ -59,13 +59,15 @@ class DCIAnalysis(BaseNode):
         structure = {}
 
         for img in images:
-            # Parse path: size/state.tone/scale/filename
+            # Parse path: size/state.tone/scale (directory path)
+            # Filename is stored separately in 'filename' field
             path_parts = img['path'].split('/')
-            if len(path_parts) >= 4:
+            filename = img.get('filename', 'unknown.png')
+
+            if len(path_parts) >= 3:
                 size = path_parts[0]
                 state_tone = path_parts[1]
                 scale = path_parts[2]
-                filename = path_parts[3]
 
                 # Initialize nested structure
                 if size not in structure:
