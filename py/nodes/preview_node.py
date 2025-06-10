@@ -43,11 +43,12 @@ class DCIPreviewNode(BaseNode):
 
     def _execute(self, **kwargs):
         """Preview DCI file contents with in-node display"""
-                # Extract parameters with translation support
-        dci_binary_data = kwargs.get(t("dci_binary_data"))
-        light_background_color = kwargs.get(t("light_background_color"), t("light_gray"))
-        dark_background_color = kwargs.get(t("dark_background_color"), t("dark_gray"))
-        text_font_size = kwargs.get(t("text_font_size"), 18)
+        # Extract parameters with translation support
+        # Try both translated and original parameter names for compatibility
+        dci_binary_data = kwargs.get(t("dci_binary_data")) or kwargs.get("dci_binary_data")
+        light_background_color = kwargs.get(t("light_background_color")) or kwargs.get("light_background_color", t("light_gray"))
+        dark_background_color = kwargs.get(t("dark_background_color")) or kwargs.get("dark_background_color", t("dark_gray"))
+        text_font_size = kwargs.get(t("text_font_size")) or kwargs.get("text_font_size", 18)
 
         # Convert translated color names back to internal English names for processing
         light_bg_internal = self._translate_color_to_internal(light_background_color)
@@ -84,75 +85,144 @@ class DCIPreviewNode(BaseNode):
 
     def _execute_impl(self, dci_binary_data, light_background_color="light_gray", dark_background_color="dark_gray", text_font_size=18):
         """Preview DCI file contents with in-node display"""
-        if not _image_support:
-            return {"ui": {"text": ["Image support not available - missing PIL/torch dependencies"]}}
+        try:
+            if not _image_support:
+                error_msg = "❌ 错误：图像支持不可用\n缺少 PIL/torch 依赖库"
+                return {"ui": {"text": [error_msg]}}
 
-        # Use binary data
-        reader = DCIReader(binary_data=dci_binary_data)
-        source_name = "binary_data"
+            # Check if binary data is provided
+            if dci_binary_data is None:
+                error_msg = "❌ 错误：未提供 DCI 二进制数据\n"
+                error_msg += "请确保连接了有效的 DCI 二进制数据输入。\n"
+                error_msg += "数据来源可以是：DCI File 节点或 Binary File Loader 节点"
+                return {"ui": {"text": [error_msg]}}
 
-        # Read DCI data
-        if not reader.read():
-            return {"ui": {"text": ["Failed to read DCI data"]}}
+            if not isinstance(dci_binary_data, bytes):
+                error_msg = f"❌ 错误：DCI 数据类型不正确\n"
+                error_msg += f"期望类型：bytes，实际类型：{type(dci_binary_data)}\n"
+                error_msg += f"数据内容：{str(dci_binary_data)[:100]}..."
+                return {"ui": {"text": [error_msg]}}
 
-        # Extract images
-        images = reader.get_icon_images()
-        if not images:
-            return {"ui": {"text": ["No images found in DCI file"]}}
+            if len(dci_binary_data) == 0:
+                error_msg = "❌ 错误：DCI 二进制数据为空\n"
+                error_msg += "请检查数据源是否正确生成了 DCI 文件内容"
+                return {"ui": {"text": [error_msg]}}
 
-        # 根据色调将图像分成Light和Dark两组
-        light_images = [img for img in images if img['tone'].lower() == 'light']
-        dark_images = [img for img in images if img['tone'].lower() == 'dark']
-        other_images = [img for img in images if img['tone'].lower() not in ('light', 'dark')]
+            # Use binary data
+            reader = DCIReader(binary_data=dci_binary_data)
+            source_name = "binary_data"
 
-        # 确定背景颜色
-        light_bg_color = self._get_background_color(light_background_color)
-        dark_bg_color = self._get_background_color(dark_background_color)
+            # Read DCI data with detailed error reporting
+            if not reader.read():
+                error_msg = "❌ 错误：无法读取 DCI 数据\n"
+                error_msg += f"数据大小：{len(dci_binary_data)} 字节\n"
+                error_msg += f"数据开头：{dci_binary_data[:32].hex() if len(dci_binary_data) >= 32 else dci_binary_data.hex()}\n"
+                error_msg += "可能原因：\n"
+                error_msg += "1. 数据不是有效的 DCI 格式\n"
+                error_msg += "2. 文件头损坏或格式不正确\n"
+                error_msg += "3. 数据在传输过程中被截断"
 
-        # 生成预览图像
-        generator = DCIPreviewGenerator(font_size=text_font_size)
+                # Create error preview image
+                error_preview = self._create_error_preview_image(error_msg, text_font_size)
+                error_base64 = pil_to_comfyui_format(error_preview, "dci_error_preview")
 
-        # 为Light和Dark分别生成单列预览
-        light_preview = self._create_preview_with_special_background(generator, light_images, 1, light_background_color, light_bg_color) if light_images else None
-        dark_preview = self._create_preview_with_special_background(generator, dark_images, 1, dark_background_color, dark_bg_color) if dark_images else None
+                return {"ui": {"images": [error_base64], "text": [error_msg]}}
 
-        # 如果有其他色调，将它们添加到默认组(Light)
-        if other_images:
-            if light_preview:
-                # 如果已有Light预览，合并到Light预览中
-                combined_images = light_images + other_images
-                light_preview = self._create_preview_with_special_background(generator, combined_images, 1, light_background_color, light_bg_color)
+            # Extract images with detailed error reporting
+            images = reader.get_icon_images()
+            if not images:
+                error_msg = "❌ 错误：DCI 文件中未找到图像\n"
+                error_msg += f"DCI 文件读取成功，数据大小：{len(dci_binary_data)} 字节\n"
+
+                # Try to get more info from reader
+                try:
+                    if hasattr(reader, '_directories') and reader._directories:
+                        error_msg += f"发现 {len(reader._directories)} 个目录，但无图像数据\n"
+                    else:
+                        error_msg += "未发现任何目录结构\n"
+                except:
+                    pass
+
+                error_msg += "可能原因：\n"
+                error_msg += "1. DCI 文件为空或只包含目录结构\n"
+                error_msg += "2. 图像数据解析失败\n"
+                error_msg += "3. 文件格式版本不兼容"
+
+                # Create error preview image
+                error_preview = self._create_error_preview_image(error_msg, text_font_size)
+                error_base64 = pil_to_comfyui_format(error_preview, "dci_error_preview")
+
+                return {"ui": {"images": [error_base64], "text": [error_msg]}}
+
+            # 根据色调将图像分成Light和Dark两组
+            light_images = [img for img in images if img['tone'].lower() == 'light']
+            dark_images = [img for img in images if img['tone'].lower() == 'dark']
+            other_images = [img for img in images if img['tone'].lower() not in ('light', 'dark')]
+
+            # 确定背景颜色
+            light_bg_color = self._get_background_color(light_background_color)
+            dark_bg_color = self._get_background_color(dark_background_color)
+
+            # 生成预览图像
+            generator = DCIPreviewGenerator(font_size=text_font_size)
+
+            # 为Light和Dark分别生成单列预览
+            light_preview = self._create_preview_with_special_background(generator, light_images, 1, light_background_color, light_bg_color) if light_images else None
+            dark_preview = self._create_preview_with_special_background(generator, dark_images, 1, dark_background_color, dark_bg_color) if dark_images else None
+
+            # 如果有其他色调，将它们添加到默认组(Light)
+            if other_images:
+                if light_preview:
+                    # 如果已有Light预览，合并到Light预览中
+                    combined_images = light_images + other_images
+                    light_preview = self._create_preview_with_special_background(generator, combined_images, 1, light_background_color, light_bg_color)
+                else:
+                    # 否则创建新的预览
+                    light_preview = self._create_preview_with_special_background(generator, other_images, 1, light_background_color, light_bg_color)
+
+            # 合并Light和Dark预览（如果两者都存在）
+            if light_preview and dark_preview:
+                preview_image = self._combine_preview_images(light_preview, dark_preview)
+            elif light_preview:
+                preview_image = light_preview
+            elif dark_preview:
+                preview_image = dark_preview
             else:
-                # 否则创建新的预览
-                light_preview = self._create_preview_with_special_background(generator, other_images, 1, light_background_color, light_bg_color)
+                # 创建空预览
+                preview_image = self._create_preview_with_special_background(generator, [], 1, light_background_color, light_bg_color)
 
-        # 合并Light和Dark预览（如果两者都存在）
-        if light_preview and dark_preview:
-            preview_image = self._combine_preview_images(light_preview, dark_preview)
-        elif light_preview:
-            preview_image = light_preview
-        elif dark_preview:
-            preview_image = dark_preview
-        else:
-            # 创建空预览
-            preview_image = self._create_preview_with_special_background(generator, [], 1, light_background_color, light_bg_color)
+            # Convert PIL image to base64 for UI display
+            preview_base64 = pil_to_comfyui_format(preview_image, "dci_preview")
 
-        # Convert PIL image to base64 for UI display
-        preview_base64 = pil_to_comfyui_format(preview_image, "dci_preview")
+            # Generate detailed metadata summary
+            summary_text = self._format_detailed_summary(images, source_name, text_font_size)
 
-        # Generate detailed metadata summary
-        summary_text = self._format_detailed_summary(images, source_name, text_font_size)
-
-        # Create UI output with image and text
-        ui_output = {
-            "ui": {
-                "images": [preview_base64],
-                "text": [summary_text]
+            # Create UI output with image and text
+            ui_output = {
+                "ui": {
+                    "images": [preview_base64],
+                    "text": [summary_text]
+                }
             }
-        }
 
-        print(f"DCI preview generated: {len(images)} images found, Light: {len(light_images)}, Dark: {len(dark_images)}, Other: {len(other_images)}")
-        return ui_output
+            print(f"DCI preview generated: {len(images)} images found, Light: {len(light_images)}, Dark: {len(dark_images)}, Other: {len(other_images)}")
+            return ui_output
+
+        except Exception as e:
+            # Comprehensive error reporting with preview image
+            import traceback
+            error_msg = f"❌ 严重错误：DCI 预览过程中发生异常\n"
+            error_msg += f"错误类型：{type(e).__name__}\n"
+            error_msg += f"错误信息：{str(e)}\n"
+            error_msg += f"数据状态：{type(dci_binary_data)} ({len(dci_binary_data) if isinstance(dci_binary_data, bytes) else 'N/A'} 字节)\n"
+            error_msg += "\n详细错误堆栈：\n"
+            error_msg += traceback.format_exc()
+
+            # Create error preview image
+            error_preview = self._create_error_preview_image(error_msg, text_font_size)
+            error_base64 = pil_to_comfyui_format(error_preview, "dci_error_preview")
+
+            return {"ui": {"images": [error_base64], "text": [error_msg]}}
 
     def _get_background_color(self, color_name):
         """Get RGB color tuple based on color name"""
@@ -196,8 +266,81 @@ class DCIPreviewNode(BaseNode):
 
     def _apply_checkerboard_to_preview(self, preview_image):
         """Apply checkerboard pattern to preview image background"""
-        # For now, just return the preview as-is since DCIPreviewGenerator handles backgrounds
-        return preview_image
+        # Create a checkerboard pattern background
+        width, height = preview_image.size
+        checkerboard = Image.new('RGB', (width, height), (255, 255, 255))
+
+        # Create checkerboard pattern
+        checker_size = 16  # Size of each checker square
+        for y in range(0, height, checker_size):
+            for x in range(0, width, checker_size):
+                # Determine if this square should be light or dark
+                is_dark = ((x // checker_size) + (y // checker_size)) % 2 == 1
+                color = (200, 200, 200) if is_dark else (255, 255, 255)
+
+                # Draw the checker square
+                for py in range(y, min(y + checker_size, height)):
+                    for px in range(x, min(x + checker_size, width)):
+                        checkerboard.putpixel((px, py), color)
+
+        # If the preview image has transparency, composite it over the checkerboard
+        if preview_image.mode == 'RGBA':
+            checkerboard.paste(preview_image, (0, 0), preview_image)
+            return checkerboard
+        else:
+            # If no transparency, just return the original
+            return preview_image
+
+    def _create_error_preview_image(self, error_msg, font_size=18):
+        """Create an error preview image with the error message"""
+        try:
+            from PIL import ImageDraw, ImageFont
+
+            # Calculate image size based on error message length
+            lines = error_msg.split('\n')
+            max_line_length = max(len(line) for line in lines) if lines else 50
+
+            # Estimate dimensions
+            char_width = max(6, font_size // 2)
+            line_height = max(12, font_size + 4)
+
+            width = min(800, max(400, max_line_length * char_width))
+            height = min(600, max(200, len(lines) * line_height + 40))
+
+            # Create image with red background
+            error_image = Image.new('RGB', (width, height), (220, 50, 50))
+            draw = ImageDraw.Draw(error_image)
+
+            # Try to load a font
+            try:
+                font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", font_size)
+            except:
+                try:
+                    font = ImageFont.truetype("arial.ttf", font_size)
+                except:
+                    font = ImageFont.load_default()
+
+            # Draw error icon
+            draw.text((10, 10), "❌", fill=(255, 255, 255), font=font)
+
+            # Draw error message
+            y_offset = 40
+            for line in lines[:20]:  # Limit to first 20 lines
+                if y_offset + line_height > height - 10:
+                    break
+                draw.text((10, y_offset), line[:80], fill=(255, 255, 255), font=font)  # Limit line length
+                y_offset += line_height
+
+            return error_image
+
+        except Exception as e:
+            # Fallback: create a simple red image with basic text
+            fallback_image = Image.new('RGB', (400, 200), (220, 50, 50))
+            draw = ImageDraw.Draw(fallback_image)
+            draw.text((10, 10), "Error occurred", fill=(255, 255, 255))
+            draw.text((10, 30), f"Type: {type(e).__name__}", fill=(255, 255, 255))
+            draw.text((10, 50), "Check console for details", fill=(255, 255, 255))
+            return fallback_image
 
     def _combine_preview_images(self, light_preview, dark_preview):
         """Combine light and dark preview images side by side"""

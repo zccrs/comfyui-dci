@@ -29,11 +29,12 @@ class DCIFileSaver(BaseNode):
     def _execute(self, **kwargs):
         """Save DCI binary data to file system with advanced filename handling"""
         # Extract parameters with translation support
-        binary_data = kwargs.get(t("binary_data"))
-        input_filename = kwargs.get(t("input_filename"))
-        output_directory = kwargs.get(t("output_directory"), "")
-        filename_prefix = kwargs.get(t("filename_prefix"), "")
-        filename_suffix = kwargs.get(t("filename_suffix"), "")
+        # Try both translated and original parameter names for compatibility
+        binary_data = kwargs.get(t("binary_data")) or kwargs.get("binary_data")
+        input_filename = kwargs.get(t("input_filename")) or kwargs.get("input_filename")
+        output_directory = kwargs.get(t("output_directory")) or kwargs.get("output_directory", "")
+        filename_prefix = kwargs.get(t("filename_prefix")) or kwargs.get("filename_prefix", "")
+        filename_suffix = kwargs.get(t("filename_suffix")) or kwargs.get("filename_suffix", "")
 
         return self._execute_impl(binary_data, input_filename, output_directory, filename_prefix, filename_suffix)
 

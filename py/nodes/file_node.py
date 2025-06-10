@@ -47,9 +47,12 @@ class DCIFileNode(BaseNode):
         # Collect all DCI image data
         dci_images = []
         for i in range(1, 13):  # Support up to 12 images
-            dci_image_key = t(f"dci_image_{i}")
-            if dci_image_key in kwargs and kwargs[dci_image_key]:
-                dci_images.append(kwargs[dci_image_key])
+            # Try both translated and original parameter names for compatibility
+            dci_image_key_translated = t(f"dci_image_{i}")
+            dci_image_key_original = f"dci_image_{i}"
+            dci_image = kwargs.get(dci_image_key_translated) or kwargs.get(dci_image_key_original)
+            if dci_image:
+                dci_images.append(dci_image)
 
         if not dci_images:
             print("No DCI images provided")
@@ -170,7 +173,8 @@ class BinaryFileLoader(BaseNode):
     def _execute(self, **kwargs):
         """Load binary file from file system"""
         # Extract parameters with translation support
-        file_path = kwargs.get(t("file_path"), "")
+        # Try both translated and original parameter names for compatibility
+        file_path = kwargs.get(t("file_path")) or kwargs.get("file_path", "")
 
         return self._execute_impl(file_path)
 
@@ -212,9 +216,10 @@ class BinaryFileSaver(BaseNode):
     def _execute(self, **kwargs):
         """Save binary data to file system"""
         # Extract parameters with translation support
-        binary_data = kwargs.get(t("binary_data"))
-        file_name = kwargs.get(t("file_name"))
-        output_directory = kwargs.get(t("output_directory"), "")
+        # Try both translated and original parameter names for compatibility
+        binary_data = kwargs.get(t("binary_data")) or kwargs.get("binary_data")
+        file_name = kwargs.get(t("file_name")) or kwargs.get("file_name")
+        output_directory = kwargs.get(t("output_directory")) or kwargs.get("output_directory", "")
 
         return self._execute_impl(binary_data, file_name, output_directory)
 

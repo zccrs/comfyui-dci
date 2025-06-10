@@ -35,29 +35,90 @@ class DCIAnalysis(BaseNode):
     def _execute(self, **kwargs):
         """Analyze DCI file internal structure and return text output"""
         # Extract parameters with translation support
-        dci_binary_data = kwargs.get(t("dci_binary_data"))
+        # Try both translated and original parameter names for compatibility
+        dci_binary_data = kwargs.get(t("dci_binary_data")) or kwargs.get("dci_binary_data")
 
         return self._execute_impl(dci_binary_data)
 
     def _execute_impl(self, dci_binary_data):
         """Analyze DCI file internal structure and return text output"""
 
-        # Use binary data
-        reader = DCIReader(binary_data=dci_binary_data)
+        try:
+            # Check if binary data is provided
+            if dci_binary_data is None:
+                error_msg = "❌ 错误：未提供 DCI 二进制数据\n"
+                error_msg += "请确保连接了有效的 DCI 二进制数据输入。\n"
+                error_msg += "数据来源可以是：DCI File 节点或 Binary File Loader 节点"
+                return (error_msg,)
 
-        # Read DCI data
-        if not reader.read():
-            return (t("Failed to read DCI data"),)
+            if not isinstance(dci_binary_data, bytes):
+                error_msg = f"❌ 错误：DCI 数据类型不正确\n"
+                error_msg += f"期望类型：bytes，实际类型：{type(dci_binary_data)}\n"
+                error_msg += f"数据内容：{str(dci_binary_data)[:100]}..."
+                return (error_msg,)
 
-        # Extract images
-        images = reader.get_icon_images()
-        if not images:
-            return (t("No images found in DCI file"),)
+            if len(dci_binary_data) == 0:
+                error_msg = "❌ 错误：DCI 二进制数据为空\n"
+                error_msg += "请检查数据源是否正确生成了 DCI 文件内容"
+                return (error_msg,)
 
-        # Generate tree structure
-        tree_structure = self._generate_tree_structure(images)
+            # Use binary data
+            reader = DCIReader(binary_data=dci_binary_data)
 
-        return (tree_structure,)
+            # Read DCI data with detailed error reporting
+            if not reader.read():
+                error_msg = "❌ 错误：无法读取 DCI 数据\n"
+                error_msg += f"数据大小：{len(dci_binary_data)} 字节\n"
+                error_msg += f"数据开头：{dci_binary_data[:32].hex() if len(dci_binary_data) >= 32 else dci_binary_data.hex()}\n"
+                error_msg += "可能原因：\n"
+                error_msg += "1. 数据不是有效的 DCI 格式\n"
+                error_msg += "2. 文件头损坏或格式不正确\n"
+                error_msg += "3. 数据在传输过程中被截断"
+                return (error_msg,)
+
+            # Extract images with detailed error reporting
+            images = reader.get_icon_images()
+            if not images:
+                error_msg = "❌ 错误：DCI 文件中未找到图像\n"
+                error_msg += f"DCI 文件读取成功，数据大小：{len(dci_binary_data)} 字节\n"
+
+                # Try to get more info from reader
+                try:
+                    # Check if reader has any directory info
+                    if hasattr(reader, '_directories') and reader._directories:
+                        error_msg += f"发现 {len(reader._directories)} 个目录，但无图像数据\n"
+                    else:
+                        error_msg += "未发现任何目录结构\n"
+                except:
+                    pass
+
+                error_msg += "可能原因：\n"
+                error_msg += "1. DCI 文件为空或只包含目录结构\n"
+                error_msg += "2. 图像数据解析失败\n"
+                error_msg += "3. 文件格式版本不兼容"
+                return (error_msg,)
+
+            # Generate tree structure
+            tree_structure = self._generate_tree_structure(images)
+
+            # Add success header
+            success_header = f"✅ DCI 分析成功\n"
+            success_header += f"数据大小：{len(dci_binary_data)} 字节\n"
+            success_header += f"图像数量：{len(images)} 个\n"
+            success_header += "=" * 50 + "\n\n"
+
+            return (success_header + tree_structure,)
+
+        except Exception as e:
+            # Comprehensive error reporting
+            import traceback
+            error_msg = f"❌ 严重错误：DCI 分析过程中发生异常\n"
+            error_msg += f"错误类型：{type(e).__name__}\n"
+            error_msg += f"错误信息：{str(e)}\n"
+            error_msg += f"数据状态：{type(dci_binary_data)} ({len(dci_binary_data) if isinstance(dci_binary_data, bytes) else 'N/A'} 字节)\n"
+            error_msg += "\n详细错误堆栈：\n"
+            error_msg += traceback.format_exc()
+            return (error_msg,)
 
     def _generate_tree_structure(self, images):
         """Generate tree structure representation of DCI file"""

@@ -33,8 +33,9 @@ class DCIImagePreview(BaseNode):
     def _execute(self, **kwargs):
         """Preview DCI Image data"""
         # Extract parameters with translation support
-        dci_image_data = kwargs.get(t("dci_image_data"))
-        preview_background = kwargs.get(t("preview_background"), "checkerboard")
+        # Try both translated and original parameter names for compatibility
+        dci_image_data = kwargs.get(t("dci_image_data")) or kwargs.get("dci_image_data")
+        preview_background = kwargs.get(t("preview_background")) or kwargs.get("preview_background", "checkerboard")
 
         return self._execute_impl(dci_image_data, preview_background)
 

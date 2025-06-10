@@ -35,12 +35,13 @@ class DCISampleImage(BaseNode):
     def _execute(self, **kwargs):
         """Create simple DCI image data with basic settings only"""
         # Extract parameters with translation support
-        image = kwargs.get(t("image"))
-        icon_size = kwargs.get(t("icon_size"))
-        icon_state = kwargs.get(t("icon_state"))
-        scale = kwargs.get(t("scale"))
-        tone_type = kwargs.get(t("tone_type"), "light")
-        image_format = kwargs.get(t("image_format"), "webp")
+        # Try both translated and original parameter names for compatibility
+        image = kwargs.get(t("image")) or kwargs.get("image")
+        icon_size = kwargs.get(t("icon_size")) or kwargs.get("icon_size")
+        icon_state = kwargs.get(t("icon_state")) or kwargs.get("icon_state")
+        scale = kwargs.get(t("scale")) or kwargs.get("scale")
+        tone_type = kwargs.get(t("tone_type")) or kwargs.get("tone_type", "light")
+        image_format = kwargs.get(t("image_format")) or kwargs.get("image_format", "webp")
 
         return self._execute_impl(image, icon_size, icon_state, scale, tone_type, image_format)
 
