@@ -323,9 +323,55 @@ Supports 20 preset colors including:
 **Output:**
 - **`saved_path`** (STRING): Actual saved file path
 
-#### 8. DCI File Saver
+#### 8. Base64 Loader
 **Node Category**: `DCI/Files`
-**Function Description**: Advanced file saver specialized for saving DCI files, with intelligent filename parsing, prefix/suffix support, and cross-platform path handling.
+**Function Description**: Load binary data from base64 encoded strings, supporting multiline input for large data sets.
+
+**Required Input Parameters:**
+- **`base64_data`** (STRING): Base64 encoded string data (supports multiline input)
+
+**Output:**
+- **`binary_data`** (BINARY_DATA): Decoded binary data
+
+**Features:**
+- **Multiline Support**: Handles base64 strings with line breaks and whitespace
+- **Error Handling**: Gracefully handles invalid base64 data
+- **Large Data Support**: Efficiently processes large base64 encoded files
+
+#### 9. Base64 Saver
+**Node Category**: `DCI/Files`
+**Function Description**: Save binary data as base64 encoded text files, useful for data exchange and storage.
+
+**Required Input Parameters:**
+- **`binary_data`** (BINARY_DATA): Binary data to encode and save
+- **`file_name`** (STRING): Target filename, default "data.txt"
+
+**Optional Input Parameters:**
+- **`output_directory`** (STRING): Output directory, defaults to ComfyUI output directory
+- **`allow_overwrite`** (BOOLEAN): Allow overwriting existing files, default False
+
+**Output:**
+- **`saved_path`** (STRING): Actual saved file path
+- **`base64_data`** (STRING): Base64 encoded string (also returned for chaining)
+
+#### 10. Binary File Saver (Enhanced)
+**Node Category**: `DCI/Files`
+**Function Description**: Save binary data to the file system, supports custom output paths and directories with overwrite protection.
+
+**Required Input Parameters:**
+- **`binary_data`** (BINARY_DATA): Binary data to save
+- **`file_name`** (STRING): Target filename, default "binary_file"
+
+**Optional Input Parameters:**
+- **`output_directory`** (STRING): Output directory, defaults to ComfyUI output directory
+- **`allow_overwrite`** (BOOLEAN): Allow overwriting existing files, default False
+
+**Output:**
+- **`saved_path`** (STRING): Actual saved file path
+
+#### 11. DCI File Saver (Enhanced)
+**Node Category**: `DCI/Files`
+**Function Description**: Advanced file saver specialized for saving DCI files, with intelligent filename parsing, prefix/suffix support, cross-platform path handling, and overwrite protection.
 
 **Required Input Parameters:**
 - **`binary_data`** (BINARY_DATA): DCI binary data to save
@@ -335,6 +381,7 @@ Supports 20 preset colors including:
 - **`output_directory`** (STRING): Output directory, defaults to ComfyUI output directory
 - **`filename_prefix`** (STRING): Filename prefix, default empty string
 - **`filename_suffix`** (STRING): Filename suffix, default empty string
+- **`allow_overwrite`** (BOOLEAN): Allow overwriting existing files, default False
 
 **Output:**
 - **`saved_filename`** (STRING): Saved filename (without path)
@@ -784,9 +831,55 @@ DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制数据 3
 **输出：**
 - **`saved_path`** (STRING)：实际保存的文件路径
 
-#### 8. DCI File Saver（DCI 文件保存器）
+#### 8. Base64 Loader（Base64 加载器）
 **节点类别**：`DCI/Files`
-**功能描述**：专门用于保存DCI文件的高级文件保存器，具有智能文件名解析、前缀后缀支持和跨平台路径处理功能。
+**功能描述**：从base64编码字符串加载二进制数据，支持多行输入处理大型数据集。
+
+**必需输入参数：**
+- **`base64_data`** (STRING)：Base64编码的字符串数据（支持多行输入）
+
+**输出：**
+- **`binary_data`** (BINARY_DATA)：解码后的二进制数据
+
+**功能特性：**
+- **多行支持**：处理包含换行符和空格的base64字符串
+- **错误处理**：优雅处理无效的base64数据
+- **大数据支持**：高效处理大型base64编码文件
+
+#### 9. Base64 Saver（Base64 保存器）
+**节点类别**：`DCI/Files`
+**功能描述**：将二进制数据保存为base64编码的文本文件，用于数据交换和存储。
+
+**必需输入参数：**
+- **`binary_data`** (BINARY_DATA)：要编码和保存的二进制数据
+- **`file_name`** (STRING)：目标文件名，默认"data.txt"
+
+**可选输入参数：**
+- **`output_directory`** (STRING)：输出目录，默认使用 ComfyUI 输出目录
+- **`allow_overwrite`** (BOOLEAN)：允许覆盖现有文件，默认False
+
+**输出：**
+- **`saved_path`** (STRING)：实际保存的文件路径
+- **`base64_data`** (STRING)：Base64编码字符串（也返回用于链式操作）
+
+#### 10. Binary File Saver（二进制文件保存器 - 增强版）
+**节点类别**：`DCI/Files`
+**功能描述**：将二进制数据保存到文件系统，支持自定义输出路径和目录，具有覆盖保护功能。
+
+**必需输入参数：**
+- **`binary_data`** (BINARY_DATA)：要保存的二进制数据
+- **`file_name`** (STRING)：目标文件名，默认"binary_file"
+
+**可选输入参数：**
+- **`output_directory`** (STRING)：输出目录，默认使用 ComfyUI 输出目录
+- **`allow_overwrite`** (BOOLEAN)：允许覆盖现有文件，默认False
+
+**输出：**
+- **`saved_path`** (STRING)：实际保存的文件路径
+
+#### 11. DCI File Saver（DCI 文件保存器 - 增强版）
+**节点类别**：`DCI/Files`
+**功能描述**：专门用于保存DCI文件的高级文件保存器，具有智能文件名解析、前缀后缀支持、跨平台路径处理和覆盖保护功能。
 
 **必需输入参数：**
 - **`binary_data`** (BINARY_DATA)：要保存的DCI二进制数据
@@ -796,6 +889,7 @@ DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制数据 3
 - **`output_directory`** (STRING)：输出目录，默认使用 ComfyUI 输出目录
 - **`filename_prefix`** (STRING)：文件名前缀，默认空字符串
 - **`filename_suffix`** (STRING)：文件名后缀，默认空字符串
+- **`allow_overwrite`** (BOOLEAN)：允许覆盖现有文件，默认False
 
 **输出：**
 - **`saved_filename`** (STRING)：保存后的文件名（不含路径）
@@ -831,11 +925,18 @@ DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制数据 3
 - **文件名标准化**：统一DCI文件的命名规范，添加项目前缀或版本后缀
 - **跨平台开发**：在不同操作系统间保持一致的文件名处理逻辑
 
+**覆盖保护功能：**
+- **安全默认**：默认不允许覆盖现有文件，防止意外数据丢失
+- **明确控制**：通过`allow_overwrite`参数明确控制覆盖行为
+- **友好提示**：当文件已存在且不允许覆盖时，提供清晰的错误信息
+- **工作流安全**：在批量处理工作流中避免意外覆盖重要文件
+
 **技术特性：**
 - **路径安全**：自动处理路径分隔符，避免跨平台兼容性问题
 - **文件名清理**：确保生成的文件名符合文件系统要求
 - **错误处理**：对无效输入提供友好的默认处理
 - **双输出设计**：同时提供文件名和完整路径，满足不同使用需求
+- **覆盖保护**：防止意外覆盖现有文件，提高工作流安全性
 
 #### 9. DCI Analysis（DCI 分析）
 **节点类别**：`DCI/Analysis`

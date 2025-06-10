@@ -10,6 +10,8 @@
   "DCI File Saver": "DCI 文件保存器",
   "Binary File Loader": "二进制文件加载器",
   "Binary File Saver": "二进制文件保存器",
+  "Base64 Loader": "Base64 加载器",
+  "Base64 Saver": "Base64 保存器",
 
   "Export": "导出",
   "Preview": "预览",
@@ -48,6 +50,8 @@
   "light_background_color": "浅色背景颜色",
   "dark_background_color": "深色背景颜色",
   "text_font_size": "文本字体大小",
+  "base64_data": "Base64 数据",
+  "allow_overwrite": "允许覆盖",
 
   "normal": "正常",
   "disabled": "禁用",

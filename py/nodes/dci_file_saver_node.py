@@ -17,6 +17,7 @@ class DCIFileSaver(BaseNode):
                 t("output_directory"): ("STRING", {"default": "", "multiline": False}),
                 t("filename_prefix"): ("STRING", {"default": "", "multiline": False}),
                 t("filename_suffix"): ("STRING", {"default": "", "multiline": False}),
+                t("allow_overwrite"): ("BOOLEAN", {"default": False}),
             }
         }
 
@@ -35,10 +36,11 @@ class DCIFileSaver(BaseNode):
         output_directory = kwargs.get(t("output_directory")) if t("output_directory") in kwargs else kwargs.get("output_directory", "")
         filename_prefix = kwargs.get(t("filename_prefix")) if t("filename_prefix") in kwargs else kwargs.get("filename_prefix", "")
         filename_suffix = kwargs.get(t("filename_suffix")) if t("filename_suffix") in kwargs else kwargs.get("filename_suffix", "")
+        allow_overwrite = kwargs.get(t("allow_overwrite")) if t("allow_overwrite") in kwargs else kwargs.get("allow_overwrite", False)
 
-        return self._execute_impl(binary_data, input_filename, output_directory, filename_prefix, filename_suffix)
+        return self._execute_impl(binary_data, input_filename, output_directory, filename_prefix, filename_suffix, allow_overwrite)
 
-    def _execute_impl(self, binary_data, input_filename, output_directory="", filename_prefix="", filename_suffix=""):
+    def _execute_impl(self, binary_data, input_filename, output_directory="", filename_prefix="", filename_suffix="", allow_overwrite=False):
         """Save DCI binary data to file system with intelligent filename parsing"""
 
         # Check if binary_data is valid
@@ -71,6 +73,11 @@ class DCIFileSaver(BaseNode):
         # Create full path
         full_path = os.path.join(output_dir, final_filename)
         print(f"Target DCI file path: {full_path}")
+
+        # Check if file exists and overwrite is not allowed
+        if os.path.exists(full_path) and not allow_overwrite:
+            print(f"DCI file already exists and overwrite is not allowed: {full_path}")
+            return ("", "")
 
         # Ensure directory exists
         dir_path = os.path.dirname(full_path)
