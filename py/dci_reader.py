@@ -150,9 +150,13 @@ class DCIReader:
         """Extract all icon images with metadata"""
         images = []
 
+        print("DCIReader.get_icon_images: 开始提取图像...")
+
         for dir_path, files in self.directory_structure.items():
             # Parse directory path to extract metadata
             path_parts = dir_path.split('/')
+
+            print(f"处理目录: {dir_path}, 包含 {len(files)} 个文件")
 
             if len(path_parts) >= 3:
                 # Expected format: size/state.tone/scale
@@ -178,6 +182,8 @@ class DCIReader:
                 # Process files in this directory
                 for filename, file_info in files.items():
                     if file_info['type'] == self.FILE_TYPE_FILE:
+                        print(f"处理文件: {filename} (在目录 {dir_path} 中)")
+
                         # Parse layer filename for additional metadata
                         layer_info = self._parse_layer_filename(filename)
 
@@ -185,7 +191,7 @@ class DCIReader:
                             # Load image from content
                             image = Image.open(BytesIO(file_info['content']))
 
-                            images.append({
+                            image_info = {
                                 'image': image,
                                 'size': size,
                                 'state': state,
@@ -196,11 +202,17 @@ class DCIReader:
                                 'path': dir_path,
                                 'filename': filename,
                                 'file_size': file_info['size']
-                            })
+                            }
+
+                            # 打印完整的图像信息以进行调试
+                            print(f"添加图像: 路径={image_info['path']}, 文件名={image_info['filename']}")
+
+                            images.append(image_info)
 
                         except Exception as e:
                             print(f"Error loading image {filename}: {e}")
 
+        print(f"DCIReader.get_icon_images: 共提取 {len(images)} 个图像")
         return images
 
     def _parse_state_tone(self, state_tone_str: str) -> Tuple[str, str]:

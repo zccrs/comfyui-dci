@@ -68,6 +68,11 @@ class DCIPreviewNode:
             if not images:
                 return {"ui": {"text": ["No images found in DCI file"]}}
 
+            # 添加调试信息，输出每个图像的路径
+            print("调试路径信息:")
+            for i, img in enumerate(images):
+                print(f"图像 #{i}: 路径={img.get('path', 'None')} 文件名={img.get('filename', 'None')}")
+
             # 根据色调将图像分成Light和Dark两组
             light_images = [img for img in images if img['tone'].lower() == 'light']
             dark_images = [img for img in images if img['tone'].lower() == 'dark']
@@ -205,6 +210,13 @@ class DCIPreviewNode:
         if not images:
             return "No images available"
 
+        # 添加调试信息，再次输出所有路径
+        print("_format_detailed_summary 方法中的路径信息:")
+        for i, img in enumerate(images):
+            path = img.get('path', 'None')
+            filename = img.get('filename', 'None')
+            print(f"图像 #{i}: 路径={path}, 文件名={filename}")
+
         # 根据色调将图像分组
         light_images = [img for img in images if img['tone'].lower() == 'light']
         dark_images = [img for img in images if img['tone'].lower() == 'dark']
@@ -231,7 +243,7 @@ class DCIPreviewNode:
         lines = [
             f"📁 DCI 数据源: {source_name} (字体大小: {text_font_size})",
             f"🖼️  图像总数: {total_images} (Light: {len(light_images)}, Dark: {len(dark_images)}, 其他: {len(other_images)})",
-            f"�� 文件总大小: {total_file_size:,} 字节 ({total_file_size/1024:.1f} KB)",
+            f"🗂️  文件总大小: {total_file_size:,} 字节 ({total_file_size/1024:.1f} KB)",
             "",
             "📏 图标尺寸:",
             f"{indentation}{', '.join(f'{size}px' for size in sizes)}",
@@ -258,7 +270,11 @@ class DCIPreviewNode:
             # Sort light images for consistent display
             sorted_light_images = sorted(light_images, key=lambda x: (x['size'], x['state'], x['scale']))
             for img in sorted_light_images:
-                full_path = f"/{img['path']}/{img['filename']}"
+                # 确保路径和文件名都存在
+                path = img.get('path', 'unknown_path')
+                filename = img.get('filename', 'unknown_file')
+                print(f"Light 图像路径信息: 路径={path}, 文件名={filename}")
+                full_path = f"/{path}/{filename}"
                 lines.append(f"{indentation}{full_path}")
             lines.append("")
 
@@ -269,7 +285,11 @@ class DCIPreviewNode:
             # Sort dark images for consistent display
             sorted_dark_images = sorted(dark_images, key=lambda x: (x['size'], x['state'], x['scale']))
             for img in sorted_dark_images:
-                full_path = f"/{img['path']}/{img['filename']}"
+                # 确保路径和文件名都存在
+                path = img.get('path', 'unknown_path')
+                filename = img.get('filename', 'unknown_file')
+                print(f"Dark 图像路径信息: 路径={path}, 文件名={filename}")
+                full_path = f"/{path}/{filename}"
                 lines.append(f"{indentation}{full_path}")
             lines.append("")
 
@@ -280,7 +300,11 @@ class DCIPreviewNode:
             # Sort other images for consistent display
             sorted_other_images = sorted(other_images, key=lambda x: (x['size'], x['state'], x['scale']))
             for img in sorted_other_images:
-                full_path = f"/{img['path']}/{img['filename']}"
+                # 确保路径和文件名都存在
+                path = img.get('path', 'unknown_path')
+                filename = img.get('filename', 'unknown_file')
+                print(f"其他 图像路径信息: 路径={path}, 文件名={filename}")
+                full_path = f"/{path}/{filename}"
                 lines.append(f"{indentation}{full_path}")
             lines.append("")
 
@@ -321,7 +345,10 @@ class DCIPreviewNode:
         # Add detailed info for each image
         for i, img in enumerate(sorted_images, 1):
             # Construct full DCI path
-            full_path = f"/{img['path']}/{img['filename']}"
+            path = img.get('path', 'unknown_path')
+            filename = img.get('filename', 'unknown_file')
+            full_path = f"/{path}/{filename}"
+            print(f"详细信息中的图像 #{i} 路径: {full_path}")
 
             # Adjust detail level based on font size
             if text_font_size >= 16:
@@ -736,6 +763,12 @@ class DCIFileNode:
                 print("No DCI images provided")
                 return (b"",)
 
+            # 添加调试信息：输出所有DCI图像的路径
+            print("DCIFileNode: 所有输入图像的路径:")
+            for i, dci_image in enumerate(dci_images):
+                path = dci_image.get('path', 'None')
+                print(f"  图像 #{i+1}: 路径={path}")
+
             # Create DCI file structure
             dci_file = DCIFile()
             directory_structure = {}
@@ -752,6 +785,9 @@ class DCIFileNode:
                     continue
 
                 size_dir, state_tone_dir, scale_dir, filename_part = path_parts
+
+                # 添加调试信息：输出路径的各个部分
+                print(f"解析路径: {path} => size_dir={size_dir}, state_tone_dir={state_tone_dir}, scale_dir={scale_dir}, filename={filename_part}")
 
                 # Build nested directory structure
                 if size_dir not in directory_structure:
@@ -815,10 +851,16 @@ class DCIFileNode:
         """Create directory content from file list"""
         dir_content = BytesIO()
 
+        # 添加调试信息：输出所有文件
+        print(f"_create_directory_content: 处理 {len(files)} 个文件")
+
         # Sort files by name
         sorted_files = sorted(files, key=lambda x: dci_file._natural_sort_key(x['name']))
 
         for file_info in sorted_files:
+            # 添加调试信息：输出当前处理的文件
+            print(f"  处理文件: 名称={file_info['name']}, 类型={file_info.get('type', DCIFile.FILE_TYPE_FILE)}")
+
             # File type (1 byte)
             dir_content.write(struct.pack('<B', file_info.get('type', DCIFile.FILE_TYPE_FILE)))
 
