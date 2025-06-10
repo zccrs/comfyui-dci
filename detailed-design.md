@@ -851,3 +851,128 @@ class PreviewRenderer:
         """渲染单个预览单元格"""
         pass
 ```
+
+## 8. 发布与分发设计
+
+### 8.1 ComfyUI Registry 发布
+
+#### 8.1.1 发布配置
+项目已配置完整的 ComfyUI Registry 发布支持：
+
+**pyproject.toml 配置**:
+```toml
+[project]
+name = "comfyui-dci"
+description = "A comprehensive ComfyUI extension for creating, previewing, and analyzing DCI (DSG Combined Icons) format files."
+version = "1.0.0"
+license = { file = "LICENSE" }
+dependencies = ["Pillow>=8.0.0", "numpy>=1.19.0"]
+
+[tool.comfy]
+PublisherId = ""  # 需要填入实际的发布者ID
+DisplayName = "DCI Image Export Extension"
+Icon = "https://raw.githubusercontent.com/your-username/comfyui-dci/master/resources/icon.svg"
+```
+
+**许可证文件**: MIT License，确保开源兼容性
+
+**项目图标**: SVG格式图标，符合Registry要求
+
+#### 8.1.2 自动化发布流程
+**GitHub Actions 工作流**:
+- 监听 `pyproject.toml` 文件变更
+- 自动触发发布到 ComfyUI Registry
+- 支持手动触发发布
+- 使用安全的 API 密钥管理
+
+**版本管理策略**:
+- 遵循语义化版本规范 (SemVer)
+- 主版本号：重大架构变更
+- 次版本号：新功能添加
+- 修订版本号：错误修复和小改进
+
+#### 8.1.3 发布前检查清单
+1. **代码质量**:
+   - 所有测试通过
+   - 代码风格一致
+   - 文档完整更新
+
+2. **功能验证**:
+   - 所有节点正常工作
+   - 示例工作流可执行
+   - 错误处理正确
+
+3. **兼容性测试**:
+   - 多版本 ComfyUI 兼容
+   - 依赖库版本兼容
+   - 操作系统兼容性
+
+### 8.2 分发策略
+
+#### 8.2.1 多渠道分发
+1. **ComfyUI Registry** (主要渠道):
+   - 官方推荐安装方式
+   - 自动更新支持
+   - 用户发现性最佳
+
+2. **GitHub Releases** (备用渠道):
+   - 直接下载支持
+   - 版本历史完整
+   - 开发者友好
+
+3. **ComfyUI Manager** (集成渠道):
+   - 通过 Registry 自动集成
+   - 一键安装体验
+   - 依赖管理自动化
+
+#### 8.2.2 安装方式设计
+**优先级排序**:
+1. ComfyUI Manager 一键安装 (推荐)
+2. 自动安装脚本 (install.sh/install.bat)
+3. 手动安装 (高级用户)
+
+**安装脚本特性**:
+- 自动检测 Python 环境
+- 智能依赖安装
+- 错误处理和回滚
+- 跨平台兼容
+
+### 8.3 用户支持设计
+
+#### 8.3.1 文档体系
+1. **README.md**: 快速入门和基本使用
+2. **PUBLISHING.md**: 发布流程详细说明
+3. **detailed-design.md**: 技术实现细节
+4. **examples/**: 实际使用示例
+
+#### 8.3.2 问题反馈机制
+- GitHub Issues: 错误报告和功能请求
+- 详细的错误信息输出
+- 调试模式支持
+- 社区支持渠道
+
+#### 8.3.3 更新通知
+- Registry 自动更新通知
+- 版本变更日志
+- 重要更新公告
+- 兼容性说明
+
+### 8.4 质量保证
+
+#### 8.4.1 发布前测试
+- 自动化测试套件
+- 手动功能验证
+- 性能基准测试
+- 兼容性测试矩阵
+
+#### 8.4.2 发布后监控
+- 用户反馈收集
+- 错误报告分析
+- 使用统计分析
+- 性能监控
+
+#### 8.4.3 维护策略
+- 定期安全更新
+- 依赖库更新
+- 功能改进迭代
+- 社区贡献集成

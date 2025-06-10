@@ -1,0 +1,50 @@
+[project]
+name = "comfyui-dci"
+description = "A comprehensive ComfyUI extension for creating, previewing, and analyzing DCI (DSG Combined Icons) format files. Supports multi-state icons, multi-tone variants, scaling factors, and advanced metadata analysis with complete Chinese localization."
+version = "1.0.0"
+license = { file = "LICENSE" }
+dependencies = [
+    "Pillow>=8.0.0",
+    "numpy>=1.19.0"
+]
+readme = "README.md"
+requires-python = ">=3.8"
+keywords = ["comfyui", "dci", "icons", "image-processing", "desktop-icons"]
+authors = [
+    { name = "ComfyUI DCI Extension Team" }
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+
+[project.urls]
+Repository = "https://github.com/zccrs/comfyui-dci"
+Homepage = "https://github.com/zccrs/comfyui-dci"
+Documentation = "https://github.com/zccrs/comfyui-dci/blob/master/README.md"
+"Bug Reports" = "https://github.com/zccrs/comfyui-dci/issues"
+
+[tool.comfy]
+PublisherId = ""  # TODO: Fill in Publisher ID from Comfy Registry Website
+DisplayName = "DCI Image Export Extension"
+Icon = "https://raw.githubusercontent.com/zccrs/comfyui-dci/master/resources/icon.svg"
+
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["py*", "locales*", "resources*"]
+exclude = ["tests*", "test_env*", "tools*", "examples*", "venv*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.json", "*.png", "*.jpg", "*.svg", "*.md", "*.txt"]

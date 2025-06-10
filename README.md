@@ -113,7 +113,15 @@ comfyui-dci/
 
 ## Installation
 
-### Automatic Installation (Recommended)
+### From ComfyUI Registry (Recommended)
+
+This extension is available on the official ComfyUI Registry. You can install it directly through ComfyUI Manager:
+
+1. Open ComfyUI Manager in your ComfyUI interface
+2. Search for "DCI Image Export Extension" or "comfyui-dci"
+3. Click Install and restart ComfyUI
+
+### Automatic Installation (Alternative)
 
 1. Clone this repository to your ComfyUI custom nodes directory:
 ```bash
