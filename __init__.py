@@ -19,7 +19,8 @@ try:
         DCIImagePreview,
         DCIFileNode,
         BinaryFileLoader,
-        BinaryFileSaver
+        BinaryFileSaver,
+        DCIStructureNode
     )
 except ImportError:
     # Fallback for when module is loaded directly
@@ -33,7 +34,8 @@ except ImportError:
         DCIImagePreview,
         DCIFileNode,
         BinaryFileLoader,
-        BinaryFileSaver
+        BinaryFileSaver,
+        DCIStructureNode
     )
 
 # ComfyUI Node Registration
@@ -45,6 +47,7 @@ NODE_CLASS_MAPPINGS = {
     "DCI_FileNode": DCIFileNode,
     "DCI_BinaryFileLoader": BinaryFileLoader,
     "DCI_BinaryFileSaver": BinaryFileSaver,
+    "DCI_StructureNode": DCIStructureNode,
 }
 
 # Display names for ComfyUI interface
@@ -55,6 +58,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "DCI_FileNode": "DCI File",
     "DCI_BinaryFileLoader": "Binary File Loader",
     "DCI_BinaryFileSaver": "Binary File Saver",
+    "DCI_StructureNode": "DCI Structure Preview",
 }
 
 # Extension metadata
