@@ -62,15 +62,30 @@ class DCIFileNode(BaseNode):
             print(f"No new images, returning existing DCI data: {len(existing_binary_data)} bytes")
             return (existing_binary_data,)
 
-        # If we have new images, create a new DCI file with just the new images
-        # For now, we don't merge with existing data - this is a simpler approach
-        # that still allows composability by chaining nodes
+        # If we have new images, create a new DCI file and merge with existing data if present
         if dci_images:
             # Create DCI file structure
             dci_file = DCIFile()
             directory_structure = {}
 
-            # Process each DCI image
+            # First, parse existing DCI data if provided
+            if existing_binary_data:
+                existing_structure = self._parse_existing_dci_data(existing_binary_data)
+                # Merge existing structure into our directory structure
+                for size_dir, size_content in existing_structure.items():
+                    if size_dir not in directory_structure:
+                        directory_structure[size_dir] = {}
+                    for state_tone_dir, state_tone_content in size_content.items():
+                        if state_tone_dir not in directory_structure[size_dir]:
+                            directory_structure[size_dir][state_tone_dir] = {}
+                        for scale_dir, scale_content in state_tone_content.items():
+                            if scale_dir not in directory_structure[size_dir][state_tone_dir]:
+                                directory_structure[size_dir][state_tone_dir][scale_dir] = {}
+                            # Merge files from existing data
+                            for filename, file_content in scale_content.items():
+                                directory_structure[size_dir][state_tone_dir][scale_dir][filename] = file_content
+
+            # Then, add new DCI images (they will overwrite existing files with same path)
             for dci_image in dci_images:
                 path = dci_image['path']
                 content = dci_image['content']
@@ -133,8 +148,7 @@ class DCIFileNode(BaseNode):
             binary_data = dci_file.to_binary()
 
             if existing_binary_data:
-                print(f"Created new DCI file with {len(dci_images)} new images ({len(binary_data)} bytes)")
-                print("Note: Existing data not merged - use multiple DCI File nodes to combine")
+                print(f"Merged DCI file: {len(dci_images)} new images + existing data = {len(binary_data)} bytes total")
             else:
                 print(f"Created DCI file with {len(dci_images)} images ({len(binary_data)} bytes)")
             return (binary_data,)
@@ -166,11 +180,54 @@ class DCIFileNode(BaseNode):
 
     def _parse_existing_dci_data(self, binary_data):
         """Parse existing DCI binary data to extract directory structure"""
-        # For now, we'll use a simpler approach:
-        # Just return empty structure and let the new images be added
-        # This means existing data will be preserved but not merged at the structure level
-        # The DCI format will handle the combination at the binary level
-        return {}
+        try:
+            # Import DCIReader here to avoid circular imports
+            from ..dci_reader import DCIReader
+
+            # Create DCIReader instance with binary data
+            reader = DCIReader(binary_data=binary_data)
+
+            # Read and parse the DCI file
+            if not reader.read():
+                print("Failed to read existing DCI data")
+                return {}
+
+            # Extract directory structure from the reader
+            directory_structure = {}
+
+            # Get all icon images from the existing DCI data
+            existing_images = reader.get_icon_images()
+
+            for image_info in existing_images:
+                # Reconstruct the path and content from image info
+                size_dir = str(image_info['size'])
+                state_tone_dir = f"{image_info['state']}.{image_info['tone']}"
+                scale_dir = str(image_info['scale'])
+                filename = image_info['filename']
+
+                # Get the file content from the reader's directory structure
+                full_path = image_info['path']
+                if full_path in reader.directory_structure and filename in reader.directory_structure[full_path]:
+                    file_content = reader.directory_structure[full_path][filename]['content']
+
+                    # Build nested directory structure
+                    if size_dir not in directory_structure:
+                        directory_structure[size_dir] = {}
+                    if state_tone_dir not in directory_structure[size_dir]:
+                        directory_structure[size_dir][state_tone_dir] = {}
+                    if scale_dir not in directory_structure[size_dir][state_tone_dir]:
+                        directory_structure[size_dir][state_tone_dir][scale_dir] = {}
+
+                    directory_structure[size_dir][state_tone_dir][scale_dir][filename] = file_content
+
+            print(f"Parsed existing DCI data: {len(existing_images)} images from {len(directory_structure)} size directories")
+            return directory_structure
+
+        except Exception as e:
+            print(f"Error parsing existing DCI data: {e}")
+            import traceback
+            traceback.print_exc()
+            return {}
 
 
 class BinaryFileLoader(BaseNode):

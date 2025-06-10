@@ -9,10 +9,19 @@ import time
 
 def tensor_to_pil(image):
     """Convert ComfyUI image tensor to PIL Image"""
-    if len(image.shape) == 4:
-        img_array = image[0].cpu().numpy()
+    # Handle both torch tensors and numpy arrays
+    if hasattr(image, 'cpu'):
+        # PyTorch tensor
+        if len(image.shape) == 4:
+            img_array = image[0].cpu().numpy()
+        else:
+            img_array = image.cpu().numpy()
     else:
-        img_array = image.cpu().numpy()
+        # NumPy array
+        if len(image.shape) == 4:
+            img_array = image[0]
+        else:
+            img_array = image
 
     # Convert from 0-1 range to 0-255 range
     img_array = (img_array * 255).astype(np.uint8)
