@@ -424,6 +424,42 @@ DCI_IMAGE_DATA = {
 4. 创建元数据摘要
 5. 返回预览图像和摘要
 
+#### 3. DCI Preview（DCI 预览）
+**节点类别**：`DCI/Preview`
+**功能描述**：直接在节点内显示 DCI 文件内容的可视化预览和详细元数据信息。专门用于预览 DCI 二进制数据，现支持将Light和Dark相关内容分开显示。
+
+**必需输入参数：**
+- **`dci_binary_data`** (BINARY_DATA)：DCI 文件的二进制数据
+
+**可选输入参数：**
+- **`light_background_color`** (COMBO)：Light主题预览背景色（light_gray/dark_gray/white/black/blue/green/red/custom），默认light_gray
+- **`light_custom_bg_r`** (INT)：Light自定义背景色红色分量（0-255），默认240
+- **`light_custom_bg_g`** (INT)：Light自定义背景色绿色分量（0-255），默认240
+- **`light_custom_bg_b`** (INT)：Light自定义背景色蓝色分量（0-255），默认240
+- **`dark_background_color`** (COMBO)：Dark主题预览背景色（light_gray/dark_gray/white/black/blue/green/red/custom），默认dark_gray
+- **`dark_custom_bg_r`** (INT)：Dark自定义背景色红色分量（0-255），默认64
+- **`dark_custom_bg_g`** (INT)：Dark自定义背景色绿色分量（0-255），默认64
+- **`dark_custom_bg_b`** (INT)：Dark自定义背景色蓝色分量（0-255），默认64
+- **`text_font_size`** (INT)：文本字号大小（8-24像素），默认12
+
+**节点内预览功能：**
+- **双列布局**：Light主题图标在左列，Dark主题图标在右列
+- **独立背景设置**：Light和Dark主题可设置不同的背景颜色
+- **智能背景色设置**：每种主题支持多种预设背景色和自定义RGB颜色
+- **自适应文本格式**：根据字体大小调整文本显示格式，较大字体使用更紧凑的布局
+- **文件路径分组显示**：Light、Dark和其他色调图标的路径分别显示
+- **详细元数据显示**：在节点内显示全面的文件信息，包括：
+  - 图标尺寸、状态、色调、缩放因子
+  - 图像格式、文件大小、实际尺寸
+  - 完整的DCI内部路径和文件名
+  - 每个图像的优先级和详细属性
+  - 统计汇总信息和文件路径列表
+
+**输出：**
+- 无输出（所有预览内容直接在节点内显示）
+
+**注意**：此节点专门用于处理二进制数据输入，不再需要手动设置列数，默认将Light和Dark内容分开显示在两列。Light主题图标固定在左侧列，Dark主题图标固定在右侧列。文本格式会根据字体大小自动调整，提供最佳阅读体验。
+
 ## 2. 数据结构设计
 
 ### 2.1 传统数据结构
@@ -562,8 +598,6 @@ else:
     output_dir = folder_paths.get_output_directory()
     final_path = os.path.join(output_dir, file_path)
 ```
-
-
 
 ### 2.3 数据流转换
 

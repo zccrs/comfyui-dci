@@ -30,11 +30,14 @@ class DCIPreviewNode:
                 "dci_binary_data": ("BINARY_DATA",),
             },
             "optional": {
-                "grid_columns": ("INT", {"default": 1, "min": 1, "max": 10, "step": 1}),
-                "background_color": (["light_gray", "dark_gray", "white", "black", "blue", "green", "red", "custom"], {"default": "light_gray"}),
-                "custom_bg_r": ("INT", {"default": 240, "min": 0, "max": 255, "step": 1}),
-                "custom_bg_g": ("INT", {"default": 240, "min": 0, "max": 255, "step": 1}),
-                "custom_bg_b": ("INT", {"default": 240, "min": 0, "max": 255, "step": 1}),
+                "light_background_color": (["light_gray", "dark_gray", "white", "black", "blue", "green", "red", "custom"], {"default": "light_gray"}),
+                "light_custom_bg_r": ("INT", {"default": 240, "min": 0, "max": 255, "step": 1}),
+                "light_custom_bg_g": ("INT", {"default": 240, "min": 0, "max": 255, "step": 1}),
+                "light_custom_bg_b": ("INT", {"default": 240, "min": 0, "max": 255, "step": 1}),
+                "dark_background_color": (["light_gray", "dark_gray", "white", "black", "blue", "green", "red", "custom"], {"default": "dark_gray"}),
+                "dark_custom_bg_r": ("INT", {"default": 64, "min": 0, "max": 255, "step": 1}),
+                "dark_custom_bg_g": ("INT", {"default": 64, "min": 0, "max": 255, "step": 1}),
+                "dark_custom_bg_b": ("INT", {"default": 64, "min": 0, "max": 255, "step": 1}),
                 "text_font_size": ("INT", {"default": 12, "min": 8, "max": 24, "step": 1}),
             }
         }
@@ -45,8 +48,11 @@ class DCIPreviewNode:
     CATEGORY = "DCI/Preview"
     OUTPUT_NODE = True
 
-    def preview_dci(self, dci_binary_data, grid_columns=1, background_color="light_gray", custom_bg_r=240, custom_bg_g=240, custom_bg_b=240, text_font_size=12):
-        """Preview DCI file contents with in-node display"""
+    def preview_dci(self, dci_binary_data,
+                   light_background_color="light_gray", light_custom_bg_r=240, light_custom_bg_g=240, light_custom_bg_b=240,
+                   dark_background_color="dark_gray", dark_custom_bg_r=64, dark_custom_bg_g=64, dark_custom_bg_b=64,
+                   text_font_size=12):
+        """Preview DCI file contents with in-node display, separating Light and Dark content into two columns"""
 
         try:
             # Use binary data
@@ -62,12 +68,42 @@ class DCIPreviewNode:
             if not images:
                 return {"ui": {"text": ["No images found in DCI file"]}}
 
-            # Determine background color
-            bg_color = self._get_background_color(background_color, custom_bg_r, custom_bg_g, custom_bg_b)
+            # 根据色调将图像分成Light和Dark两组
+            light_images = [img for img in images if img['tone'].lower() == 'light']
+            dark_images = [img for img in images if img['tone'].lower() == 'dark']
+            other_images = [img for img in images if img['tone'].lower() not in ('light', 'dark')]
 
-            # Generate preview
+            # 确定背景颜色
+            light_bg_color = self._get_background_color(light_background_color, light_custom_bg_r, light_custom_bg_g, light_custom_bg_b)
+            dark_bg_color = self._get_background_color(dark_background_color, dark_custom_bg_r, dark_custom_bg_g, dark_custom_bg_b)
+
+            # 生成预览图像
             generator = DCIPreviewGenerator()
-            preview_image = generator.create_preview_grid(images, grid_columns, bg_color)
+
+            # 为Light和Dark分别生成单列预览
+            light_preview = generator.create_preview_grid(light_images, 1, light_bg_color) if light_images else None
+            dark_preview = generator.create_preview_grid(dark_images, 1, dark_bg_color) if dark_images else None
+
+            # 如果有其他色调，将它们添加到默认组(Light)
+            if other_images:
+                if light_preview:
+                    # 如果已有Light预览，合并到Light预览中
+                    combined_images = light_images + other_images
+                    light_preview = generator.create_preview_grid(combined_images, 1, light_bg_color)
+                else:
+                    # 否则创建新的预览
+                    light_preview = generator.create_preview_grid(other_images, 1, light_bg_color)
+
+            # 合并Light和Dark预览（如果两者都存在）
+            if light_preview and dark_preview:
+                preview_image = self._combine_preview_images(light_preview, dark_preview)
+            elif light_preview:
+                preview_image = light_preview
+            elif dark_preview:
+                preview_image = dark_preview
+            else:
+                # 创建空预览
+                preview_image = generator.create_preview_grid([], 1, light_bg_color)
 
             # Convert PIL image to base64 for UI display
             preview_base64 = self._pil_to_base64(preview_image)
@@ -83,7 +119,7 @@ class DCIPreviewNode:
                 }
             }
 
-            print(f"DCI preview generated: {len(images)} images found, background: {background_color}")
+            print(f"DCI preview generated: {len(images)} images found, Light: {len(light_images)}, Dark: {len(dark_images)}, Other: {len(other_images)}")
             return ui_output
 
         except Exception as e:
@@ -91,6 +127,23 @@ class DCIPreviewNode:
             import traceback
             traceback.print_exc()
             return {"ui": {"text": [f"Error: {str(e)}"]}}
+
+    def _combine_preview_images(self, light_preview, dark_preview):
+        """Combine light and dark preview images side by side"""
+        # 计算新图像的尺寸
+        width = light_preview.width + dark_preview.width
+        height = max(light_preview.height, dark_preview.height)
+
+        # 创建新图像
+        combined = Image.new('RGB', (width, height), (240, 240, 240))
+
+        # 粘贴Light预览（左侧）
+        combined.paste(light_preview, (0, 0))
+
+        # 粘贴Dark预览（右侧）
+        combined.paste(dark_preview, (light_preview.width, 0))
+
+        return combined
 
     def _get_background_color(self, color_name, custom_r, custom_g, custom_b):
         """Get RGB color tuple based on color name or custom values"""
@@ -148,15 +201,20 @@ class DCIPreviewNode:
         }
 
     def _format_detailed_summary(self, images, source_name, text_font_size=12):
-        """Format detailed metadata summary as text with comprehensive information"""
+        """Format detailed metadata summary as text with comprehensive information and clear Light/Dark separation"""
         if not images:
             return "No images available"
+
+        # 根据色调将图像分组
+        light_images = [img for img in images if img['tone'].lower() == 'light']
+        dark_images = [img for img in images if img['tone'].lower() == 'dark']
+        other_images = [img for img in images if img['tone'].lower() not in ('light', 'dark')]
 
         # Calculate summary statistics
         total_images = len(images)
         total_file_size = sum(img['file_size'] for img in images)
 
-        # Collect unique values
+        # Collect unique values across all images
         sizes = sorted(set(img['size'] for img in images))
         states = sorted(set(img['state'] for img in images))
         tones = sorted(set(img['tone'] for img in images))
@@ -165,7 +223,6 @@ class DCIPreviewNode:
         paths = sorted(set(img['path'] for img in images))
 
         # Adjust spacing based on font size
-        # For smaller font sizes, use more detailed format; for larger fonts use more compact format
         spacing = "" if text_font_size <= 10 else "\n"
         indentation = "   " if text_font_size <= 14 else " "
         separator = "=" * max(20, 50 - text_font_size)
@@ -173,8 +230,8 @@ class DCIPreviewNode:
         # Build detailed summary with font size adaptations
         lines = [
             f"📁 DCI 数据源: {source_name} (字体大小: {text_font_size})",
-            f"🖼️  图像总数: {total_images}",
-            f"📊 文件总大小: {total_file_size:,} 字节 ({total_file_size/1024:.1f} KB)",
+            f"🖼️  图像总数: {total_images} (Light: {len(light_images)}, Dark: {len(dark_images)}, 其他: {len(other_images)})",
+            f"�� 文件总大小: {total_file_size:,} 字节 ({total_file_size/1024:.1f} KB)",
             "",
             "📏 图标尺寸:",
             f"{indentation}{', '.join(f'{size}px' for size in sizes)}",
@@ -191,25 +248,75 @@ class DCIPreviewNode:
             "🗂️  图像格式:",
             f"{indentation}{', '.join(formats)}",
             "",
-            "📂 文件路径列表:",
         ]
 
-        # Always show file paths
-        # Sort images for consistent display and extract full paths
-        sorted_images = sorted(images, key=lambda x: (x['size'], x['state'], x['tone'], x['scale']))
-        for img in sorted_images:
-            # Construct full DCI path like /235/normal.light/1/1.0.0.0.0.0.0.0.0.0.webp
-            full_path = f"/{img['path']}/{img['filename']}"
-            lines.append(f"{indentation}{full_path}")
+        # 分别显示Light和Dark的路径列表
+        if light_images:
+            lines.extend([
+                "📂 Light 文件路径列表:",
+            ])
+            # Sort light images for consistent display
+            sorted_light_images = sorted(light_images, key=lambda x: (x['size'], x['state'], x['scale']))
+            for img in sorted_light_images:
+                full_path = f"/{img['path']}/{img['filename']}"
+                lines.append(f"{indentation}{full_path}")
+            lines.append("")
+
+        if dark_images:
+            lines.extend([
+                "📂 Dark 文件路径列表:",
+            ])
+            # Sort dark images for consistent display
+            sorted_dark_images = sorted(dark_images, key=lambda x: (x['size'], x['state'], x['scale']))
+            for img in sorted_dark_images:
+                full_path = f"/{img['path']}/{img['filename']}"
+                lines.append(f"{indentation}{full_path}")
+            lines.append("")
+
+        if other_images:
+            lines.extend([
+                "📂 其他色调文件路径列表:",
+            ])
+            # Sort other images for consistent display
+            sorted_other_images = sorted(other_images, key=lambda x: (x['size'], x['state'], x['scale']))
+            for img in sorted_other_images:
+                full_path = f"/{img['path']}/{img['filename']}"
+                lines.append(f"{indentation}{full_path}")
+            lines.append("")
 
         lines.extend([
-            "",
             "📋 详细图像信息:",
             separator
         ])
 
+        # Add detailed info for each image, grouped by tone
+        # First Light images
+        if light_images:
+            lines.append("")
+            lines.append("🌞 Light 主题图像:")
+            lines.append("")
+            self._add_detailed_image_info(lines, light_images, indentation, text_font_size)
+
+        # Then Dark images
+        if dark_images:
+            lines.append("")
+            lines.append("🌙 Dark 主题图像:")
+            lines.append("")
+            self._add_detailed_image_info(lines, dark_images, indentation, text_font_size)
+
+        # Finally other images if any
+        if other_images:
+            lines.append("")
+            lines.append("⚪ 其他主题图像:")
+            lines.append("")
+            self._add_detailed_image_info(lines, other_images, indentation, text_font_size)
+
+        return "\n".join(lines)
+
+    def _add_detailed_image_info(self, lines, images, indentation, text_font_size):
+        """Helper method to add detailed image information to the summary text"""
         # Sort images for consistent display
-        sorted_images = sorted(images, key=lambda x: (x['size'], x['state'], x['tone'], x['scale']))
+        sorted_images = sorted(images, key=lambda x: (x['size'], x['state'], x['scale']))
 
         # Add detailed info for each image
         for i, img in enumerate(sorted_images, 1):
@@ -241,8 +348,6 @@ class DCIPreviewNode:
                     ""
                 ]
             lines.extend(image_info)
-
-        return "\n".join(lines)
 
 
 class DCIImage:

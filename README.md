@@ -157,24 +157,28 @@ pip install -r requirements.txt
 
 #### 3. DCI Preview（DCI 预览）
 **节点类别**：`DCI/Preview`
-**功能描述**：直接在节点内显示 DCI 文件内容的可视化网格预览和详细元数据信息。专门用于预览 DCI 二进制数据。
+**功能描述**：直接在节点内显示 DCI 文件内容的可视化预览和详细元数据信息。专门用于预览 DCI 二进制数据，现支持将Light和Dark相关内容分开显示。
 
 **必需输入参数：**
 - **`dci_binary_data`** (BINARY_DATA)：DCI 文件的二进制数据
 
 **可选输入参数：**
-- **`grid_columns`** (INT)：网格列数（1-10），默认1（单列显示）
-- **`background_color`** (COMBO)：预览背景色（light_gray/dark_gray/white/black/blue/green/red/custom），默认light_gray
-- **`custom_bg_r`** (INT)：自定义背景色红色分量（0-255），默认240
-- **`custom_bg_g`** (INT)：自定义背景色绿色分量（0-255），默认240
-- **`custom_bg_b`** (INT)：自定义背景色蓝色分量（0-255），默认240
+- **`light_background_color`** (COMBO)：Light主题预览背景色（light_gray/dark_gray/white/black/blue/green/red/custom），默认light_gray
+- **`light_custom_bg_r`** (INT)：Light自定义背景色红色分量（0-255），默认240
+- **`light_custom_bg_g`** (INT)：Light自定义背景色绿色分量（0-255），默认240
+- **`light_custom_bg_b`** (INT)：Light自定义背景色蓝色分量（0-255），默认240
+- **`dark_background_color`** (COMBO)：Dark主题预览背景色（light_gray/dark_gray/white/black/blue/green/red/custom），默认dark_gray
+- **`dark_custom_bg_r`** (INT)：Dark自定义背景色红色分量（0-255），默认64
+- **`dark_custom_bg_g`** (INT)：Dark自定义背景色绿色分量（0-255），默认64
+- **`dark_custom_bg_b`** (INT)：Dark自定义背景色蓝色分量（0-255），默认64
 - **`text_font_size`** (INT)：文本字号大小（8-24像素），默认12
 
 **节点内预览功能：**
-- **图像网格预览**：直接在节点界面中显示所有图像的网格布局，图像居左对齐
-- **智能背景色设置**：支持多种预设背景色和自定义RGB颜色
+- **双列布局**：Light主题图标在左列，Dark主题图标在右列
+- **独立背景设置**：Light和Dark主题可设置不同的背景颜色
+- **智能背景色设置**：每种主题支持多种预设背景色和自定义RGB颜色
 - **自适应文本格式**：根据字体大小调整文本显示格式，较大字体使用更紧凑的布局
-- **文件路径始终显示**：始终显示完整的DCI文件路径列表（如 /235/normal.light/1/1.0.0.0.0.0.0.0.0.0.webp）
+- **文件路径分组显示**：Light、Dark和其他色调图标的路径分别显示
 - **详细元数据显示**：在节点内显示全面的文件信息，包括：
   - 图标尺寸、状态、色调、缩放因子
   - 图像格式、文件大小、实际尺寸
@@ -185,7 +189,7 @@ pip install -r requirements.txt
 **输出：**
 - 无输出（所有预览内容直接在节点内显示）
 
-**注意**：此节点不再接受 `dci_file_path` 参数，专门用于处理二进制数据输入。默认使用单列布局以便更好地查看详细信息。文本格式会根据字体大小自动调整，提供最佳阅读体验。
+**注意**：此节点专门用于处理二进制数据输入。不需要手动设置列数，默认将Light和Dark内容分开显示在两列，Light主题图标固定在左侧列，Dark主题图标固定在右侧列。文本格式会根据字体大小自动调整，提供最佳阅读体验。
 
 #### 4. DCI Image Debug（DCI 图像调试）
 **节点类别**：`DCI/Debug`
