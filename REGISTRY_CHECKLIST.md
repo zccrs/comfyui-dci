@@ -16,7 +16,7 @@
 - ✅ **README.md** - 详细的项目文档（已更新包含Registry安装说明）
 
 ### 2. 项目资源
-- ✅ **resources/icon.svg** - 项目图标（64x64 SVG格式）
+- ✅ **resources/icon.svg** - 项目图标（256x256 SVG格式，来自deepin官方DCI图标）
 - ✅ **locales/** - 国际化支持文件
 - ✅ **examples/** - 示例工作流
 
