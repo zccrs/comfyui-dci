@@ -36,7 +36,7 @@ class DCIAnalysis(BaseNode):
         """Analyze DCI file internal structure and return text output"""
         # Extract parameters with translation support
         # Try both translated and original parameter names for compatibility
-        dci_binary_data = kwargs.get(t("dci_binary_data")) or kwargs.get("dci_binary_data")
+        dci_binary_data = kwargs.get(t("dci_binary_data")) if t("dci_binary_data") in kwargs else kwargs.get("dci_binary_data")
 
         return self._execute_impl(dci_binary_data)
 

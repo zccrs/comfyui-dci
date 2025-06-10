@@ -45,10 +45,10 @@ class DCIPreviewNode(BaseNode):
         """Preview DCI file contents with in-node display"""
         # Extract parameters with translation support
         # Try both translated and original parameter names for compatibility
-        dci_binary_data = kwargs.get(t("dci_binary_data")) or kwargs.get("dci_binary_data")
-        light_background_color = kwargs.get(t("light_background_color")) or kwargs.get("light_background_color", t("light_gray"))
-        dark_background_color = kwargs.get(t("dark_background_color")) or kwargs.get("dark_background_color", t("dark_gray"))
-        text_font_size = kwargs.get(t("text_font_size")) or kwargs.get("text_font_size", 18)
+        dci_binary_data = kwargs.get(t("dci_binary_data")) if t("dci_binary_data") in kwargs else kwargs.get("dci_binary_data")
+        light_background_color = kwargs.get(t("light_background_color")) if t("light_background_color") in kwargs else kwargs.get("light_background_color", t("light_gray"))
+        dark_background_color = kwargs.get(t("dark_background_color")) if t("dark_background_color") in kwargs else kwargs.get("dark_background_color", t("dark_gray"))
+        text_font_size = kwargs.get(t("text_font_size")) if t("text_font_size") in kwargs else kwargs.get("text_font_size", 18)
 
         # Convert translated color names back to internal English names for processing
         light_bg_internal = self._translate_color_to_internal(light_background_color)

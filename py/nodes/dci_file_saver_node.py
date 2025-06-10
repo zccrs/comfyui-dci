@@ -30,11 +30,11 @@ class DCIFileSaver(BaseNode):
         """Save DCI binary data to file system with advanced filename handling"""
         # Extract parameters with translation support
         # Try both translated and original parameter names for compatibility
-        binary_data = kwargs.get(t("binary_data")) or kwargs.get("binary_data")
-        input_filename = kwargs.get(t("input_filename")) or kwargs.get("input_filename")
-        output_directory = kwargs.get(t("output_directory")) or kwargs.get("output_directory", "")
-        filename_prefix = kwargs.get(t("filename_prefix")) or kwargs.get("filename_prefix", "")
-        filename_suffix = kwargs.get(t("filename_suffix")) or kwargs.get("filename_suffix", "")
+        binary_data = kwargs.get(t("binary_data")) if t("binary_data") in kwargs else kwargs.get("binary_data")
+        input_filename = kwargs.get(t("input_filename")) if t("input_filename") in kwargs else kwargs.get("input_filename")
+        output_directory = kwargs.get(t("output_directory")) if t("output_directory") in kwargs else kwargs.get("output_directory", "")
+        filename_prefix = kwargs.get(t("filename_prefix")) if t("filename_prefix") in kwargs else kwargs.get("filename_prefix", "")
+        filename_suffix = kwargs.get(t("filename_suffix")) if t("filename_suffix") in kwargs else kwargs.get("filename_suffix", "")
 
         return self._execute_impl(binary_data, input_filename, output_directory, filename_prefix, filename_suffix)
 
