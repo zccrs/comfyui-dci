@@ -243,80 +243,142 @@ class DCIReader:
     def _parse_layer_filename(self, filename: str) -> Dict:
         """Parse layer filename to extract metadata according to DCI specification
 
-        Expected format: priority.padding_with_p.palette.hue_saturation_brightness_red_green_blue_alpha.format[.alpha8]
+        Based on official implementation from dtkgui/ddciicon.cpp
+        Uses step-by-step parsing: Priority -> Format/Alpha8 -> Padding -> Palette
+
+        Supports both full format and simplified format:
+        - Full: priority.padding_with_p.palette.hue_saturation_brightness_red_green_blue_alpha.format[.alpha8]
+        - Simple: priority.format (e.g., 1.webp)
         """
         parts = filename.split('.')
 
-        if len(parts) >= 2:
-            # Check for alpha8 format
-            is_alpha8 = parts[-1] == 'alpha8'
-            if is_alpha8:
-                format_ext = f"{parts[-2]}.alpha8"
-                # Remove alpha8 suffix for further parsing
-                parts = parts[:-1]
-            else:
-                format_ext = parts[-1]
+        if len(parts) < 2:
+            return {'format': 'unknown', 'is_alpha8': False}
 
-            layer_info = {'format': format_ext, 'is_alpha8': is_alpha8}
+        # Initialize layer info with defaults
+        layer_info = {
+            'priority': 1,
+            'padding': 0,
+            'palette': -1,  # NoPalette
+            'hue': 0,
+            'saturation': 0,
+            'brightness': 0,
+            'red': 0,
+            'green': 0,
+            'blue': 0,
+            'alpha': 0,
+            'format': 'unknown',
+            'is_alpha8': False
+        }
 
-            if len(parts) >= 5:  # Full layer info: priority.padding.palette.color_adjustments.format
-                try:
-                    def safe_int(value, default=0):
-                        """Safely convert string to int, handling negative values"""
-                        try:
-                            return int(value)
-                        except (ValueError, TypeError):
-                            return default
+        # Step 1: Priority Step - always process first part
+        try:
+            layer_info['priority'] = int(parts[0])
+            remaining_parts = parts[1:]
+        except (ValueError, IndexError):
+            return layer_info  # Invalid priority
 
-                    def safe_float(value, default=0.0):
-                        """Safely convert string to float, handling negative values"""
-                        try:
-                            return float(value)
-                        except (ValueError, TypeError):
-                            return default
-
-                    def safe_padding(value, default=0):
-                        """Safely parse padding value with 'p' suffix"""
-                        try:
-                            if value.endswith('p'):
-                                return int(value[:-1])  # Remove 'p' suffix and convert to int
-                            else:
-                                return int(value)  # Fallback for values without 'p'
-                        except (ValueError, TypeError):
-                            return default
-
-                    # Parse color adjustments from underscore-separated string
-                    color_parts = parts[3].split('_') if len(parts) > 3 else []
-
-                    layer_info.update({
-                        'priority': safe_int(parts[0], 1),
-                        'padding': safe_padding(parts[1], 0),  # Parse padding with 'p' suffix
-                        'palette': safe_int(parts[2], -1),
-                        'hue': safe_int(color_parts[0] if len(color_parts) > 0 else 0, 0),
-                        'saturation': safe_int(color_parts[1] if len(color_parts) > 1 else 0, 0),
-                        'brightness': safe_int(color_parts[2] if len(color_parts) > 2 else 0, 0),
-                        'red': safe_int(color_parts[3] if len(color_parts) > 3 else 0, 0),
-                        'green': safe_int(color_parts[4] if len(color_parts) > 4 else 0, 0),
-                        'blue': safe_int(color_parts[5] if len(color_parts) > 5 else 0, 0),
-                        'alpha': safe_int(color_parts[6] if len(color_parts) > 6 else 0, 0),
-                    })
-
-                    # Convert palette number to readable name
-                    palette_names = {
-                        -1: "none",
-                        0: "foreground",
-                        1: "background",
-                        2: "highlight_foreground",
-                        3: "highlight"
-                    }
-                    layer_info['palette_name'] = palette_names.get(layer_info['palette'], "unknown")
-
-                except (ValueError, IndexError) as e:
-                    print(f"Error parsing layer filename {filename}: {e}")
-
+        if not remaining_parts:
             return layer_info
 
-        return {'format': 'unknown', 'is_alpha8': False}
+        # Step 2: Format and Alpha8 Step - always process last part(s)
+        is_alpha8 = remaining_parts[-1].lower() == 'alpha8'
+        if is_alpha8:
+            if len(remaining_parts) >= 2:
+                layer_info['format'] = remaining_parts[-2]  # Just the format, not with .alpha8
+                layer_info['is_alpha8'] = True
+                # Remove both format and alpha8 from remaining parts
+                remaining_parts = remaining_parts[:-2]
+            else:
+                return layer_info  # Invalid alpha8 format
+        else:
+            layer_info['format'] = remaining_parts[-1]
+            # Remove format from remaining parts
+            remaining_parts = remaining_parts[:-1]
+
+        if not remaining_parts:
+            return layer_info  # Only priority and format, return with defaults
+
+        # Step 3: Padding Step - find part ending with 'p'
+        padding_part = None
+        for i, part in enumerate(remaining_parts):
+            if part.endswith('p'):
+                try:
+                    layer_info['padding'] = int(part[:-1])  # Remove 'p' suffix
+                    padding_part = i
+                    break
+                except ValueError:
+                    continue
+
+        # Remove padding part if found
+        if padding_part is not None:
+            remaining_parts.pop(padding_part)
+
+        if not remaining_parts:
+            return layer_info  # No palette info, return with defaults
+
+                # Step 4: Palette Step - process remaining parts
+        # Handle both formats:
+        # 1. Single part with palette and color adjustments: "3_0_0_-10_0_0_0_0"
+        # 2. Separate parts: "3" and "0_0_-10_0_0_0_0" (our format)
+
+        if len(remaining_parts) == 1:
+            # Single part format (official format)
+            palette_part = remaining_parts[0]
+        elif len(remaining_parts) == 2:
+            # Two parts format (our format): palette and color_adjustments
+            palette_part = f"{remaining_parts[0]}_{remaining_parts[1]}"
+        else:
+            # Fallback to first part only
+            palette_part = remaining_parts[0] if remaining_parts else ""
+
+        # Check if it contains color adjustments (underscore-separated)
+        if '_' in palette_part:
+            color_parts = palette_part.split('_')
+            if len(color_parts) == 8:  # role_hue_saturation_lightness_red_green_blue_alpha
+                try:
+                    layer_info['palette'] = int(color_parts[0])
+                    layer_info['hue'] = int(color_parts[1])
+                    layer_info['saturation'] = int(color_parts[2])
+                    layer_info['brightness'] = int(color_parts[3])  # lightness in original
+                    layer_info['red'] = int(color_parts[4])
+                    layer_info['green'] = int(color_parts[5])
+                    layer_info['blue'] = int(color_parts[6])
+                    layer_info['alpha'] = int(color_parts[7])
+                except ValueError:
+                    # If parsing fails, treat as simple palette
+                    try:
+                        layer_info['palette'] = int(palette_part.split('_')[0])
+                    except ValueError:
+                        pass
+            else:
+                # Invalid color adjustment format, treat as simple palette
+                try:
+                    layer_info['palette'] = int(palette_part.split('_')[0])
+                except ValueError:
+                    pass
+        else:
+            # Simple palette without color adjustments
+            try:
+                layer_info['palette'] = int(palette_part)
+            except ValueError:
+                pass
+
+        # Validate palette range
+        if layer_info['palette'] < -1 or layer_info['palette'] > 3:
+            layer_info['palette'] = -1  # Reset to NoPalette if invalid
+
+        # Add palette name for convenience
+        palette_names = {
+            -1: "none",
+            0: "foreground",
+            1: "background",
+            2: "highlight_foreground",
+            3: "highlight"
+        }
+        layer_info['palette_name'] = palette_names.get(layer_info['palette'], "unknown")
+
+        return layer_info
 
 
 class DCIPreviewGenerator:
