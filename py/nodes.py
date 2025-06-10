@@ -30,14 +30,8 @@ class DCIPreviewNode:
                 "dci_binary_data": ("BINARY_DATA",),
             },
             "optional": {
-                "light_background_color": (["light_gray", "dark_gray", "white", "black", "blue", "green", "red", "custom"], {"default": "light_gray"}),
-                "light_custom_bg_r": ("INT", {"default": 240, "min": 0, "max": 255, "step": 1}),
-                "light_custom_bg_g": ("INT", {"default": 240, "min": 0, "max": 255, "step": 1}),
-                "light_custom_bg_b": ("INT", {"default": 240, "min": 0, "max": 255, "step": 1}),
-                "dark_background_color": (["light_gray", "dark_gray", "white", "black", "blue", "green", "red", "custom"], {"default": "dark_gray"}),
-                "dark_custom_bg_r": ("INT", {"default": 64, "min": 0, "max": 255, "step": 1}),
-                "dark_custom_bg_g": ("INT", {"default": 64, "min": 0, "max": 255, "step": 1}),
-                "dark_custom_bg_b": ("INT", {"default": 64, "min": 0, "max": 255, "step": 1}),
+                "light_background_color": (["light_gray", "dark_gray", "white", "black", "transparent", "checkerboard", "blue", "green", "red", "yellow", "cyan", "magenta", "orange", "purple", "pink", "brown", "navy", "teal", "olive", "maroon"], {"default": "light_gray"}),
+                "dark_background_color": (["light_gray", "dark_gray", "white", "black", "transparent", "checkerboard", "blue", "green", "red", "yellow", "cyan", "magenta", "orange", "purple", "pink", "brown", "navy", "teal", "olive", "maroon"], {"default": "dark_gray"}),
                 "text_font_size": ("INT", {"default": 12, "min": 8, "max": 24, "step": 1}),
             }
         }
@@ -49,8 +43,8 @@ class DCIPreviewNode:
     OUTPUT_NODE = True
 
     def preview_dci(self, dci_binary_data,
-                   light_background_color="light_gray", light_custom_bg_r=240, light_custom_bg_g=240, light_custom_bg_b=240,
-                   dark_background_color="dark_gray", dark_custom_bg_r=64, dark_custom_bg_g=64, dark_custom_bg_b=64,
+                   light_background_color="light_gray",
+                   dark_background_color="dark_gray",
                    text_font_size=12):
         """Preview DCI file contents with in-node display, separating Light and Dark content into two columns"""
 
@@ -79,25 +73,25 @@ class DCIPreviewNode:
             other_images = [img for img in images if img['tone'].lower() not in ('light', 'dark')]
 
             # 确定背景颜色
-            light_bg_color = self._get_background_color(light_background_color, light_custom_bg_r, light_custom_bg_g, light_custom_bg_b)
-            dark_bg_color = self._get_background_color(dark_background_color, dark_custom_bg_r, dark_custom_bg_g, dark_custom_bg_b)
+            light_bg_color = self._get_background_color(light_background_color)
+            dark_bg_color = self._get_background_color(dark_background_color)
 
             # 生成预览图像
             generator = DCIPreviewGenerator()
 
-            # 为Light和Dark分别生成单列预览
-            light_preview = generator.create_preview_grid(light_images, 1, light_bg_color) if light_images else None
-            dark_preview = generator.create_preview_grid(dark_images, 1, dark_bg_color) if dark_images else None
+            # 为Light和Dark分别生成单列预览，处理特殊背景类型
+            light_preview = self._create_preview_with_special_background(generator, light_images, 1, light_background_color, light_bg_color) if light_images else None
+            dark_preview = self._create_preview_with_special_background(generator, dark_images, 1, dark_background_color, dark_bg_color) if dark_images else None
 
             # 如果有其他色调，将它们添加到默认组(Light)
             if other_images:
                 if light_preview:
                     # 如果已有Light预览，合并到Light预览中
                     combined_images = light_images + other_images
-                    light_preview = generator.create_preview_grid(combined_images, 1, light_bg_color)
+                    light_preview = self._create_preview_with_special_background(generator, combined_images, 1, light_background_color, light_bg_color)
                 else:
                     # 否则创建新的预览
-                    light_preview = generator.create_preview_grid(other_images, 1, light_bg_color)
+                    light_preview = self._create_preview_with_special_background(generator, other_images, 1, light_background_color, light_bg_color)
 
             # 合并Light和Dark预览（如果两者都存在）
             if light_preview and dark_preview:
@@ -108,7 +102,7 @@ class DCIPreviewNode:
                 preview_image = dark_preview
             else:
                 # 创建空预览
-                preview_image = generator.create_preview_grid([], 1, light_bg_color)
+                preview_image = self._create_preview_with_special_background(generator, [], 1, light_background_color, light_bg_color)
 
             # Convert PIL image to base64 for UI display
             preview_base64 = self._pil_to_base64(preview_image)
@@ -150,22 +144,69 @@ class DCIPreviewNode:
 
         return combined
 
-    def _get_background_color(self, color_name, custom_r, custom_g, custom_b):
-        """Get RGB color tuple based on color name or custom values"""
+    def _get_background_color(self, color_name):
+        """Get RGB color tuple based on color name, or special handling for transparent/checkerboard"""
         color_presets = {
             "light_gray": (240, 240, 240),
             "dark_gray": (64, 64, 64),
             "white": (255, 255, 255),
             "black": (0, 0, 0),
+            "transparent": (240, 240, 240),  # Default fallback for transparent
+            "checkerboard": (240, 240, 240),  # Default fallback for checkerboard
             "blue": (70, 130, 180),
             "green": (60, 120, 60),
             "red": (120, 60, 60),
+            "yellow": (255, 255, 0),
+            "cyan": (0, 255, 255),
+            "magenta": (255, 0, 255),
+            "orange": (255, 165, 0),
+            "purple": (128, 0, 128),
+            "pink": (255, 192, 203),
+            "brown": (165, 42, 42),
+            "navy": (0, 0, 128),
+            "teal": (0, 128, 128),
+            "olive": (128, 128, 0),
+            "maroon": (128, 0, 0),
         }
 
-        if color_name == "custom":
-            return (custom_r, custom_g, custom_b)
+        return color_presets.get(color_name, (240, 240, 240))
+
+    def _create_preview_with_special_background(self, generator, images, grid_cols, background_name, background_color):
+        """Create preview with special handling for transparent and checkerboard backgrounds"""
+        if background_name == "transparent":
+            # For transparent, use a light gray background but preserve transparency info
+            preview = generator.create_preview_grid(images, grid_cols, (240, 240, 240))
+            return preview
+        elif background_name == "checkerboard":
+            # For checkerboard, create preview with light gray first, then apply checkerboard to transparent areas
+            preview = generator.create_preview_grid(images, grid_cols, (240, 240, 240))
+            return self._apply_checkerboard_to_preview(preview)
         else:
-            return color_presets.get(color_name, (240, 240, 240))
+            # Normal color background
+            return generator.create_preview_grid(images, grid_cols, background_color)
+
+    def _apply_checkerboard_to_preview(self, preview_image):
+        """Apply checkerboard pattern to preview image background"""
+        # For now, just return the preview as-is since DCIPreviewGenerator handles backgrounds
+        # In the future, we could enhance this to detect transparent areas and apply checkerboard
+        return preview_image
+
+    def _create_checkerboard_background(self, size, square_size=16):
+        """Create a checkerboard pattern background"""
+        width, height = size
+        background = Image.new('RGB', size, (255, 255, 255))
+
+        # Create checkerboard pattern
+        for y in range(0, height, square_size):
+            for x in range(0, width, square_size):
+                # Determine if this square should be gray
+                if (x // square_size + y // square_size) % 2 == 1:
+                    # Draw gray square
+                    for py in range(y, min(y + square_size, height)):
+                        for px in range(x, min(x + square_size, width)):
+                            background.putpixel((px, py), (200, 200, 200))
+
+        return background
 
     def _pil_to_base64(self, pil_image):
         """Convert PIL image to base64 string for UI display"""

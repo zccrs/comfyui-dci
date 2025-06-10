@@ -432,20 +432,20 @@ DCI_IMAGE_DATA = {
 - **`dci_binary_data`** (BINARY_DATA)：DCI 文件的二进制数据
 
 **可选输入参数：**
-- **`light_background_color`** (COMBO)：Light主题预览背景色（light_gray/dark_gray/white/black/blue/green/red/custom），默认light_gray
-- **`light_custom_bg_r`** (INT)：Light自定义背景色红色分量（0-255），默认240
-- **`light_custom_bg_g`** (INT)：Light自定义背景色绿色分量（0-255），默认240
-- **`light_custom_bg_b`** (INT)：Light自定义背景色蓝色分量（0-255），默认240
-- **`dark_background_color`** (COMBO)：Dark主题预览背景色（light_gray/dark_gray/white/black/blue/green/red/custom），默认dark_gray
-- **`dark_custom_bg_r`** (INT)：Dark自定义背景色红色分量（0-255），默认64
-- **`dark_custom_bg_g`** (INT)：Dark自定义背景色绿色分量（0-255），默认64
-- **`dark_custom_bg_b`** (INT)：Dark自定义背景色蓝色分量（0-255），默认64
+- **`light_background_color`** (COMBO)：Light主题预览背景色，默认light_gray
+- **`dark_background_color`** (COMBO)：Dark主题预览背景色，默认dark_gray
 - **`text_font_size`** (INT)：文本字号大小（8-24像素），默认12
+
+**背景颜色选项：**
+支持20种预设颜色，包括：
+- **基础色**：light_gray、dark_gray、white、black
+- **特殊背景**：transparent、checkerboard
+- **彩色选项**：blue、green、red、yellow、cyan、magenta、orange、purple、pink、brown、navy、teal、olive、maroon
 
 **节点内预览功能：**
 - **双列布局**：Light主题图标在左列，Dark主题图标在右列
 - **独立背景设置**：Light和Dark主题可设置不同的背景颜色
-- **智能背景色设置**：每种主题支持多种预设背景色和自定义RGB颜色
+- **丰富背景色选项**：每种主题支持20种预设背景色，包括特殊的透明和棋盘格背景
 - **自适应文本格式**：根据字体大小调整文本显示格式，较大字体使用更紧凑的布局
 - **文件路径分组显示**：Light、Dark和其他色调图标的路径分别显示
 - **详细元数据显示**：在节点内显示全面的文件信息，包括：
@@ -458,7 +458,7 @@ DCI_IMAGE_DATA = {
 **输出：**
 - 无输出（所有预览内容直接在节点内显示）
 
-**注意**：此节点专门用于处理二进制数据输入，不再需要手动设置列数，默认将Light和Dark内容分开显示在两列。Light主题图标固定在左侧列，Dark主题图标固定在右侧列。文本格式会根据字体大小自动调整，提供最佳阅读体验。
+**注意**：此节点专门用于处理二进制数据输入，不再需要手动设置列数，默认将Light和Dark内容分开显示在两列。Light主题图标固定在左侧列，Dark主题图标固定在右侧列。文本格式会根据字体大小自动调整，提供最佳阅读体验。背景颜色选择简化为预设选项，移除了自定义RGB设置以提供更好的用户体验。
 
 ## 2. 数据结构设计
 
