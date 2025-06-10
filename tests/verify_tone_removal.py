@@ -85,12 +85,12 @@ def test_tone_field_removal():
     print(f"生成预览图像: {preview_image.size[0]}x{preview_image.size[1]}px")
     print("✓ 保存验证图像: verify_tone_removal.png")
 
-    # 验证标签高度计算（应该是6行而不是7行）
-    expected_height = max(100, (14 + 2) * 6 + 20)  # 6行文本
+    # 验证标签高度计算（应该是5行而不是7行）
+    expected_height = max(100, (14 + 2) * 5 + 20)  # 5行文本
     actual_height = generator.label_height
 
     print(f"\n标签高度验证:")
-    print(f"  期望高度（6行文本）: {expected_height}px")
+    print(f"  期望高度（5行文本）: {expected_height}px")
     print(f"  实际高度: {actual_height}px")
     print(f"  ✓ {'通过' if actual_height == expected_height else '失败'}")
 
@@ -103,12 +103,13 @@ def test_tone_field_removal():
         print(f"  状态: {img['state']}")
         print(f"  色调: {img['tone']} (数据中存在，但预览中不显示)")
         print(f"  缩放: {img['scale']}x")
-        print(f"  格式: {img['format']}")
+        print(f"  格式: {img['format']} (数据中存在，但预览中不显示，文件名已包含)")
 
     print(f"\n✅ 验证完成:")
-    print(f"1. 数据层面仍然包含tone信息，用于分组显示")
+    print(f"1. 数据层面仍然包含tone和format信息，用于分组显示和逻辑处理")
     print(f"2. 预览界面中不再显示tone字段，避免重复信息")
-    print(f"3. 标签高度已调整为6行文本的空间")
+    print(f"3. 预览界面中不再显示format字段，文件名已包含格式信息")
+    print(f"4. 标签高度已调整为5行文本的空间")
 
 
 if __name__ == "__main__":

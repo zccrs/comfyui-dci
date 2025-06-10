@@ -388,8 +388,8 @@ class DCIPreviewGenerator:
         self.font_size = font_size
         self.margin = 10
         # 动态计算label_height，根据字体大小和文本行数
-        # 6行文本 + 行间距，确保有足够空间显示所有文本（移除了tone字段）
-        self.label_height = max(100, (self.font_size + 2) * 6 + 20)  # 6行文本 + 额外空间
+        # 5行文本 + 行间距，确保有足够空间显示所有文本（移除了tone和format字段）
+        self.label_height = max(100, (self.font_size + 2) * 5 + 20)  # 5行文本 + 额外空间
         self.background_color = background_color
         self.text_color = self._get_contrasting_text_color(background_color)
 
@@ -497,7 +497,6 @@ class DCIPreviewGenerator:
             f"Size: {img_info['size']}px",
             f"State: {img_info['state']}",
             f"Scale: {img_info['scale']:g}x",
-            f"Format: {img_info['format']}",
             f"File: {img_info['file_size']}B"
         ]
 

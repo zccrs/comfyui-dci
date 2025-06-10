@@ -100,8 +100,8 @@ def test_label_height_calculation():
     for font_size in font_sizes:
         generator = DCIPreviewGenerator(font_size=font_size)
 
-        # 计算期望的最小高度（移除tone字段后为6行文本）
-        expected_min_height = max(100, (font_size + 2) * 6 + 20)
+        # 计算期望的最小高度（移除tone和format字段后为5行文本）
+        expected_min_height = max(100, (font_size + 2) * 5 + 20)
         actual_height = generator.label_height
 
         print(f"字体大小: {font_size}px")
