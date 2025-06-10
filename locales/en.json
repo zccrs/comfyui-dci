@@ -107,14 +107,14 @@
   "dci_image_11": "DCI Image 11",
   "dci_image_12": "DCI Image 12",
 
-  "Failed to read DCI data": "Failed to read DCI data",
-  "No images found in DCI file": "No images found in DCI file",
-  "Created DCI image with layers": "Created DCI image with layers",
-  "Layer priority": "Layer priority",
-  "padding": "padding",
-  "palette": "palette",
-  "Color adjustments": "Color adjustments",
-  "RGBA adjustments": "RGBA adjustments",
+  "Failed to read DCI data": "Failed to Read DCI Data",
+  "No images found in DCI file": "No Images Found in DCI File",
+  "Created DCI image with layers": "Created DCI Image with Layers",
+  "Layer priority": "Layer Priority",
+  "padding": "Padding",
+  "palette": "Palette",
+  "Color adjustments": "Color Adjustments",
+  "RGBA adjustments": "RGBA Adjustments",
 
   "metadata.scale": "Scale",
   "metadata.priority": "Priority",
@@ -132,6 +132,6 @@
   "metadata.alpha_adjustment": "Alpha Adjustment",
   "metadata.alpha8_format": "Alpha8 Format",
 
-  "bytes": "bytes",
+  "bytes": "Bytes",
   "px": "px"
 }
