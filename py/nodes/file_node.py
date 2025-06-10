@@ -202,7 +202,8 @@ class DCIFileNode(BaseNode):
                 # Reconstruct the path and content from image info
                 size_dir = str(image_info['size'])
                 state_tone_dir = f"{image_info['state']}.{image_info['tone']}"
-                scale_dir = str(image_info['scale'])
+                # Format scale consistently with format_dci_path using :g format
+                scale_dir = f"{image_info['scale']:g}"
                 filename = image_info['filename']
 
                 # Get the file content from the reader's directory structure

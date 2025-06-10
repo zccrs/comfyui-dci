@@ -254,7 +254,8 @@ Image Input → DCI Image Node → DCI Image Data → DCI File Node → DCI Bina
 - **Unlimited Images**: Chain multiple DCI File nodes to handle any number of images
 - **Flexible Workflow**: Each node can process 4 images, allowing modular icon creation
 - **Data Preservation**: When only existing data is provided (no new images), the node passes through the data unchanged
-- **Independent Processing**: Each node creates a DCI file with its input images (existing data is not merged in current implementation)
+- **Intelligent Merging**: When both existing DCI data and new images are provided, the node merges them intelligently
+- **File Overwrite Behavior**: New DCI images will overwrite existing files with the same path (size/state.tone/scale), while preserving other existing files
 
 **Usage Examples:**
 ```
@@ -263,11 +264,16 @@ DCI Image 1 → DCI File → DCI Binary Data
 
 # Composable usage (unlimited images)
 DCI Image 1-4 → DCI File Node 1 → DCI Binary Data 1
-DCI Image 5-8 → DCI File Node 2 → DCI Binary Data 2
-DCI Image 9-12 → DCI File Node 3 → DCI Binary Data 3
+DCI Binary Data 1 + DCI Image 5-8 → DCI File Node 2 → DCI Binary Data 2 (merged)
+DCI Binary Data 2 + DCI Image 9-12 → DCI File Node 3 → DCI Binary Data 3 (merged)
 
 # Data passthrough
 Existing DCI Data → DCI File Node → Same DCI Data (unchanged)
+
+# File overwrite behavior
+Existing DCI Data (red image at 256px/normal.light/1.0x) +
+New DCI Image (blue image at 256px/normal.light/1.0x) →
+Result: Blue image replaces red image, other existing images preserved
 ```
 
 #### 4. DCI Preview
@@ -721,7 +727,8 @@ pip install -r requirements.txt
 - **无限图像支持**：串联多个 DCI File 节点以处理任意数量的图像
 - **灵活工作流**：每个节点可处理4个图像，允许模块化图标创建
 - **数据保持**：当只提供现有数据（无新图像）时，节点会原样传递数据
-- **独立处理**：每个节点使用其输入图像创建 DCI 文件（当前实现中现有数据不会合并）
+- **智能合并**：当同时提供现有DCI数据和新图像时，节点会智能合并它们
+- **文件覆盖行为**：新的DCI图像会覆盖具有相同路径（尺寸/状态.色调/缩放）的现有文件，同时保留其他现有文件
 
 **使用示例：**
 ```
@@ -730,11 +737,16 @@ DCI 图像 1 → DCI 文件 → DCI 二进制数据
 
 # 可组合用法（无限图像）
 DCI 图像 1-4 → DCI 文件节点 1 → DCI 二进制数据 1
-DCI 图像 5-8 → DCI 文件节点 2 → DCI 二进制数据 2
-DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制数据 3
+DCI 二进制数据 1 + DCI 图像 5-8 → DCI 文件节点 2 → DCI 二进制数据 2（合并）
+DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制数据 3（合并）
 
 # 数据传递
 现有 DCI 数据 → DCI 文件节点 → 相同 DCI 数据（不变）
+
+# 文件覆盖行为
+现有 DCI 数据（256px/normal.light/1.0x 处有红色图像）+
+新 DCI 图像（256px/normal.light/1.0x 处有蓝色图像）→
+结果：蓝色图像替换红色图像，其他现有图像保留
 ```
 
 #### 4. DCI Preview（DCI 预览）
