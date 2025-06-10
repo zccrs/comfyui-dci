@@ -8,7 +8,7 @@ from .sample_image_node import DCISampleImage
 from .image_preview_node import DCIImagePreview
 from .file_node import DCIFileNode, BinaryFileLoader, BinaryFileSaver
 from .dci_file_saver_node import DCIFileSaver
-from .structure_node import DCIStructureNode
+from .structure_node import DCIAnalysis
 
 NODE_CLASS_MAPPINGS = {
     "DCIPreviewNode": DCIPreviewNode,
@@ -19,7 +19,7 @@ NODE_CLASS_MAPPINGS = {
     "BinaryFileLoader": BinaryFileLoader,
     "BinaryFileSaver": BinaryFileSaver,
     "DCIFileSaver": DCIFileSaver,
-    "DCIStructureNode": DCIStructureNode,
+    "DCIAnalysis": DCIAnalysis,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -31,7 +31,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "BinaryFileLoader": "Binary File Loader",
     "BinaryFileSaver": "Binary File Saver",
     "DCIFileSaver": "DCI File Saver",
-    "DCIStructureNode": "DCI Structure Preview",
+    "DCIAnalysis": "DCI Analysis",
 }
 
 __all__ = [
@@ -43,7 +43,7 @@ __all__ = [
     'BinaryFileLoader',
     'BinaryFileSaver',
     'DCIFileSaver',
-    'DCIStructureNode',
+    'DCIAnalysis',
     'NODE_CLASS_MAPPINGS',
     'NODE_DISPLAY_NAME_MAPPINGS',
 ]

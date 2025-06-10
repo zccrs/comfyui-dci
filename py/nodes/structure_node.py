@@ -1,6 +1,6 @@
 """
-DCI Structure Preview Node
-专门用于预览DCI文件内部结构的节点，以树状结构展示所有元信息
+DCI Analysis Node
+专门用于分析DCI文件内部结构的节点，以文本形式输出所有元信息
 """
 
 from .base_node import BaseNode
@@ -15,8 +15,8 @@ except ImportError:
     from dci_reader import DCIReader
 
 
-class DCIStructureNode(BaseNode):
-    """ComfyUI node for displaying DCI file internal structure in tree format"""
+class DCIAnalysis(BaseNode):
+    """ComfyUI node for analyzing DCI file internal structure and outputting text"""
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -26,26 +26,25 @@ class DCIStructureNode(BaseNode):
             }
         }
 
-    RETURN_TYPES = ()
-    RETURN_NAMES = ()
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("analysis_text",)
     FUNCTION = "execute"
-    CATEGORY = "DCI/Preview"
-    OUTPUT_NODE = True
+    CATEGORY = "DCI/Analysis"
 
     def _execute(self, dci_binary_data):
-        """Display DCI file internal structure in tree format"""
+        """Analyze DCI file internal structure and return text output"""
 
         # Use binary data
         reader = DCIReader(binary_data=dci_binary_data)
 
         # Read DCI data
         if not reader.read():
-            return {"ui": {"text": ["Failed to read DCI data"]}}
+            return ("Failed to read DCI data",)
 
         # Extract images
         images = reader.get_icon_images()
         if not images:
-            return {"ui": {"text": ["No images found in DCI file"]}}
+            return ("No images found in DCI file",)
 
         # Generate tree structure
         tree_structure = self._generate_tree_structure(images)
@@ -56,7 +55,7 @@ class DCIStructureNode(BaseNode):
         # Combine structure and summary
         full_output = f"{summary}\n\n{tree_structure}"
 
-        return {"ui": {"text": [full_output]}}
+        return (full_output,)
 
     def _generate_tree_structure(self, images):
         """Generate tree structure representation of DCI file"""
@@ -311,9 +310,9 @@ class DCIStructureNode(BaseNode):
 
 # Register the node
 NODE_CLASS_MAPPINGS = {
-    "DCIStructureNode": DCIStructureNode
+    "DCIAnalysis": DCIAnalysis
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "DCIStructureNode": "DCI Structure Preview"
+    "DCIAnalysis": "DCI Analysis"
 }

@@ -140,7 +140,9 @@ pip install -r requirements.txt
 #### DCI/Preview（预览）
 - DCI_PreviewNode (DCI Preview)
 - DCI_ImagePreview (DCI Image Preview)
-- DCI_StructureNode (DCI Structure Preview)
+
+#### DCI/Analysis（分析）
+- DCI_Analysis (DCI Analysis)
 
 #### DCI/Files（文件处理）
 - DCI_BinaryFileLoader (Binary File Loader)
@@ -388,18 +390,12 @@ pip install -r requirements.txt
 - **错误处理**：对无效输入提供友好的默认处理
 - **双输出设计**：同时提供文件名和完整路径，满足不同使用需求
 
-#### 9. DCI Structure Preview（DCI 结构预览）
-**节点类别**：`DCI/Preview`
-**功能描述**：以树状结构详细展示DCI文件的内部组织结构和元信息，专门用于分析和调试DCI文件内容。
+#### 9. DCI Analysis（DCI 分析）
+**节点类别**：`DCI/Analysis`
+**功能描述**：以树状结构详细分析DCI文件的内部组织结构和元信息，输出文本格式的分析结果，专门用于分析和调试DCI文件内容。
 
 **必需输入参数：**
 - **`dci_binary_data`** (BINARY_DATA)：DCI 文件的二进制数据
-
-**可选输入参数：**
-- **`show_file_details`** (BOOLEAN)：是否显示文件详细信息，默认True
-- **`show_layer_metadata`** (BOOLEAN)：是否显示图层元数据，默认True
-- **`show_file_sizes`** (BOOLEAN)：是否显示文件大小，默认True
-- **`compact_mode`** (BOOLEAN)：是否使用紧凑模式，默认False
 
 **节点功能特性：**
 
@@ -452,7 +448,7 @@ DCI File Structure:
 - **人性化格式**：文件大小自动格式化为B、KB、MB单位
 
 **输出：**
-- 无输出（所有结构信息直接在节点内以文本形式显示）
+- **`analysis_text`** (STRING)：包含完整分析结果的文本字符串
 
 **使用场景：**
 - **DCI文件分析**：深入了解DCI文件的内部结构和组织方式
