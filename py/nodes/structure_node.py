@@ -4,6 +4,7 @@ DCI Analysis Node
 """
 
 from .base_node import BaseNode
+from ..utils.i18n import t
 
 try:
     from ..dci_reader import DCIReader
@@ -27,9 +28,9 @@ class DCIAnalysis(BaseNode):
         }
 
     RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("analysis_text",)
+    RETURN_NAMES = (t("analysis_text"),)
     FUNCTION = "execute"
-    CATEGORY = "DCI/Analysis"
+    CATEGORY = f"DCI/{t('Analysis')}"
 
     def _execute(self, dci_binary_data):
         """Analyze DCI file internal structure and return text output"""
@@ -39,12 +40,12 @@ class DCIAnalysis(BaseNode):
 
         # Read DCI data
         if not reader.read():
-            return ("Failed to read DCI data",)
+            return (t("Failed to read DCI data"),)
 
         # Extract images
         images = reader.get_icon_images()
         if not images:
-            return ("No images found in DCI file",)
+            return (t("No images found in DCI file"),)
 
         # Generate tree structure
         tree_structure = self._generate_tree_structure(images)
@@ -220,47 +221,47 @@ class DCIAnalysis(BaseNode):
         lines = []
 
         # Scale (always show)
-        lines.append(f"[Scale: {metadata.get('scale', '1x')}]")
+        lines.append(f"[{t('metadata.scale')}: {metadata.get('scale', '1x')}]")
 
         # Priority (always show)
-        lines.append(f"[Priority: {metadata.get('priority', 1)}]")
+        lines.append(f"[{t('metadata.priority')}: {metadata.get('priority', 1)}]")
 
         # Palette (only show if not default)
         palette_value = metadata.get('palette', -1)
         if palette_value != -1:
             palette_names = {
-                0: "Foreground",
-                1: "Background",
-                2: "Highlight Foreground",
-                3: "Highlight"
+                0: t("metadata.palette.foreground"),
+                1: t("metadata.palette.background"),
+                2: t("metadata.palette.highlight_foreground"),
+                3: t("metadata.palette.highlight")
             }
             palette_name = palette_names.get(palette_value, f"Palette{palette_value}")
-            lines.append(f"[Palette: {palette_name}]")
+            lines.append(f"[{t('palette')}: {palette_name}]")
 
         # Padding (only show if not zero)
         padding = metadata.get('padding', 0)
         if padding > 0:
-            lines.append(f"[Padding: {padding}px]")
+            lines.append(f"[{t('metadata.padding')}: {padding}{t('px')}]")
 
         # Color adjustments (only show non-zero values, with clear descriptions)
         if metadata.get('hue', 0) != 0:
-            lines.append(f"[色调调整: {metadata['hue']:+d}%]")
+            lines.append(f"[{t('metadata.hue_adjustment')}: {metadata['hue']:+d}%]")
         if metadata.get('saturation', 0) != 0:
-            lines.append(f"[饱和度调整: {metadata['saturation']:+d}%]")
+            lines.append(f"[{t('metadata.saturation_adjustment')}: {metadata['saturation']:+d}%]")
         if metadata.get('brightness', 0) != 0:
-            lines.append(f"[亮度调整: {metadata['brightness']:+d}%]")
+            lines.append(f"[{t('metadata.brightness_adjustment')}: {metadata['brightness']:+d}%]")
         if metadata.get('red', 0) != 0:
-            lines.append(f"[红色分量: {metadata['red']:+d}%]")
+            lines.append(f"[{t('metadata.red_component')}: {metadata['red']:+d}%]")
         if metadata.get('green', 0) != 0:
-            lines.append(f"[绿色分量: {metadata['green']:+d}%]")
+            lines.append(f"[{t('metadata.green_component')}: {metadata['green']:+d}%]")
         if metadata.get('blue', 0) != 0:
-            lines.append(f"[蓝色分量: {metadata['blue']:+d}%]")
+            lines.append(f"[{t('metadata.blue_component')}: {metadata['blue']:+d}%]")
         if metadata.get('alpha', 0) != 0:
-            lines.append(f"[透明度调整: {metadata['alpha']:+d}%]")
+            lines.append(f"[{t('metadata.alpha_adjustment')}: {metadata['alpha']:+d}%]")
 
         # Alpha8 format (special indicator)
         if metadata.get('is_alpha8', False):
-            lines.append("[Alpha8格式]")
+            lines.append(f"[{t('metadata.alpha8_format')}]")
 
         return lines
 
@@ -271,5 +272,5 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "DCIAnalysis": "DCI Analysis"
+    "DCIAnalysis": t("DCI Analysis")
 }

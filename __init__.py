@@ -23,6 +23,7 @@ try:
         BinaryFileSaver,
         DCIAnalysis
     )
+    from .py.utils.i18n import t
 except ImportError:
     # Fallback for when module is loaded directly
     import sys
@@ -39,6 +40,7 @@ except ImportError:
         BinaryFileSaver,
         DCIAnalysis
     )
+    from py.utils.i18n import t
 
 # ComfyUI Node Registration
 # Using DCI prefix to ensure unique node names and avoid conflicts
@@ -55,14 +57,14 @@ NODE_CLASS_MAPPINGS = {
 
 # Display names for ComfyUI interface
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "DCI_PreviewNode": "DCI Preview",
-    "DCI_Image": "DCI Image",
-    "DCI_SampleImage": "DCI Sample Image",
-    "DCI_ImagePreview": "DCI Image Preview",
-    "DCI_FileNode": "DCI File",
-    "DCI_BinaryFileLoader": "Binary File Loader",
-    "DCI_BinaryFileSaver": "Binary File Saver",
-    "DCI_Analysis": "DCI Analysis",
+    "DCI_PreviewNode": t("DCI Preview"),
+    "DCI_Image": t("DCI Image"),
+    "DCI_SampleImage": t("DCI Sample Image"),
+    "DCI_ImagePreview": t("DCI Image Preview"),
+    "DCI_FileNode": t("DCI File"),
+    "DCI_BinaryFileLoader": t("Binary File Loader"),
+    "DCI_BinaryFileSaver": t("Binary File Saver"),
+    "DCI_Analysis": t("DCI Analysis"),
 }
 
 # Extension metadata

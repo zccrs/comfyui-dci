@@ -9,6 +9,7 @@ from .image_preview_node import DCIImagePreview
 from .file_node import DCIFileNode, BinaryFileLoader, BinaryFileSaver
 from .dci_file_saver_node import DCIFileSaver
 from .structure_node import DCIAnalysis
+from ..utils.i18n import t
 
 NODE_CLASS_MAPPINGS = {
     "DCIPreviewNode": DCIPreviewNode,
@@ -23,15 +24,15 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "DCIPreviewNode": "DCI Preview",
-    "DCIImage": "DCI Image",
-    "DCISampleImage": "DCI Sample Image",
-    "DCIImagePreview": "DCI Image Preview",
-    "DCIFileNode": "DCI File",
-    "BinaryFileLoader": "Binary File Loader",
-    "BinaryFileSaver": "Binary File Saver",
-    "DCIFileSaver": "DCI File Saver",
-    "DCIAnalysis": "DCI Analysis",
+    "DCIPreviewNode": t("DCI Preview"),
+    "DCIImage": t("DCI Image"),
+    "DCISampleImage": t("DCI Sample Image"),
+    "DCIImagePreview": t("DCI Image Preview"),
+    "DCIFileNode": t("DCI File"),
+    "BinaryFileLoader": t("Binary File Loader"),
+    "BinaryFileSaver": t("Binary File Saver"),
+    "DCIFileSaver": t("DCI File Saver"),
+    "DCIAnalysis": t("DCI Analysis"),
 }
 
 __all__ = [

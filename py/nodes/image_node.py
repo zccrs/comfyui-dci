@@ -8,6 +8,7 @@ except ImportError as e:
 
 from io import BytesIO
 from ..utils.ui_utils import format_dci_path
+from ..utils.i18n import t
 from .base_node import BaseNode
 
 class DCIImage(BaseNode):
@@ -50,9 +51,9 @@ class DCIImage(BaseNode):
         }
 
     RETURN_TYPES = ("DCI_IMAGE_DATA",)
-    RETURN_NAMES = ("dci_image_data",)
+    RETURN_NAMES = (t("dci_image_data"),)
     FUNCTION = "execute"
-    CATEGORY = "DCI/Export"
+    CATEGORY = f"DCI/{t('Export')}"
 
     def _execute(self, image, icon_size, icon_state, scale, tone_type="light",
                  image_format="webp",
@@ -152,9 +153,9 @@ class DCIImage(BaseNode):
             'alpha_adjustment': alpha_adjustment,
         }
 
-        print(f"Created DCI image with layers: {dci_path} ({len(img_content)} bytes)")
-        print(f"  Layer priority: {layer_priority}, padding: {layer_padding}, palette: {palette_type}")
-        print(f"  Color adjustments - H:{hue_adjustment} S:{saturation_adjustment} B:{brightness_adjustment}")
-        print(f"  RGBA adjustments - R:{red_adjustment} G:{green_adjustment} B:{blue_adjustment} A:{alpha_adjustment}")
+        print(f"{t('Created DCI image with layers')}: {dci_path} ({len(img_content)} {t('bytes')})")
+        print(f"  {t('Layer priority')}: {layer_priority}, {t('padding')}: {layer_padding}, {t('palette')}: {palette_type}")
+        print(f"  {t('Color adjustments')} - H:{hue_adjustment} S:{saturation_adjustment} B:{brightness_adjustment}")
+        print(f"  {t('RGBA adjustments')} - R:{red_adjustment} G:{green_adjustment} B:{blue_adjustment} A:{alpha_adjustment}")
 
         return (dci_image_data,)
