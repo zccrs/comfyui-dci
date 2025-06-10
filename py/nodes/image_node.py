@@ -99,10 +99,24 @@ class DCIImage(BaseNode):
         # Convert ComfyUI image tensor to PIL Image
         pil_image = tensor_to_pil(image)
 
+        # Convert translated background color to original English for apply_background function
+        def _translate_background_to_original(value):
+            """Convert translated UI background values back to original English"""
+            background_map = {
+                t("transparent"): "transparent",
+                t("white"): "white",
+                t("black"): "black",
+                t("custom"): "custom"
+            }
+            return background_map.get(value, value)  # fallback to original if not found
+
+        # Convert background value to original English
+        original_background_color = _translate_background_to_original(background_color)
+
         # Handle background color for images with transparency
-        if background_color != "transparent" and pil_image.mode in ('RGBA', 'LA'):
-            bg_color = (custom_bg_r, custom_bg_g, custom_bg_b) if background_color == "custom" else None
-            pil_image = apply_background(pil_image, background_color, bg_color)
+        if original_background_color != "transparent" and pil_image.mode in ('RGBA', 'LA'):
+            bg_color = (custom_bg_r, custom_bg_g, custom_bg_b) if original_background_color == "custom" else None
+            pil_image = apply_background(pil_image, original_background_color, bg_color)
 
         # Calculate actual size with scale
         actual_size = int(icon_size * scale)
@@ -111,6 +125,8 @@ class DCIImage(BaseNode):
         resized_image = pil_image.resize((actual_size, actual_size), Image.Resampling.LANCZOS)
 
         # Convert palette type to numeric value according to DCI specification
+        # Use original English values for palette mapping
+        original_palette_type = _translate_to_original(palette_type, "palette")
         palette_map = {
             "none": -1,
             "foreground": 0,
@@ -118,13 +134,13 @@ class DCIImage(BaseNode):
             "highlight_foreground": 2,
             "highlight": 3
         }
-        palette_value = palette_map.get(palette_type, -1)
+        palette_value = palette_map.get(original_palette_type, -1)
 
         # Convert to bytes
         img_bytes = BytesIO()
         if image_format == 'webp':
             # For WebP, preserve transparency if available
-            if resized_image.mode == 'RGBA' and background_color == "transparent":
+            if resized_image.mode == 'RGBA' and original_background_color == "transparent":
                 resized_image.save(img_bytes, format='WEBP', quality=90, lossless=True)
             else:
                 # Convert to RGB for lossy WebP
@@ -180,7 +196,7 @@ class DCIImage(BaseNode):
         # Convert values to original English for DCI path
         original_icon_state = _translate_to_original(icon_state, "state")
         original_tone_type = _translate_to_original(tone_type, "tone")
-        original_palette_type = _translate_to_original(palette_type, "palette")
+        # original_palette_type already defined above for palette mapping
 
         # Create DCI path with layer parameters using original English values
         dci_path = format_dci_path(
