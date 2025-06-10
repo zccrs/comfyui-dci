@@ -23,7 +23,7 @@ class DCIAnalysis(BaseNode):
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "dci_binary_data": ("BINARY_DATA",),
+                t("dci_binary_data"): ("BINARY_DATA",),
             }
         }
 
@@ -32,7 +32,14 @@ class DCIAnalysis(BaseNode):
     FUNCTION = "execute"
     CATEGORY = f"DCI/{t('Analysis')}"
 
-    def _execute(self, dci_binary_data):
+    def _execute(self, **kwargs):
+        """Analyze DCI file internal structure and return text output"""
+        # Extract parameters with translation support
+        dci_binary_data = kwargs.get(t("dci_binary_data"))
+
+        return self._execute_impl(dci_binary_data)
+
+    def _execute_impl(self, dci_binary_data):
         """Analyze DCI file internal structure and return text output"""
 
         # Use binary data

@@ -9,6 +9,7 @@ except ImportError as e:
 from io import BytesIO
 from ..utils.ui_utils import format_dci_path
 from .base_node import BaseNode
+from ..utils.i18n import t
 
 class DCISampleImage(BaseNode):
     """ComfyUI node for creating simple DCI image data with basic settings only"""
@@ -17,21 +18,33 @@ class DCISampleImage(BaseNode):
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "image": ("IMAGE",),
-                "icon_size": ("INT", {"default": 256, "min": 16, "max": 1024, "step": 1}),
-                "icon_state": (["normal", "disabled", "hover", "pressed"], {"default": "normal"}),
-                "scale": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 10.0, "step": 0.1}),
-                "tone_type": (["light", "dark"], {"default": "light"}),
-                "image_format": (["webp", "png", "jpg"], {"default": "webp"}),
+                t("image"): ("IMAGE",),
+                t("icon_size"): ("INT", {"default": 256, "min": 16, "max": 1024, "step": 1}),
+                t("icon_state"): ([t("normal"), t("disabled"), t("hover"), t("pressed")], {"default": "normal"}),
+                t("scale"): ("FLOAT", {"default": 1.0, "min": 0.1, "max": 10.0, "step": 0.1}),
+                t("tone_type"): ([t("light"), t("dark")], {"default": "light"}),
+                t("image_format"): ([t("webp"), t("png"), t("jpg")], {"default": "webp"}),
             }
         }
 
     RETURN_TYPES = ("DCI_IMAGE_DATA",)
-    RETURN_NAMES = ("dci_image_data",)
+    RETURN_NAMES = (t("dci_image_data"),)
     FUNCTION = "execute"
-    CATEGORY = "DCI/Export"
+    CATEGORY = f"DCI/{t('Export')}"
 
-    def _execute(self, image, icon_size, icon_state, scale, tone_type="light", image_format="webp"):
+    def _execute(self, **kwargs):
+        """Create simple DCI image data with basic settings only"""
+        # Extract parameters with translation support
+        image = kwargs.get(t("image"))
+        icon_size = kwargs.get(t("icon_size"))
+        icon_state = kwargs.get(t("icon_state"))
+        scale = kwargs.get(t("scale"))
+        tone_type = kwargs.get(t("tone_type"), "light")
+        image_format = kwargs.get(t("image_format"), "webp")
+
+        return self._execute_impl(image, icon_size, icon_state, scale, tone_type, image_format)
+
+    def _execute_impl(self, image, icon_size, icon_state, scale, tone_type="light", image_format="webp"):
         """Create simple DCI image data with basic settings only"""
         if not _image_support:
             return ({},)

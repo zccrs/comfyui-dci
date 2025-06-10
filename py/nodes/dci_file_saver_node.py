@@ -1,5 +1,6 @@
 import os
 from ..utils.file_utils import get_output_directory, ensure_directory, save_binary_data
+from ..utils.i18n import t
 from .base_node import BaseNode
 
 class DCIFileSaver(BaseNode):
@@ -9,23 +10,34 @@ class DCIFileSaver(BaseNode):
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "binary_data": ("BINARY_DATA",),
-                "input_filename": ("STRING", {"default": "icon.png", "multiline": False}),
+                t("binary_data"): ("BINARY_DATA",),
+                t("input_filename"): ("STRING", {"default": "icon.png", "multiline": False}),
             },
             "optional": {
-                "output_directory": ("STRING", {"default": "", "multiline": False}),
-                "filename_prefix": ("STRING", {"default": "", "multiline": False}),
-                "filename_suffix": ("STRING", {"default": "", "multiline": False}),
+                t("output_directory"): ("STRING", {"default": "", "multiline": False}),
+                t("filename_prefix"): ("STRING", {"default": "", "multiline": False}),
+                t("filename_suffix"): ("STRING", {"default": "", "multiline": False}),
             }
         }
 
     RETURN_TYPES = ("STRING", "STRING")
-    RETURN_NAMES = ("saved_filename", "saved_full_path")
+    RETURN_NAMES = (t("saved_filename"), t("saved_full_path"))
     FUNCTION = "execute"
-    CATEGORY = "DCI/Files"
+    CATEGORY = f"DCI/{t('Files')}"
     OUTPUT_NODE = True
 
-    def _execute(self, binary_data, input_filename, output_directory="", filename_prefix="", filename_suffix=""):
+    def _execute(self, **kwargs):
+        """Save DCI binary data to file system with advanced filename handling"""
+        # Extract parameters with translation support
+        binary_data = kwargs.get(t("binary_data"))
+        input_filename = kwargs.get(t("input_filename"))
+        output_directory = kwargs.get(t("output_directory"), "")
+        filename_prefix = kwargs.get(t("filename_prefix"), "")
+        filename_suffix = kwargs.get(t("filename_suffix"), "")
+
+        return self._execute_impl(binary_data, input_filename, output_directory, filename_prefix, filename_suffix)
+
+    def _execute_impl(self, binary_data, input_filename, output_directory="", filename_prefix="", filename_suffix=""):
         """Save DCI binary data to file system with intelligent filename parsing"""
 
         # Check if binary_data is valid

@@ -3,6 +3,7 @@ import os
 from io import BytesIO
 from ..utils.file_utils import load_binary_data, save_binary_data, get_output_directory, clean_file_name, ensure_directory
 from .base_node import BaseNode
+from ..utils.i18n import t
 
 try:
     from ..dci_format import DCIFile
@@ -21,32 +22,32 @@ class DCIFileNode(BaseNode):
         return {
             "required": {},
             "optional": {
-                "dci_image_1": ("DCI_IMAGE_DATA",),
-                "dci_image_2": ("DCI_IMAGE_DATA",),
-                "dci_image_3": ("DCI_IMAGE_DATA",),
-                "dci_image_4": ("DCI_IMAGE_DATA",),
-                "dci_image_5": ("DCI_IMAGE_DATA",),
-                "dci_image_6": ("DCI_IMAGE_DATA",),
-                "dci_image_7": ("DCI_IMAGE_DATA",),
-                "dci_image_8": ("DCI_IMAGE_DATA",),
-                "dci_image_9": ("DCI_IMAGE_DATA",),
-                "dci_image_10": ("DCI_IMAGE_DATA",),
-                "dci_image_11": ("DCI_IMAGE_DATA",),
-                "dci_image_12": ("DCI_IMAGE_DATA",),
+                t("dci_image_1"): ("DCI_IMAGE_DATA",),
+                t("dci_image_2"): ("DCI_IMAGE_DATA",),
+                t("dci_image_3"): ("DCI_IMAGE_DATA",),
+                t("dci_image_4"): ("DCI_IMAGE_DATA",),
+                t("dci_image_5"): ("DCI_IMAGE_DATA",),
+                t("dci_image_6"): ("DCI_IMAGE_DATA",),
+                t("dci_image_7"): ("DCI_IMAGE_DATA",),
+                t("dci_image_8"): ("DCI_IMAGE_DATA",),
+                t("dci_image_9"): ("DCI_IMAGE_DATA",),
+                t("dci_image_10"): ("DCI_IMAGE_DATA",),
+                t("dci_image_11"): ("DCI_IMAGE_DATA",),
+                t("dci_image_12"): ("DCI_IMAGE_DATA",),
             }
         }
 
     RETURN_TYPES = ("BINARY_DATA",)
-    RETURN_NAMES = ("dci_binary_data",)
+    RETURN_NAMES = (t("dci_binary_data"),)
     FUNCTION = "execute"
-    CATEGORY = "DCI/Export"
+    CATEGORY = f"DCI/{t('Export')}"
 
     def _execute(self, **kwargs):
         """Combine multiple DCI images into a DCI file"""
         # Collect all DCI image data
         dci_images = []
         for i in range(1, 13):  # Support up to 12 images
-            dci_image_key = f"dci_image_{i}"
+            dci_image_key = t(f"dci_image_{i}")
             if dci_image_key in kwargs and kwargs[dci_image_key]:
                 dci_images.append(kwargs[dci_image_key])
 
@@ -157,16 +158,23 @@ class BinaryFileLoader(BaseNode):
         return {
             "required": {},
             "optional": {
-                "file_path": ("STRING", {"default": "", "multiline": False}),
+                t("file_path"): ("STRING", {"default": "", "multiline": False}),
             }
         }
 
     RETURN_TYPES = ("BINARY_DATA", "STRING")
-    RETURN_NAMES = ("binary_data", "file_path")
+    RETURN_NAMES = (t("binary_data"), t("file_path"))
     FUNCTION = "execute"
-    CATEGORY = "DCI/Files"
+    CATEGORY = f"DCI/{t('Files')}"
 
-    def _execute(self, file_path=""):
+    def _execute(self, **kwargs):
+        """Load binary file from file system"""
+        # Extract parameters with translation support
+        file_path = kwargs.get(t("file_path"), "")
+
+        return self._execute_impl(file_path)
+
+    def _execute_impl(self, file_path=""):
         """Load binary file from file system"""
         if not file_path:
             print("No file path provided")
@@ -187,21 +195,30 @@ class BinaryFileSaver(BaseNode):
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "binary_data": ("BINARY_DATA",),
-                "file_name": ("STRING", {"default": "binary_file", "multiline": False}),
+                t("binary_data"): ("BINARY_DATA",),
+                t("file_name"): ("STRING", {"default": "binary_file", "multiline": False}),
             },
             "optional": {
-                "output_directory": ("STRING", {"default": "", "multiline": False}),
+                t("output_directory"): ("STRING", {"default": "", "multiline": False}),
             }
         }
 
     RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("saved_path",)
+    RETURN_NAMES = (t("saved_path"),)
     FUNCTION = "execute"
-    CATEGORY = "DCI/Files"
+    CATEGORY = f"DCI/{t('Files')}"
     OUTPUT_NODE = True
 
-    def _execute(self, binary_data, file_name, output_directory=""):
+    def _execute(self, **kwargs):
+        """Save binary data to file system"""
+        # Extract parameters with translation support
+        binary_data = kwargs.get(t("binary_data"))
+        file_name = kwargs.get(t("file_name"))
+        output_directory = kwargs.get(t("output_directory"), "")
+
+        return self._execute_impl(binary_data, file_name, output_directory)
+
+    def _execute_impl(self, binary_data, file_name, output_directory=""):
         """Save binary data to file system"""
         # Check if binary_data is valid
         if binary_data is None:

@@ -8,6 +8,7 @@ except ImportError as e:
 
 from ..utils.ui_utils import format_image_info
 from .base_node import BaseNode
+from ..utils.i18n import t
 
 try:
     from ..dci_reader import DCIReader, DCIPreviewGenerator
@@ -25,22 +26,32 @@ class DCIPreviewNode(BaseNode):
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "dci_binary_data": ("BINARY_DATA",),
+                t("dci_binary_data"): ("BINARY_DATA",),
             },
             "optional": {
-                "light_background_color": (["light_gray", "dark_gray", "white", "black", "transparent", "checkerboard", "blue", "green", "red", "yellow", "cyan", "magenta", "orange", "purple", "pink", "brown", "navy", "teal", "olive", "maroon"], {"default": "light_gray"}),
-                "dark_background_color": (["light_gray", "dark_gray", "white", "black", "transparent", "checkerboard", "blue", "green", "red", "yellow", "cyan", "magenta", "orange", "purple", "pink", "brown", "navy", "teal", "olive", "maroon"], {"default": "dark_gray"}),
-                "text_font_size": ("INT", {"default": 18, "min": 8, "max": 50, "step": 1}),
+                t("light_background_color"): (["light_gray", "dark_gray", "white", "black", "transparent", "checkerboard", "blue", "green", "red", "yellow", "cyan", "magenta", "orange", "purple", "pink", "brown", "navy", "teal", "olive", "maroon"], {"default": "light_gray"}),
+                t("dark_background_color"): (["light_gray", "dark_gray", "white", "black", "transparent", "checkerboard", "blue", "green", "red", "yellow", "cyan", "magenta", "orange", "purple", "pink", "brown", "navy", "teal", "olive", "maroon"], {"default": "dark_gray"}),
+                t("text_font_size"): ("INT", {"default": 18, "min": 8, "max": 50, "step": 1}),
             }
         }
 
     RETURN_TYPES = ()
     RETURN_NAMES = ()
     FUNCTION = "execute"
-    CATEGORY = "DCI/Preview"
+    CATEGORY = f"DCI/{t('Preview')}"
     OUTPUT_NODE = True
 
-    def _execute(self, dci_binary_data, light_background_color="light_gray", dark_background_color="dark_gray", text_font_size=18):
+    def _execute(self, **kwargs):
+        """Preview DCI file contents with in-node display"""
+        # Extract parameters with translation support
+        dci_binary_data = kwargs.get(t("dci_binary_data"))
+        light_background_color = kwargs.get(t("light_background_color"), "light_gray")
+        dark_background_color = kwargs.get(t("dark_background_color"), "dark_gray")
+        text_font_size = kwargs.get(t("text_font_size"), 18)
+
+        return self._execute_impl(dci_binary_data, light_background_color, dark_background_color, text_font_size)
+
+    def _execute_impl(self, dci_binary_data, light_background_color="light_gray", dark_background_color="dark_gray", text_font_size=18):
         """Preview DCI file contents with in-node display"""
         if not _image_support:
             return {"ui": {"text": ["Image support not available - missing PIL/torch dependencies"]}}

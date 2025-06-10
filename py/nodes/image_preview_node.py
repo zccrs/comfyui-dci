@@ -8,6 +8,7 @@ except ImportError as e:
 
 from io import BytesIO
 from .base_node import BaseNode
+from ..utils.i18n import t
 
 class DCIImagePreview(BaseNode):
     """ComfyUI node for previewing DCI Image data"""
@@ -16,20 +17,28 @@ class DCIImagePreview(BaseNode):
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "dci_image_data": ("DCI_IMAGE_DATA",),
+                t("dci_image_data"): ("DCI_IMAGE_DATA",),
             },
             "optional": {
-                "preview_background": (["transparent", "white", "black", "checkerboard"], {"default": "checkerboard"}),
+                t("preview_background"): ([t("transparent"), t("white"), t("black"), t("checkerboard")], {"default": "checkerboard"}),
             }
         }
 
     RETURN_TYPES = ()
     RETURN_NAMES = ()
     FUNCTION = "execute"
-    CATEGORY = "DCI/Preview"
+    CATEGORY = f"DCI/{t('Preview')}"
     OUTPUT_NODE = True
 
-    def _execute(self, dci_image_data, preview_background="checkerboard"):
+    def _execute(self, **kwargs):
+        """Preview DCI Image data"""
+        # Extract parameters with translation support
+        dci_image_data = kwargs.get(t("dci_image_data"))
+        preview_background = kwargs.get(t("preview_background"), "checkerboard")
+
+        return self._execute_impl(dci_image_data, preview_background)
+
+    def _execute_impl(self, dci_image_data, preview_background="checkerboard"):
         """Preview DCI image data"""
         if not _image_support:
             return {"ui": {"text": ["Image support not available - missing PIL/torch dependencies"]}}

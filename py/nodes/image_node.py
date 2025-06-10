@@ -18,35 +18,35 @@ class DCIImage(BaseNode):
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "image": ("IMAGE",),
-                "icon_size": ("INT", {"default": 256, "min": 16, "max": 1024, "step": 1}),
-                "icon_state": (["normal", "disabled", "hover", "pressed"], {"default": "normal"}),
-                "scale": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 10.0, "step": 0.1}),
-                "tone_type": (["light", "dark"], {"default": "light"}),
+                t("image"): ("IMAGE",),
+                t("icon_size"): ("INT", {"default": 256, "min": 16, "max": 1024, "step": 1}),
+                t("icon_state"): ([t("normal"), t("disabled"), t("hover"), t("pressed")], {"default": "normal"}),
+                t("scale"): ("FLOAT", {"default": 1.0, "min": 0.1, "max": 10.0, "step": 0.1}),
+                t("tone_type"): ([t("light"), t("dark")], {"default": "light"}),
             },
             "optional": {
                 # Basic format setting
-                "image_format": (["webp", "png", "jpg"], {"default": "webp"}),
+                t("image_format"): ([t("webp"), t("png"), t("jpg")], {"default": "webp"}),
 
                 # Background color settings
-                "background_color": (["transparent", "white", "black", "custom"], {"default": "transparent"}),
-                "custom_bg_r": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
-                "custom_bg_g": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
-                "custom_bg_b": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
+                t("background_color"): ([t("transparent"), t("white"), t("black"), t("custom")], {"default": "transparent"}),
+                t("custom_bg_r"): ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
+                t("custom_bg_g"): ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
+                t("custom_bg_b"): ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
 
                 # Layer properties
-                "layer_priority": ("INT", {"default": 1, "min": 1, "max": 100, "step": 1}),
-                "layer_padding": ("INT", {"default": 0, "min": 0, "max": 100, "step": 1}),
-                "palette_type": (["none", "foreground", "background", "highlight_foreground", "highlight"], {"default": "none"}),
+                t("layer_priority"): ("INT", {"default": 1, "min": 1, "max": 100, "step": 1}),
+                t("layer_padding"): ("INT", {"default": 0, "min": 0, "max": 100, "step": 1}),
+                t("palette_type"): ([t("none"), t("foreground"), t("background"), t("highlight_foreground"), t("highlight")], {"default": "none"}),
 
                 # Color adjustments
-                "hue_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
-                "saturation_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
-                "brightness_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
-                "red_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
-                "green_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
-                "blue_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
-                "alpha_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
+                t("hue_adjustment"): ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
+                t("saturation_adjustment"): ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
+                t("brightness_adjustment"): ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
+                t("red_adjustment"): ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
+                t("green_adjustment"): ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
+                t("blue_adjustment"): ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
+                t("alpha_adjustment"): ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
             }
         }
 
@@ -55,12 +55,42 @@ class DCIImage(BaseNode):
     FUNCTION = "execute"
     CATEGORY = f"DCI/{t('Export')}"
 
-    def _execute(self, image, icon_size, icon_state, scale, tone_type="light",
-                 image_format="webp",
-                 background_color="transparent", custom_bg_r=255, custom_bg_g=255, custom_bg_b=255,
-                 layer_priority=1, layer_padding=0, palette_type="none",
-                 hue_adjustment=0, saturation_adjustment=0, brightness_adjustment=0,
-                 red_adjustment=0, green_adjustment=0, blue_adjustment=0, alpha_adjustment=0):
+    def _execute(self, **kwargs):
+        """Create DCI image metadata and data with layer support"""
+        # Extract parameters with translation support
+        image = kwargs.get(t("image"))
+        icon_size = kwargs.get(t("icon_size"))
+        icon_state = kwargs.get(t("icon_state"))
+        scale = kwargs.get(t("scale"))
+        tone_type = kwargs.get(t("tone_type"), "light")
+        image_format = kwargs.get(t("image_format"), "webp")
+        background_color = kwargs.get(t("background_color"), "transparent")
+        custom_bg_r = kwargs.get(t("custom_bg_r"), 255)
+        custom_bg_g = kwargs.get(t("custom_bg_g"), 255)
+        custom_bg_b = kwargs.get(t("custom_bg_b"), 255)
+        layer_priority = kwargs.get(t("layer_priority"), 1)
+        layer_padding = kwargs.get(t("layer_padding"), 0)
+        palette_type = kwargs.get(t("palette_type"), "none")
+        hue_adjustment = kwargs.get(t("hue_adjustment"), 0)
+        saturation_adjustment = kwargs.get(t("saturation_adjustment"), 0)
+        brightness_adjustment = kwargs.get(t("brightness_adjustment"), 0)
+        red_adjustment = kwargs.get(t("red_adjustment"), 0)
+        green_adjustment = kwargs.get(t("green_adjustment"), 0)
+        blue_adjustment = kwargs.get(t("blue_adjustment"), 0)
+        alpha_adjustment = kwargs.get(t("alpha_adjustment"), 0)
+
+        return self._execute_impl(image, icon_size, icon_state, scale, tone_type,
+                                 image_format, background_color, custom_bg_r, custom_bg_g, custom_bg_b,
+                                 layer_priority, layer_padding, palette_type,
+                                 hue_adjustment, saturation_adjustment, brightness_adjustment,
+                                 red_adjustment, green_adjustment, blue_adjustment, alpha_adjustment)
+
+    def _execute_impl(self, image, icon_size, icon_state, scale, tone_type="light",
+                     image_format="webp",
+                     background_color="transparent", custom_bg_r=255, custom_bg_g=255, custom_bg_b=255,
+                     layer_priority=1, layer_padding=0, palette_type="none",
+                     hue_adjustment=0, saturation_adjustment=0, brightness_adjustment=0,
+                     red_adjustment=0, green_adjustment=0, blue_adjustment=0, alpha_adjustment=0):
         """Create DCI image metadata and data with layer support"""
         if not _image_support:
             return ({},)

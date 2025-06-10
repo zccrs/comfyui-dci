@@ -21,6 +21,7 @@ try:
         DCIFileNode,
         BinaryFileLoader,
         BinaryFileSaver,
+        DCIFileSaver,
         DCIAnalysis
     )
     from .py.utils.i18n import t
@@ -38,6 +39,7 @@ except ImportError:
         DCIFileNode,
         BinaryFileLoader,
         BinaryFileSaver,
+        DCIFileSaver,
         DCIAnalysis
     )
     from py.utils.i18n import t
@@ -52,6 +54,7 @@ NODE_CLASS_MAPPINGS = {
     "DCI_FileNode": DCIFileNode,
     "DCI_BinaryFileLoader": BinaryFileLoader,
     "DCI_BinaryFileSaver": BinaryFileSaver,
+    "DCI_FileSaver": DCIFileSaver,
     "DCI_Analysis": DCIAnalysis,
 }
 
@@ -64,6 +67,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "DCI_FileNode": t("DCI File"),
     "DCI_BinaryFileLoader": t("Binary File Loader"),
     "DCI_BinaryFileSaver": t("Binary File Saver"),
+    "DCI_FileSaver": t("DCI File Saver"),
     "DCI_Analysis": t("DCI Analysis"),
 }
 
