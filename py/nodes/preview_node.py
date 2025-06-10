@@ -29,8 +29,8 @@ class DCIPreviewNode(BaseNode):
                 t("dci_binary_data"): ("BINARY_DATA",),
             },
             "optional": {
-                t("light_background_color"): (["light_gray", "dark_gray", "white", "black", "transparent", "checkerboard", "blue", "green", "red", "yellow", "cyan", "magenta", "orange", "purple", "pink", "brown", "navy", "teal", "olive", "maroon"], {"default": "light_gray"}),
-                t("dark_background_color"): (["light_gray", "dark_gray", "white", "black", "transparent", "checkerboard", "blue", "green", "red", "yellow", "cyan", "magenta", "orange", "purple", "pink", "brown", "navy", "teal", "olive", "maroon"], {"default": "dark_gray"}),
+                t("light_background_color"): ([t("light_gray"), t("dark_gray"), t("white"), t("black"), t("transparent"), t("checkerboard"), t("blue"), t("green"), t("red"), t("yellow"), t("cyan"), t("magenta"), t("orange"), t("purple"), t("pink"), t("brown"), t("navy"), t("teal"), t("olive"), t("maroon")], {"default": t("light_gray")}),
+                t("dark_background_color"): ([t("light_gray"), t("dark_gray"), t("white"), t("black"), t("transparent"), t("checkerboard"), t("blue"), t("green"), t("red"), t("yellow"), t("cyan"), t("magenta"), t("orange"), t("purple"), t("pink"), t("brown"), t("navy"), t("teal"), t("olive"), t("maroon")], {"default": t("dark_gray")}),
                 t("text_font_size"): ("INT", {"default": 18, "min": 8, "max": 50, "step": 1}),
             }
         }
@@ -43,13 +43,44 @@ class DCIPreviewNode(BaseNode):
 
     def _execute(self, **kwargs):
         """Preview DCI file contents with in-node display"""
-        # Extract parameters with translation support
+                # Extract parameters with translation support
         dci_binary_data = kwargs.get(t("dci_binary_data"))
-        light_background_color = kwargs.get(t("light_background_color"), "light_gray")
-        dark_background_color = kwargs.get(t("dark_background_color"), "dark_gray")
+        light_background_color = kwargs.get(t("light_background_color"), t("light_gray"))
+        dark_background_color = kwargs.get(t("dark_background_color"), t("dark_gray"))
         text_font_size = kwargs.get(t("text_font_size"), 18)
 
-        return self._execute_impl(dci_binary_data, light_background_color, dark_background_color, text_font_size)
+        # Convert translated color names back to internal English names for processing
+        light_bg_internal = self._translate_color_to_internal(light_background_color)
+        dark_bg_internal = self._translate_color_to_internal(dark_background_color)
+
+        return self._execute_impl(dci_binary_data, light_bg_internal, dark_bg_internal, text_font_size)
+
+    def _translate_color_to_internal(self, translated_color):
+        """Convert translated color name back to internal English name"""
+        # Create reverse mapping from translated names to internal names
+        color_mapping = {
+            t("light_gray"): "light_gray",
+            t("dark_gray"): "dark_gray",
+            t("white"): "white",
+            t("black"): "black",
+            t("transparent"): "transparent",
+            t("checkerboard"): "checkerboard",
+            t("blue"): "blue",
+            t("green"): "green",
+            t("red"): "red",
+            t("yellow"): "yellow",
+            t("cyan"): "cyan",
+            t("magenta"): "magenta",
+            t("orange"): "orange",
+            t("purple"): "purple",
+            t("pink"): "pink",
+            t("brown"): "brown",
+            t("navy"): "navy",
+            t("teal"): "teal",
+            t("olive"): "olive",
+            t("maroon"): "maroon",
+        }
+        return color_mapping.get(translated_color, translated_color)
 
     def _execute_impl(self, dci_binary_data, light_background_color="light_gray", dark_background_color="dark_gray", text_font_size=18):
         """Preview DCI file contents with in-node display"""
