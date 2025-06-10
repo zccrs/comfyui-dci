@@ -20,10 +20,10 @@ class DCISampleImage(BaseNode):
             "required": {
                 t("image"): ("IMAGE",),
                 t("icon_size"): ("INT", {"default": 256, "min": 16, "max": 1024, "step": 1}),
-                t("icon_state"): ([t("normal"), t("disabled"), t("hover"), t("pressed")], {"default": "normal"}),
+                t("icon_state"): ([t("normal"), t("disabled"), t("hover"), t("pressed")], {"default": t("normal")}),
                 t("scale"): ("FLOAT", {"default": 1.0, "min": 0.1, "max": 10.0, "step": 0.1}),
-                t("tone_type"): ([t("light"), t("dark")], {"default": "light"}),
-                t("image_format"): ([t("webp"), t("png"), t("jpg")], {"default": "webp"}),
+                t("tone_type"): ([t("light"), t("dark")], {"default": t("light")}),
+                t("image_format"): ([t("webp"), t("png"), t("jpg")], {"default": t("webp")}),
             }
         }
 

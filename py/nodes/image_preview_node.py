@@ -20,7 +20,7 @@ class DCIImagePreview(BaseNode):
                 t("dci_image_data"): ("DCI_IMAGE_DATA",),
             },
             "optional": {
-                t("preview_background"): ([t("transparent"), t("white"), t("black"), t("checkerboard")], {"default": "checkerboard"}),
+                t("preview_background"): ([t("transparent"), t("white"), t("black"), t("checkerboard")], {"default": t("checkerboard")}),
             }
         }
 
