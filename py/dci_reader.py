@@ -520,8 +520,21 @@ class DCIPreviewGenerator:
         else:
             canvas.paste(image, (img_x, img_y))
 
-        # Draw metadata labels
+        # Draw border around the icon to show its actual range
         draw = ImageDraw.Draw(canvas)
+
+        # Calculate border coordinates (around the actual image)
+        border_x1 = img_x - 1
+        border_y1 = img_y - 1
+        border_x2 = img_x + image.size[0]
+        border_y2 = img_y + image.size[1]
+
+        # Choose border color based on background brightness
+        border_color = self._get_border_color()
+
+        # Draw a thin border around the icon
+        draw.rectangle([border_x1, border_y1, border_x2, border_y2],
+                      outline=border_color, width=1)
 
         # Try to load a font, fall back to default if not available
         try:
@@ -572,6 +585,34 @@ class DCIPreviewGenerator:
                 if i < len(wrapped_lines) - 1:
                     draw.text((x, text_y), "...", fill=self.text_color, font=font)
                 break
+
+    def _get_border_color(self):
+        """Get appropriate border color based on background color"""
+        # Calculate relative luminance of background color
+        r, g, b = self.background_color
+
+        # Convert to linear RGB
+        def to_linear(c):
+            c = c / 255.0
+            if c <= 0.03928:
+                return c / 12.92
+            else:
+                return pow((c + 0.055) / 1.055, 2.4)
+
+        r_linear = to_linear(r)
+        g_linear = to_linear(g)
+        b_linear = to_linear(b)
+
+        # Calculate relative luminance
+        luminance = 0.2126 * r_linear + 0.7152 * g_linear + 0.0722 * b_linear
+
+        # Return contrasting border color
+        if luminance > 0.5:
+            # Light background - use dark border
+            return (128, 128, 128)  # Medium gray
+        else:
+            # Dark background - use light border
+            return (192, 192, 192)  # Light gray
 
     def _wrap_text(self, text: str, max_width: int, font, draw) -> List[str]:
         """Wrap text to fit within the specified width"""
