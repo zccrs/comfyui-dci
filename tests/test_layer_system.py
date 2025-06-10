@@ -66,6 +66,7 @@ def test_layer_filename_parsing():
     assert basic_result['palette'] == -1
     assert basic_result['palette_name'] == "none"
     assert basic_result['format'] == "webp"
+    assert basic_result['is_alpha8'] == False
 
     # 测试复杂图层文件名
     # 格式: priority.padding_with_p.palette.hue_saturation_brightness_red_green_blue_alpha.format
@@ -83,6 +84,20 @@ def test_layer_filename_parsing():
     assert complex_result['blue'] == -50
     assert complex_result['alpha'] == 60
     assert complex_result['format'] == "png"
+    assert complex_result['is_alpha8'] == False
+
+    # 测试alpha8格式文件名
+    alpha8_result = reader._parse_layer_filename("2.5p.1.0_0_0_0_0_0_0.webp.alpha8")
+    print(f"Alpha8文件名解析: {alpha8_result}")
+    assert alpha8_result['priority'] == 2
+    assert alpha8_result['padding'] == 5
+    assert alpha8_result['palette'] == 1
+    assert alpha8_result['palette_name'] == "background"
+    assert alpha8_result['format'] == "webp.alpha8"
+    assert alpha8_result['is_alpha8'] == True
+    assert alpha8_result['hue'] == 0
+    assert alpha8_result['saturation'] == 0
+    assert alpha8_result['brightness'] == 0
 
     # 测试调色板类型映射
     palette_tests = [
@@ -91,6 +106,7 @@ def test_layer_filename_parsing():
         ("1.0p.1.0_0_0_0_0_0_0.webp", "background"),
         ("1.0p.2.0_0_0_0_0_0_0.webp", "highlight_foreground"),
         ("1.0p.3.0_0_0_0_0_0_0.webp", "highlight"),
+        ("1.0p.1.0_0_0_0_0_0_0.png.alpha8", "background"),  # alpha8格式测试
     ]
 
     for filename, expected_palette in palette_tests:

@@ -243,13 +243,21 @@ class DCIReader:
     def _parse_layer_filename(self, filename: str) -> Dict:
         """Parse layer filename to extract metadata according to DCI specification
 
-        Expected format: priority.padding_with_p.palette.hue_saturation_brightness_red_green_blue_alpha.format
+        Expected format: priority.padding_with_p.palette.hue_saturation_brightness_red_green_blue_alpha.format[.alpha8]
         """
         parts = filename.split('.')
 
         if len(parts) >= 2:
-            format_ext = parts[-1]
-            layer_info = {'format': format_ext}
+            # Check for alpha8 format
+            is_alpha8 = parts[-1] == 'alpha8'
+            if is_alpha8:
+                format_ext = f"{parts[-2]}.alpha8"
+                # Remove alpha8 suffix for further parsing
+                parts = parts[:-1]
+            else:
+                format_ext = parts[-1]
+
+            layer_info = {'format': format_ext, 'is_alpha8': is_alpha8}
 
             if len(parts) >= 5:  # Full layer info: priority.padding.palette.color_adjustments.format
                 try:
@@ -308,7 +316,7 @@ class DCIReader:
 
             return layer_info
 
-        return {'format': 'unknown'}
+        return {'format': 'unknown', 'is_alpha8': False}
 
 
 class DCIPreviewGenerator:
