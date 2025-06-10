@@ -15,7 +15,7 @@ from io import BytesIO
 # Add the parent directory to the path to import our modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'py'))
 
-from nodes import DCIPreviewNode
+from nodes import DCIAnalysisNode
 from dci_format import DCIIconBuilder
 from dci_reader import DCIReader
 
@@ -77,10 +77,10 @@ def create_test_dci_binary():
 
 def test_preview_node_parameters():
     """Test that the preview node has correct parameters"""
-    print("Testing DCIPreviewNode parameters...")
+    print("Testing DCIAnalysisNode parameters...")
 
     # Check INPUT_TYPES
-    input_types = DCIPreviewNode.INPUT_TYPES()
+    input_types = DCIAnalysisNode.INPUT_TYPES()
 
     # Check required parameters
     required = input_types.get('required', {})
@@ -90,25 +90,22 @@ def test_preview_node_parameters():
     optional = input_types.get('optional', {})
 
     # These should exist
-    assert 'grid_columns' in optional, "Missing optional parameter: grid_columns"
-    assert 'background_color' in optional, "Missing optional parameter: background_color"
-    assert 'custom_bg_r' in optional, "Missing optional parameter: custom_bg_r"
-    assert 'custom_bg_g' in optional, "Missing optional parameter: custom_bg_g"
-    assert 'custom_bg_b' in optional, "Missing optional parameter: custom_bg_b"
+    assert 'text_font_size' in optional, "Missing optional parameter: text_font_size"
 
     # These should NOT exist (removed)
-    assert 'text_font_size' not in optional, "text_font_size parameter should be removed"
+    assert 'grid_columns' not in optional, "grid_columns parameter should be removed"
+    assert 'background_color' not in optional, "background_color parameter should be removed"
     assert 'show_file_paths' not in optional, "show_file_paths parameter should be removed"
 
     print("✓ Parameter structure is correct")
 
     # Check function signature
     import inspect
-    sig = inspect.signature(DCIPreviewNode.preview_dci)
+    sig = inspect.signature(DCIAnalysisNode._execute)
     params = list(sig.parameters.keys())
 
-    # Should not have text_font_size or show_file_paths
-    assert 'text_font_size' not in params, "text_font_size should not be in function signature"
+    # Should have text_font_size but not show_file_paths
+    assert 'text_font_size' in params, "text_font_size should be in function signature"
     assert 'show_file_paths' not in params, "show_file_paths should not be in function signature"
 
     print("✓ Function signature is correct")
@@ -121,32 +118,31 @@ def test_preview_functionality():
     # Create test DCI binary data
     binary_data = create_test_dci_binary()
 
-    # Create preview node
-    node = DCIPreviewNode()
+    # Create analysis node
+    node = DCIAnalysisNode()
 
-    # Test preview with only required parameters
-    result = node.preview_dci(dci_binary_data=binary_data)
+    # Test analysis with only required parameters
+    result = node.execute(dci_binary_data=binary_data)
 
-    assert 'ui' in result, "Result should have 'ui' key"
-    assert 'text' in result['ui'], "UI should have 'text' key"
-    assert 'images' in result['ui'], "UI should have 'images' key"
+    # DCIAnalysisNode returns a tuple with text content
+    assert isinstance(result, tuple), "Result should be a tuple"
+    assert len(result) == 1, "Result should have one element"
 
     # Check that text contains file paths
-    text_content = result['ui']['text'][0]
+    text_content = result[0]
     assert '📂 文件路径列表:' in text_content, "File paths section should always be present"
     assert '.webp' in text_content or '.png' in text_content, "File paths should be shown"
 
     print("✓ Preview functionality works correctly")
     print("✓ File paths are always shown in the output")
 
-    # Test with custom background color
-    result2 = node.preview_dci(
+    # Test with custom font size
+    result2 = node.execute(
         dci_binary_data=binary_data,
-        grid_columns=2,
-        background_color='dark_gray'
+        text_font_size=20
     )
 
-    assert 'ui' in result2, "Result with custom params should work"
+    assert isinstance(result2, tuple), "Result with custom params should work"
     print("✓ Custom parameters work correctly")
 
 
@@ -157,14 +153,14 @@ def test_text_formatting():
     # Create test DCI binary data
     binary_data = create_test_dci_binary()
 
-    # Create preview node
-    node = DCIPreviewNode()
+    # Create analysis node
+    node = DCIAnalysisNode()
 
-    # Get preview result
-    result = node.preview_dci(dci_binary_data=binary_data)
+    # Get analysis result
+    result = node.execute(dci_binary_data=binary_data)
 
     # Check text content
-    text_content = result['ui']['text'][0]
+    text_content = result[0]
 
     # Should not contain HTML tags
     assert '<span' not in text_content, "Text should not contain HTML span tags"

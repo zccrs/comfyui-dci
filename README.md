@@ -137,8 +137,8 @@ pip install -r requirements.txt
 - DCI_SampleImage (DCI Sample Image) - 简化的DCI图像创建节点
 - DCI_FileNode (DCI File)
 
-#### DCI/Preview（预览）
-- DCI_PreviewNode (DCI Preview)
+#### DCI/Analysis（分析）
+- DCI_AnalysisNode (DCI Analysis)
 - DCI_ImagePreview (DCI Image Preview)
 - DCI_StructureNode (DCI Structure Preview)
 
@@ -240,50 +240,31 @@ pip install -r requirements.txt
 **输出：**
 - **`dci_binary_data`** (BINARY_DATA)：DCI文件的二进制数据
 
-#### 4. DCI Preview（DCI 预览）
-**节点类别**：`DCI/Preview`
-**功能描述**：直接在节点内显示 DCI 文件内容的可视化预览和详细元数据信息。专门用于预览 DCI 二进制数据，现支持将Light和Dark相关内容分开显示。
+#### 4. DCI Analysis（DCI 分析）
+**节点类别**：`DCI/Analysis`
+**功能描述**：分析 DCI 文件内容并输出详细的文本信息。专门用于分析 DCI 二进制数据，输出包含文件结构、图像信息、元数据等的格式化文本内容。
 
 **必需输入参数：**
 - **`dci_binary_data`** (BINARY_DATA)：DCI 文件的二进制数据
 
 **可选输入参数：**
-- **`light_background_color`** (COMBO)：Light主题预览背景色，默认light_gray
-- **`dark_background_color`** (COMBO)：Dark主题预览背景色，默认dark_gray
-- **`text_font_size`** (INT)：文本字号大小（8-50像素），默认18，同时控制预览图像中的字体大小和文本摘要的格式
+- **`text_font_size`** (INT)：文本字号大小（8-50像素），默认18，控制输出文本的格式化
 
-**背景颜色选项：**
-支持20种预设颜色，包括：
-- **基础色**：light_gray、dark_gray、white、black
-- **特殊背景**：transparent、checkerboard
-- **彩色选项**：blue、green、red、yellow、cyan、magenta、orange、purple、pink、brown、navy、teal、olive、maroon
+**输出：**
+- **`analysis_text`** (STRING)：包含DCI文件详细分析信息的格式化文本
 
-**节点内预览功能：**
-- **双列布局**：Light主题图标在左列，Dark主题图标在右列
-- **独立背景设置**：Light和Dark主题可设置不同的背景颜色
-- **丰富背景色选项**：每种主题支持20种预设背景色，包括特殊的透明和棋盘格背景
-- **图标边框显示**：每个图标周围自动绘制细线边框，清晰显示图标的实际范围和尺寸
-  - **智能边框颜色**：根据背景颜色亮度自动选择对比色边框（浅色背景用深色边框，深色背景用浅色边框）
-  - **精确范围指示**：边框紧贴图标边缘，准确显示图标的像素边界
-  - **多背景适配**：在所有背景颜色下都能清晰显示边框效果
-- **自适应文本格式**：根据字体大小调整文本显示格式，较大字体使用更紧凑的布局
-- **文件路径分组显示**：Light、Dark和其他色调图标的路径分别显示
-- **预览图像标签**：每个图标下方显示详细信息，包括：
-  - **文件路径**（第一行）：显示DCI内部的完整路径（如：64/normal.light/1.0.0.0.0.0.0.0.0.0.png）
-  - 图标尺寸、状态、缩放因子
-  - 文件大小
-  - **注意**：不显示色调(tone)字段，因为已按Light/Dark分列显示；不显示格式(format)字段，因为文件名已包含格式信息
-- **详细元数据显示**：在节点内显示全面的文件信息，包括：
+**文本输出内容：**
+- **文件概览**：数据源、图像总数、文件大小统计
+- **分类统计**：Light、Dark和其他色调图像的数量分布
+- **属性汇总**：图标尺寸、状态、色调、缩放因子、格式的统计信息
+- **文件路径列表**：按色调分组显示的完整文件路径
+- **详细图像信息**：每个图像的完整元数据，包括：
   - 图标尺寸、状态、色调、缩放因子
   - 图像格式、文件大小、实际尺寸
   - 完整的DCI内部路径和文件名
-  - 每个图像的优先级和详细属性
-  - 统计汇总信息和文件路径列表
+  - 图像的优先级和详细属性
 
-**输出：**
-- 无输出（所有预览内容直接在节点内显示）
-
-**注意**：此节点专门用于处理二进制数据输入。不需要手动设置列数，默认将Light和Dark内容分开显示在两列，Light主题图标固定在左侧列，Dark主题图标固定在右侧列。文本格式会根据字体大小自动调整，提供最佳阅读体验。背景颜色选择简化为预设选项，移除了自定义RGB设置以提供更好的用户体验。
+**注意**：此节点专门用于分析DCI文件内容并输出结构化的文本信息，不再提供图像预览功能。输出的文本可以连接到其他节点进行进一步处理或显示。
 
 #### 5. DCI Image Preview（DCI 图像预览）
 **节点类别**：`DCI/Preview`
@@ -429,9 +410,9 @@ DCI File Structure:
    - 使用 `DCI File` 节点将多个 DCI 图像组合成完整的 DCI 文件二进制数据
    - 支持最多12个图像输入的灵活组合
 
-3. **预览 DCI 内容**：
-   - 使用 `DCI Preview` 节点直接在节点内查看 DCI 文件的内容和元数据
-   - 自动显示图像网格和详细的元数据信息
+3. **分析 DCI 内容**：
+   - 使用 `DCI Analysis` 节点分析 DCI 文件的内容并输出详细的文本信息
+   - 输出包含文件结构、图像信息、元数据等的格式化文本
 
 4. **保存 DCI 文件**：
    - 使用 `Binary File Saver` 节点将 DCI 二进制数据保存到磁盘
@@ -441,8 +422,8 @@ DCI File Structure:
 1. **加载现有 DCI 文件**：
    - 使用 `Binary File Loader` 加载现有的 DCI 文件
 
-2. **预览和分析**：
-   - 将加载的二进制数据连接到 `DCI Preview` 节点进行预览
+2. **分析和查看**：
+   - 将加载的二进制数据连接到 `DCI Analysis` 节点进行分析
 
 ### 调试工作流程
 
@@ -468,26 +449,26 @@ DCI File Structure:
 
 ### 基础工作流程
 ```
-LoadImage → DCI Image → DCI File → DCI Preview
+LoadImage → DCI Image → DCI File → DCI Analysis
 ```
 
 ### 多图像工作流程
 ```
 LoadImage (normal) → DCI Image (normal) ──┐
 LoadImage (hover)  → DCI Image (hover)  ──┼─→ DCI File ──→ Binary File Saver
-LoadImage (pressed)→ DCI Image (pressed)──┘           └─→ DCI Preview
+LoadImage (pressed)→ DCI Image (pressed)──┘           └─→ DCI Analysis
 ```
 
 ### 文件处理工作流程
 ```
-Binary File Loader → DCI Preview
+Binary File Loader → DCI Analysis
                   └→ Binary File Saver
 ```
 
 ### 预览工作流程
 ```
 LoadImage → DCI Image → DCI Image Preview
-                     └→ DCI File → DCI Preview
+                     └→ DCI File → DCI Analysis
 ```
 
 ## DCI 格式规范
@@ -505,7 +486,7 @@ LoadImage → DCI Image → DCI Image Preview
 ### 预览系统优化
 
 #### 动态文本宽度计算
-DCI Preview 节点现在支持智能的文本宽度计算，解决了长文件路径显示不全的问题：
+DCI Analysis 节点现在支持智能的文本格式化，提供详细的DCI文件分析信息：
 
 **主要改进**：
 - **动态宽度计算**：根据实际文本内容计算所需的最大宽度，而不是固定使用图像尺寸

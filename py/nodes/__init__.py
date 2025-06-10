@@ -2,7 +2,7 @@
 DCI Nodes Package
 """
 
-from .preview_node import DCIPreviewNode
+from .preview_node import DCIAnalysisNode
 from .image_node import DCIImage
 from .sample_image_node import DCISampleImage
 from .image_preview_node import DCIImagePreview
@@ -10,7 +10,7 @@ from .file_node import DCIFileNode, BinaryFileLoader, BinaryFileSaver
 from .structure_node import DCIStructureNode
 
 NODE_CLASS_MAPPINGS = {
-    "DCIPreviewNode": DCIPreviewNode,
+    "DCIAnalysisNode": DCIAnalysisNode,
     "DCIImage": DCIImage,
     "DCISampleImage": DCISampleImage,
     "DCIImagePreview": DCIImagePreview,
@@ -21,7 +21,7 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "DCIPreviewNode": "DCI Preview",
+    "DCIAnalysisNode": "DCI Analysis",
     "DCIImage": "DCI Image",
     "DCISampleImage": "DCI Sample Image",
     "DCIImagePreview": "DCI Image Preview",
@@ -32,7 +32,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 }
 
 __all__ = [
-    'DCIPreviewNode',
+    'DCIAnalysisNode',
     'DCIImage',
     'DCISampleImage',
     'DCIImagePreview',

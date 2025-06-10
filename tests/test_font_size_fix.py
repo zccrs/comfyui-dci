@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'py', 'utils'))
 
 from dci_format import DCIIconBuilder
 from dci_reader import DCIReader, DCIPreviewGenerator
-from preview_node import DCIPreviewNode
+from preview_node import DCIAnalysisNode
 
 
 def create_test_image(size=256, color=(255, 0, 0, 255), text="TEST"):
@@ -113,7 +113,7 @@ def test_font_size_preview():
         print(f"\n测试字体大小: {font_size}px")
 
         # 创建预览节点
-        node = DCIPreviewNode()
+        node = DCIAnalysisNode()
 
         # 生成预览
         result = node._execute(

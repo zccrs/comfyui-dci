@@ -13,4 +13,4 @@ alwaysApply: true
 8. 对代码改动的功能进行全面的测试，确保功能的正确性和稳定性。
 9. 在确认代码无问题后，根据代码变动，更新README.md、preliminary-design.md、detailed-design.md 文件，确保文档和代码保持一致。
 10. 你应该将本次改动提交到git，commit的风格从mcp的记忆中查找。
-11. 最后，总是调用 MCP 的 `interactive_feedback`，而不是直接结束流程。
+11. 最后，总是询问用户是否还需要做什么改进，而不是直接结束流程。

@@ -63,7 +63,7 @@ web_version/        - Web组件（预留）
 #### 2.2.2 预览模块 (Preview Module)
 
 ##### 文件预览节点
-- **DCIPreviewNode**: DCI 文件可视化预览
+- **DCIAnalysisNode**: DCI 文件内容分析和文本输出
 - **DCIFileLoader**: DCI 文件加载器
 
 ##### 二进制预览节点（新增）

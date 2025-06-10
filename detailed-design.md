@@ -79,7 +79,7 @@ comfyui-dci/
 class DCIImageExporter:
     CATEGORY = "DCI"
 
-class DCIPreviewNode:
+class DCIAnalysisNode:
     CATEGORY = "DCI"
 
 # 所有节点都使用相同的分类
@@ -320,7 +320,7 @@ state_images = {
 }
 ```
 
-##### DCIPreviewNode 类
+##### DCIAnalysisNode 类
 **职责**: DCI 文件内容的节点内预览功能
 
 **设计理念**:
@@ -637,7 +637,7 @@ BINARY_DATA = bytes         # 直接的二进制数据内容，适用于所有�
 - `BINARY_DATA` 是统一的二进制数据类型，用于所有节点间的二进制数据传递
 - 包含完整的文件二进制内容，可以是DCI文件、图像文件或其他任何二进制文件
 - 不包含额外的元数据包装，保持数据的纯净性和通用性
-- 所有二进制处理节点（DCIFileNode、DCIPreviewNode、BinaryFileLoader、BinaryFileSaver）都使用此类型
+- 所有二进制处理节点（DCIFileNode、DCIAnalysisNode、BinaryFileLoader、BinaryFileSaver）都使用此类型
 
 #### 1.3.3 二进制文件处理节点（新增）
 
@@ -709,13 +709,13 @@ else:
 #### 节点间数据传递
 ```
 # 主要工作流程
-DCIImage → DCI_IMAGE_DATA → DCIFileNode → BINARY_DATA → DCIPreviewNode
+DCIImage → DCI_IMAGE_DATA → DCIFileNode → BINARY_DATA → DCIAnalysisNode
 
 # 二进制文件处理工作流程
 BinaryFileLoader → BINARY_DATA → BinaryFileSaver
 
 # 混合工作流程
-BinaryFileLoader → BINARY_DATA → DCIPreviewNode (如果是DCI文件)
+BinaryFileLoader → BINARY_DATA → DCIAnalysisNode (如果是DCI文件)
 DCIFileNode → BINARY_DATA → BinaryFileSaver (保存DCI文件)
 ```
 
