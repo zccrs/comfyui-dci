@@ -138,6 +138,7 @@ pip install -r requirements.txt
 
 #### DCI/Preview（预览）
 - DCI_PreviewNode (DCI Preview)
+- DCI_StructureNode (DCI Structure Preview)
 
 #### Preview（预览）
 - DCI_ImagePreview (DCI Image Preview)
@@ -146,8 +147,7 @@ pip install -r requirements.txt
 - DCI_BinaryFileLoader (Binary File Loader)
 - DCI_BinaryFileSaver (Binary File Saver)
 
-#### DCI/Analysis（分析）
-- DCI_StructureNode (DCI Structure Preview)
+
 
 ### 可用节点详细说明
 
@@ -304,7 +304,7 @@ pip install -r requirements.txt
 - **`saved_path`** (STRING)：实际保存的文件路径
 
 #### 7. DCI Structure Preview（DCI 结构预览）
-**节点类别**：`DCI/Analysis`
+**节点类别**：`DCI/Preview`
 **功能描述**：以树状结构详细展示DCI文件的内部组织结构和元信息，专门用于分析和调试DCI文件内容。
 
 **必需输入参数：**

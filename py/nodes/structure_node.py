@@ -35,7 +35,7 @@ class DCIStructureNode(BaseNode):
     RETURN_TYPES = ()
     RETURN_NAMES = ()
     FUNCTION = "execute"
-    CATEGORY = "DCI/Analysis"
+    CATEGORY = "DCI/Preview"
     OUTPUT_NODE = True
 
     def _execute(self, dci_binary_data, show_file_details=True, show_layer_metadata=True, show_file_sizes=True, compact_mode=False):
