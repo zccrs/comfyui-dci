@@ -265,7 +265,7 @@ class DCIPreviewGenerator:
     def __init__(self, background_color=(240, 240, 240), font_size=12):
         self.font_size = font_size
         self.margin = 10
-        self.label_height = 80
+        self.label_height = 100  # Increased to accommodate additional path line
         self.background_color = background_color
         self.text_color = self._get_contrasting_text_color(background_color)
 
@@ -366,8 +366,10 @@ class DCIPreviewGenerator:
             except:
                 font = ImageFont.load_default()
 
-        # Create metadata text
+        # Create metadata text with file path as first line
+        file_path = f"{img_info['path']}/{img_info['filename']}"
         metadata_lines = [
+            f"Path: {file_path}",
             f"Size: {img_info['size']}px",
             f"State: {img_info['state']}",
             f"Tone: {img_info['tone']}",
