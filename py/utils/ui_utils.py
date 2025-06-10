@@ -7,10 +7,40 @@ def format_file_size(size_in_bytes):
     else:
         return f"{size_in_bytes/(1024*1024):.1f} MB"
 
-def format_dci_path(size, state, tone, scale, format_type):
-    """Format DCI path components into a standard path"""
+def format_dci_path(size, state, tone, scale, format_type, priority=1, padding=0, palette=-1,
+                   hue=0, saturation=0, brightness=0, red=0, green=0, blue=0, alpha=0):
+    """Format DCI path components into a standard path with layer parameters
+
+    Args:
+        size: Icon size in pixels
+        state: Icon state (normal, disabled, hover, pressed)
+        tone: Tone type (light, dark)
+        scale: Scale factor
+        format_type: Image format (png, webp, jpg)
+        priority: Layer priority (1-n), default 1
+        padding: Outer padding value (integer), default 0, will be formatted with 'p' suffix
+        palette: Palette type (-1=none, 0=foreground, 1=background, 2=highlight_foreground, 3=highlight), default -1
+        hue: Hue adjustment (-100 to 100), default 0
+        saturation: Saturation adjustment (-100 to 100), default 0
+        brightness: Brightness adjustment (-100 to 100), default 0
+        red: Red adjustment (-100 to 100), default 0
+        green: Green adjustment (-100 to 100), default 0
+        blue: Blue adjustment (-100 to 100), default 0
+        alpha: Alpha adjustment (-100 to 100), default 0
+    """
     scale_str = f"{scale:g}"  # Remove trailing zeros
-    return f"{size}/{state}.{tone}/{scale_str}/1.0.0.0.0.0.0.0.0.0.{format_type}"
+
+    # Format padding with 'p' suffix according to DCI specification
+    padding_str = f"{padding}p"
+
+    # Format color adjustments with underscore separator
+    color_adjustments = f"{hue}_{saturation}_{brightness}_{red}_{green}_{blue}_{alpha}"
+
+    # Format layer filename according to DCI specification
+    # Format: priority.padding_with_p.palette.color_adjustments_with_underscores.format
+    layer_filename = f"{priority}.{padding_str}.{palette}.{color_adjustments}.{format_type}"
+
+    return f"{size}/{state}.{tone}/{scale_str}/{layer_filename}"
 
 def format_image_info(image_data, index=None):
     """Format image information for display"""
@@ -28,6 +58,34 @@ def format_image_info(image_data, index=None):
         f"  🔍 缩放因子: {image_data.get('scale', 'N/A')}x",
         f"  🗂️  图像格式: {image_data.get('format', 'N/A')}",
     ])
+
+    # Layer information
+    if 'layer_priority' in image_data:
+        lines.extend([
+            f"  🏷️  图层优先级: {image_data.get('layer_priority', 1)}",
+            f"  📐 外边框: {image_data.get('layer_padding', 0.0)}",
+            f"  🎨 调色板: {image_data.get('palette_type', 'none')}",
+        ])
+
+        # Color adjustments (only show non-zero values)
+        color_adjustments = []
+        if image_data.get('hue_adjustment', 0) != 0:
+            color_adjustments.append(f"色调:{image_data['hue_adjustment']}")
+        if image_data.get('saturation_adjustment', 0) != 0:
+            color_adjustments.append(f"饱和度:{image_data['saturation_adjustment']}")
+        if image_data.get('brightness_adjustment', 0) != 0:
+            color_adjustments.append(f"亮度:{image_data['brightness_adjustment']}")
+        if image_data.get('red_adjustment', 0) != 0:
+            color_adjustments.append(f"红:{image_data['red_adjustment']}")
+        if image_data.get('green_adjustment', 0) != 0:
+            color_adjustments.append(f"绿:{image_data['green_adjustment']}")
+        if image_data.get('blue_adjustment', 0) != 0:
+            color_adjustments.append(f"蓝:{image_data['blue_adjustment']}")
+        if image_data.get('alpha_adjustment', 0) != 0:
+            color_adjustments.append(f"透明度:{image_data['alpha_adjustment']}")
+
+        if color_adjustments:
+            lines.append(f"  🌈 颜色调整: {', '.join(color_adjustments)}")
 
     # Additional information if available
     if 'actual_size' in image_data:

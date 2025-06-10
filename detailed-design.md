@@ -164,7 +164,7 @@ File Entry (72+ bytes):
 ```
 
 #### 1.1.2 DCIIconBuilder 类
-**职责**: 构建符合图标规范的 DCI 文件
+**职责**: 构建符合图标规范的 DCI 文件，完全支持 DCI 规范中的图层系统
 
 **目录结构规范**:
 ```
@@ -174,26 +174,52 @@ size/
         └── priority.padding.palette.hue.saturation.brightness.red.green.blue.alpha.format
 ```
 
+**图层系统设计**:
+根据 DCI 规范，图层文件名包含完整的图层参数：
+- **priority** (1-100): 图层优先级，数值越大绘制越靠上
+- **padding** (0-100): 外边框值（整数），用于阴影效果等
+- **palette** (-1,0,1,2,3): 调色板类型
+  - -1: none (无调色板)
+  - 0: foreground (前景色)
+  - 1: background (背景色)
+  - 2: highlight_foreground (高亮前景色)
+  - 3: highlight (高亮色)
+- **颜色调整参数** (-100 到 100): 精确控制图标颜色
+  - hue: 色调调整
+  - saturation: 饱和度调整
+  - brightness: 亮度调整
+  - red/green/blue: RGB分量调整
+  - alpha: 透明度调整
+
 **关键方法**:
-- `add_icon_image()`: 添加图标图像
+- `add_icon_image()`: 添加图标图像（支持图层参数）
 - `_add_to_structure()`: 构建目录结构
 - `build()`: 生成最终 DCI 文件
+- `_format_layer_filename()`: 格式化图层文件名
 
 **图像处理流程**:
-1. 验证参数 (状态、色调、格式)
+1. 验证参数 (状态、色调、格式、图层参数)
 2. 计算实际尺寸 (size × scale)
 3. 图像重采样 (Lanczos 算法)
 4. 格式转换和压缩
-5. 添加到目录结构
+5. 生成图层文件名 (包含所有图层参数)
+6. 添加到目录结构
+
+**图层文件名生成示例**:
+```
+# 基础图层: 1.0p.-1.0_0_0_0_0_0_0.webp
+# 高优先级图层: 2.5p.1.10_20_30_0_0_0_0.png
+# 调色板图层: 1.0p.2.0_0_0_50_-20_10_0.webp
+```
 
 ### 1.2 DCI 读取模块 (dci_reader.py)
 
 #### 1.2.1 DCIReader 类
-**职责**: 读取和解析 DCI 文件
+**职责**: 读取和解析 DCI 文件，完全支持图层系统的解析
 
 **解析流程**:
 ```
-Binary Data → Header Validation → File Entries → Directory Structure → Image Extraction
+Binary Data → Header Validation → File Entries → Directory Structure → Image Extraction → Layer Parsing
 ```
 
 **关键方法**:
@@ -201,11 +227,39 @@ Binary Data → Header Validation → File Entries → Directory Structure → I
 - `_read_file_entry()`: 读取单个文件条目
 - `_parse_directory_structure()`: 解析目录结构
 - `get_icon_images()`: 提取所有图标图像
+- `_parse_layer_filename()`: 解析图层文件名参数
 
 **元数据提取**:
 - 从路径解析: size, state, tone, scale
-- 从文件名解析: priority, format
+- 从文件名解析: priority, format, padding, palette, 颜色调整参数
 - 图像属性: 尺寸、文件大小
+- 图层属性: 优先级、外边框、调色板类型、颜色调整值
+
+**图层文件名解析算法**:
+```python
+def _parse_layer_filename(self, filename: str) -> Dict:
+    # 解析格式: priority.padding.palette.hue.saturation.brightness.red.green.blue.alpha.format
+    parts = filename.split('.')
+
+    if len(parts) >= 11:  # 完整图层信息
+        return {
+            'priority': safe_int(parts[0], 1),
+            'padding': safe_float(parts[1], 0.0),
+            'palette': safe_int(parts[2], -1),
+            'hue': safe_int(parts[3], 0),
+            'saturation': safe_int(parts[4], 0),
+            'brightness': safe_int(parts[5], 0),
+            'red': safe_int(parts[6], 0),
+            'green': safe_int(parts[7], 0),
+            'blue': safe_int(parts[8], 0),
+            'alpha': safe_int(parts[9], 0),
+            'format': parts[10],
+            'palette_name': palette_names.get(palette, "unknown")
+        }
+```
+
+**图层数据结构**:
+解析后的图像数据包含完整的图层信息，便于后续处理和显示。
 
 #### 1.2.2 DCIPreviewGenerator 类
 **职责**: 生成 DCI 文件的可视化预览
@@ -343,14 +397,17 @@ state_images = {
 #### 1.3.2 重构节点（推荐使用）
 
 ##### DCIImage 类
-**职责**: 创建单个 DCI 图像数据，输出元数据而不是直接创建文件
+**职责**: 创建单个 DCI 图像数据，输出元数据而不是直接创建文件，完全支持 DCI 规范中的图层系统
 
 **设计理念**:
 - 模块化设计，提供更灵活的工作流程
 - 输出结构化数据而非文件，支持节点间数据传递
 - 支持复杂的多图像组合场景
+- 完整实现 DCI 规范的图层功能，包括优先级、外边框、调色板和颜色调整
 
 **输入参数**:
+
+*基础参数*:
 - `image`: ComfyUI 图像张量
 - `icon_size`: 图标尺寸 (16-1024)
 - `icon_state`: 图标状态 (normal/disabled/hover/pressed)
@@ -358,30 +415,63 @@ state_images = {
 - `scale`: 缩放因子 (0.1-10.0，支持小数)
 - `image_format`: 图像格式 (webp/png/jpg)
 
+*背景色设置*:
+- `background_color`: 背景色处理 (transparent/white/black/custom)
+- `custom_bg_r/g/b`: 自定义背景色RGB分量 (0-255)
+
+*图层系统参数（符合 DCI 规范）*:
+- `layer_priority`: 图层优先级 (1-100)，控制绘制顺序
+- `layer_padding`: 外边框值 (0-100)，用于阴影效果
+- `palette_type`: 调色板类型 (none/foreground/background/highlight_foreground/highlight)
+- `hue_adjustment`: 色调调整 (-100 到 100)
+- `saturation_adjustment`: 饱和度调整 (-100 到 100)
+- `brightness_adjustment`: 亮度调整 (-100 到 100)
+- `red_adjustment`: 红色分量调整 (-100 到 100)
+- `green_adjustment`: 绿色分量调整 (-100 到 100)
+- `blue_adjustment`: 蓝色分量调整 (-100 到 100)
+- `alpha_adjustment`: 透明度调整 (-100 到 100)
+
 **输出数据结构**:
 ```python
 DCI_IMAGE_DATA = {
-    'path': str,           # 目录路径
-    'filename': str,       # 文件名
+    'path': str,           # DCI内部路径 (如: "256/normal.light/1.0/1.0.-1.0.0.0.0.0.0.0.webp")
     'content': bytes,      # 图像二进制数据
-    'metadata': {          # 元数据
-        'size': int,
-        'state': str,
-        'tone': str,
-        'scale': int,
-        'format': str,
-        'file_size': int,
-        'image_dimensions': tuple
-    }
+    'size': int,           # 图标尺寸
+    'state': str,          # 图标状态
+    'tone': str,           # 色调类型
+    'scale': float,        # 缩放因子
+    'format': str,         # 图像格式
+    'actual_size': int,    # 实际图像尺寸
+    'file_size': int,      # 文件大小
+    'background_color': str, # 背景色处理方式
+    'pil_image': PIL.Image,  # PIL图像对象（调试用）
+
+    # 图层系统元数据
+    'layer_priority': int,        # 图层优先级
+    'layer_padding': int,         # 外边框值
+    'palette_type': str,          # 调色板类型名称
+    'palette_value': int,         # 调色板数值
+    'hue_adjustment': int,        # 色调调整
+    'saturation_adjustment': int, # 饱和度调整
+    'brightness_adjustment': int, # 亮度调整
+    'red_adjustment': int,        # 红色调整
+    'green_adjustment': int,      # 绿色调整
+    'blue_adjustment': int,       # 蓝色调整
+    'alpha_adjustment': int,      # 透明度调整
 }
 ```
 
 **处理流程**:
 1. 张量转换为 PIL 图像
-2. 图像缩放和格式转换
-3. 生成目录路径和文件名
-4. 创建元数据结构
-5. 返回结构化数据
+2. 处理背景色（如需要）
+3. 图像缩放和格式转换
+4. 转换调色板类型为数值
+5. 生成包含图层参数的 DCI 路径
+6. 创建包含图层信息的元数据结构
+7. 返回完整的结构化数据
+
+**图层文件名生成**:
+根据 DCI 规范，自动生成格式为 `优先级.外边框p.调色板.色调_饱和度_亮度_红_绿_蓝_透明度.格式` 的文件名。
 
 ##### DCIFileNode 类
 **职责**: 接收多个 DCI Image 输出并组合成完整的 DCI 文件

@@ -11,7 +11,7 @@ from ..utils.ui_utils import format_dci_path
 from .base_node import BaseNode
 
 class DCIImage(BaseNode):
-    """ComfyUI node for creating DCI image metadata and data"""
+    """ComfyUI node for creating DCI image metadata and data with layer support"""
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -25,10 +25,25 @@ class DCIImage(BaseNode):
                 "image_format": (["webp", "png", "jpg"], {"default": "webp"}),
             },
             "optional": {
+                # Background color settings
                 "background_color": (["transparent", "white", "black", "custom"], {"default": "transparent"}),
                 "custom_bg_r": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
                 "custom_bg_g": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
                 "custom_bg_b": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
+
+                # Layer settings according to DCI specification
+                "layer_priority": ("INT", {"default": 1, "min": 1, "max": 100, "step": 1}),
+                "layer_padding": ("INT", {"default": 0, "min": 0, "max": 100, "step": 1}),
+                "palette_type": (["none", "foreground", "background", "highlight_foreground", "highlight"], {"default": "none"}),
+
+                # Color adjustment parameters (-100 to 100)
+                "hue_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
+                "saturation_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
+                "brightness_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
+                "red_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
+                "green_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
+                "blue_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
+                "alpha_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
             }
         }
 
@@ -38,8 +53,11 @@ class DCIImage(BaseNode):
     CATEGORY = "DCI/Export"
 
     def _execute(self, image, icon_size, icon_state, tone_type, scale, image_format,
-                background_color="transparent", custom_bg_r=255, custom_bg_g=255, custom_bg_b=255):
-        """Create DCI image metadata and data"""
+                background_color="transparent", custom_bg_r=255, custom_bg_g=255, custom_bg_b=255,
+                layer_priority=1, layer_padding=0, palette_type="none",
+                hue_adjustment=0, saturation_adjustment=0, brightness_adjustment=0,
+                red_adjustment=0, green_adjustment=0, blue_adjustment=0, alpha_adjustment=0):
+        """Create DCI image metadata and data with layer support"""
         if not _image_support:
             return ({},)
 
@@ -56,6 +74,16 @@ class DCIImage(BaseNode):
 
         # Resize image to target size
         resized_image = pil_image.resize((actual_size, actual_size), Image.Resampling.LANCZOS)
+
+        # Convert palette type to numeric value according to DCI specification
+        palette_map = {
+            "none": -1,
+            "foreground": 0,
+            "background": 1,
+            "highlight_foreground": 2,
+            "highlight": 3
+        }
+        palette_value = palette_map.get(palette_type, -1)
 
         # Convert to bytes
         img_bytes = BytesIO()
@@ -85,10 +113,15 @@ class DCIImage(BaseNode):
 
         img_content = img_bytes.getvalue()
 
-        # Create DCI path
-        dci_path = format_dci_path(icon_size, icon_state, tone_type, scale, image_format)
+        # Create DCI path with layer parameters
+        dci_path = format_dci_path(
+            icon_size, icon_state, tone_type, scale, image_format,
+            priority=layer_priority, padding=layer_padding, palette=palette_value,
+            hue=hue_adjustment, saturation=saturation_adjustment, brightness=brightness_adjustment,
+            red=red_adjustment, green=green_adjustment, blue=blue_adjustment, alpha=alpha_adjustment
+        )
 
-        # Create metadata dictionary
+        # Create metadata dictionary with layer information
         dci_image_data = {
             'path': dci_path,
             'content': img_content,
@@ -100,8 +133,25 @@ class DCIImage(BaseNode):
             'actual_size': actual_size,
             'file_size': len(img_content),
             'background_color': background_color,
-            'pil_image': resized_image  # Store PIL image for debug purposes
+            'pil_image': resized_image,  # Store PIL image for debug purposes
+
+            # Layer metadata
+            'layer_priority': layer_priority,
+            'layer_padding': layer_padding,
+            'palette_type': palette_type,
+            'palette_value': palette_value,
+            'hue_adjustment': hue_adjustment,
+            'saturation_adjustment': saturation_adjustment,
+            'brightness_adjustment': brightness_adjustment,
+            'red_adjustment': red_adjustment,
+            'green_adjustment': green_adjustment,
+            'blue_adjustment': blue_adjustment,
+            'alpha_adjustment': alpha_adjustment,
         }
 
-        print(f"Created DCI image: {dci_path} ({len(img_content)} bytes), background: {background_color}")
+        print(f"Created DCI image with layers: {dci_path} ({len(img_content)} bytes)")
+        print(f"  Layer priority: {layer_priority}, padding: {layer_padding}, palette: {palette_type}")
+        print(f"  Color adjustments - H:{hue_adjustment} S:{saturation_adjustment} B:{brightness_adjustment}")
+        print(f"  RGBA adjustments - R:{red_adjustment} G:{green_adjustment} B:{blue_adjustment} A:{alpha_adjustment}")
+
         return (dci_image_data,)

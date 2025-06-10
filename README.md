@@ -120,30 +120,53 @@ pip install -r requirements.txt
 
 #### 1. DCI Image（DCI 图像）
 **节点类别**：`DCI/Export`
-**功能描述**：创建单个 DCI 图像数据，输出元数据而不是直接创建文件，提供更灵活的工作流程。
+**功能描述**：创建单个 DCI 图像数据，输出元数据而不是直接创建文件，提供更灵活的工作流程。完全支持 DCI 规范中的图层系统，包括优先级、外边框、调色板和颜色调整功能。
 
 **必需输入参数：**
 - **`image`** (IMAGE)：ComfyUI 图像张量
 - **`icon_size`** (INT)：图标尺寸（16-1024像素），默认256
 - **`icon_state`** (COMBO)：图标状态（normal/disabled/hover/pressed），默认normal
-- **`tone_type`** (COMBO)：色调类型（light/dark），默认dark
+- **`tone_type`** (COMBO)：色调类型（light/dark），默认light
 - **`scale`** (FLOAT)：缩放因子（0.1-10.0），默认1.0，支持小数如1.25
 - **`image_format`** (COMBO)：图像格式（webp/png/jpg），默认webp
 
 **可选输入参数：**
+
+*背景色设置：*
 - **`background_color`** (COMBO)：背景色处理（transparent/white/black/custom），默认transparent
 - **`custom_bg_r`** (INT)：自定义背景色红色分量（0-255），默认255
 - **`custom_bg_g`** (INT)：自定义背景色绿色分量（0-255），默认255
 - **`custom_bg_b`** (INT)：自定义背景色蓝色分量（0-255），默认255
 
+*图层设置（符合 DCI 规范）：*
+- **`layer_priority`** (INT)：图层优先级（1-100），默认1，数值越大绘制越靠上
+- **`layer_padding`** (INT)：外边框值（0-100），默认0，用于阴影效果等
+- **`palette_type`** (COMBO)：调色板类型（none/foreground/background/highlight_foreground/highlight），默认none
+
+*颜色调整参数（-100 到 100）：*
+- **`hue_adjustment`** (INT)：色调调整，默认0
+- **`saturation_adjustment`** (INT)：饱和度调整，默认0
+- **`brightness_adjustment`** (INT)：亮度调整，默认0
+- **`red_adjustment`** (INT)：红色分量调整，默认0
+- **`green_adjustment`** (INT)：绿色分量调整，默认0
+- **`blue_adjustment`** (INT)：蓝色分量调整，默认0
+- **`alpha_adjustment`** (INT)：透明度调整，默认0
+
 **输出：**
-- **`dci_image_data`** (DCI_IMAGE_DATA)：包含路径、内容、元数据的字典数据
+- **`dci_image_data`** (DCI_IMAGE_DATA)：包含路径、内容、元数据和图层信息的字典数据
 
 **背景色处理说明：**
 - **transparent**：保持原始透明度（仅PNG和WebP支持）
 - **white**：将透明背景替换为白色
 - **black**：将透明背景替换为黑色
 - **custom**：使用自定义RGB颜色作为背景
+
+**图层系统说明：**
+- **图层优先级**：控制图层绘制顺序，数值越大越靠上层
+- **外边框**：为图标添加外围不被控件覆盖的区域，常用于阴影效果
+- **调色板**：定义图标的颜色填充方式，支持前景色、背景色、高亮色等
+- **颜色调整**：精确控制图标的色调、饱和度、亮度和RGBA分量
+- **文件命名**：自动按照DCI规范生成图层文件名，格式为 `优先级.外边框p.调色板.色调_饱和度_亮度_红_绿_蓝_透明度.格式`
 
 #### 2. DCI File（DCI 文件）
 **节点类别**：`DCI/Export`

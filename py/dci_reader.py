@@ -201,7 +201,20 @@ class DCIReader:
                                 'priority': layer_info.get('priority', 1),
                                 'path': dir_path,
                                 'filename': filename,
-                                'file_size': file_info['size']
+                                'file_size': file_info['size'],
+
+                                # Layer information
+                                'layer_priority': layer_info.get('priority', 1),
+                                'layer_padding': layer_info.get('padding', 0.0),
+                                'palette_type': layer_info.get('palette_name', 'none'),
+                                'palette_value': layer_info.get('palette', -1),
+                                'hue_adjustment': layer_info.get('hue', 0),
+                                'saturation_adjustment': layer_info.get('saturation', 0),
+                                'brightness_adjustment': layer_info.get('brightness', 0),
+                                'red_adjustment': layer_info.get('red', 0),
+                                'green_adjustment': layer_info.get('green', 0),
+                                'blue_adjustment': layer_info.get('blue', 0),
+                                'alpha_adjustment': layer_info.get('alpha', 0),
                             }
 
                             # 打印完整的图像信息以进行调试
@@ -228,31 +241,70 @@ class DCIReader:
         return state, tone
 
     def _parse_layer_filename(self, filename: str) -> Dict:
-        """Parse layer filename to extract metadata"""
-        # Expected format: priority.padding.palette.hue.saturation.brightness.red.green.blue.alpha.format
+        """Parse layer filename to extract metadata according to DCI specification
+
+        Expected format: priority.padding_with_p.palette.hue_saturation_brightness_red_green_blue_alpha.format
+        """
         parts = filename.split('.')
 
         if len(parts) >= 2:
             format_ext = parts[-1]
-
             layer_info = {'format': format_ext}
 
-            if len(parts) >= 11:  # Full layer info
+            if len(parts) >= 5:  # Full layer info: priority.padding.palette.color_adjustments.format
                 try:
+                    def safe_int(value, default=0):
+                        """Safely convert string to int, handling negative values"""
+                        try:
+                            return int(value)
+                        except (ValueError, TypeError):
+                            return default
+
+                    def safe_float(value, default=0.0):
+                        """Safely convert string to float, handling negative values"""
+                        try:
+                            return float(value)
+                        except (ValueError, TypeError):
+                            return default
+
+                    def safe_padding(value, default=0):
+                        """Safely parse padding value with 'p' suffix"""
+                        try:
+                            if value.endswith('p'):
+                                return int(value[:-1])  # Remove 'p' suffix and convert to int
+                            else:
+                                return int(value)  # Fallback for values without 'p'
+                        except (ValueError, TypeError):
+                            return default
+
+                    # Parse color adjustments from underscore-separated string
+                    color_parts = parts[3].split('_') if len(parts) > 3 else []
+
                     layer_info.update({
-                        'priority': int(parts[0]) if parts[0].isdigit() else 1,
-                        'padding': float(parts[1]) if parts[1].replace('.', '').isdigit() else 0.0,
-                        'palette': int(parts[2]) if parts[2].isdigit() else 0,
-                        'hue': float(parts[3]) if parts[3].replace('.', '').isdigit() else 0.0,
-                        'saturation': float(parts[4]) if parts[4].replace('.', '').isdigit() else 0.0,
-                        'brightness': float(parts[5]) if parts[5].replace('.', '').isdigit() else 0.0,
-                        'red': float(parts[6]) if parts[6].replace('.', '').isdigit() else 0.0,
-                        'green': float(parts[7]) if parts[7].replace('.', '').isdigit() else 0.0,
-                        'blue': float(parts[8]) if parts[8].replace('.', '').isdigit() else 0.0,
-                        'alpha': float(parts[9]) if parts[9].replace('.', '').isdigit() else 0.0,
+                        'priority': safe_int(parts[0], 1),
+                        'padding': safe_padding(parts[1], 0),  # Parse padding with 'p' suffix
+                        'palette': safe_int(parts[2], -1),
+                        'hue': safe_int(color_parts[0] if len(color_parts) > 0 else 0, 0),
+                        'saturation': safe_int(color_parts[1] if len(color_parts) > 1 else 0, 0),
+                        'brightness': safe_int(color_parts[2] if len(color_parts) > 2 else 0, 0),
+                        'red': safe_int(color_parts[3] if len(color_parts) > 3 else 0, 0),
+                        'green': safe_int(color_parts[4] if len(color_parts) > 4 else 0, 0),
+                        'blue': safe_int(color_parts[5] if len(color_parts) > 5 else 0, 0),
+                        'alpha': safe_int(color_parts[6] if len(color_parts) > 6 else 0, 0),
                     })
-                except (ValueError, IndexError):
-                    pass
+
+                    # Convert palette number to readable name
+                    palette_names = {
+                        -1: "none",
+                        0: "foreground",
+                        1: "background",
+                        2: "highlight_foreground",
+                        3: "highlight"
+                    }
+                    layer_info['palette_name'] = palette_names.get(layer_info['palette'], "unknown")
+
+                except (ValueError, IndexError) as e:
+                    print(f"Error parsing layer filename {filename}: {e}")
 
             return layer_info
 
