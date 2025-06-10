@@ -26,7 +26,7 @@ class DCIImage(BaseNode):
             },
             "optional": {
                 # Basic format setting
-                t("image_format"): ([t("webp"), t("png"), t("jpg")], {"default": t("webp")}),
+                t("image_format"): (["webp", "png", "jpg"], {"default": "webp"}),
 
                 # Background color settings
                 t("background_color"): ([t("transparent"), t("white"), t("black"), t("custom")], {"default": t("transparent")}),

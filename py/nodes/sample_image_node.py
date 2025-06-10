@@ -23,7 +23,7 @@ class DCISampleImage(BaseNode):
                 t("icon_state"): ([t("normal"), t("disabled"), t("hover"), t("pressed")], {"default": t("normal")}),
                 t("scale"): ("FLOAT", {"default": 1.0, "min": 0.1, "max": 10.0, "step": 0.1}),
                 t("tone_type"): ([t("light"), t("dark")], {"default": t("light")}),
-                t("image_format"): ([t("webp"), t("png"), t("jpg")], {"default": t("webp")}),
+                t("image_format"): (["webp", "png", "jpg"], {"default": "webp"}),
             }
         }
 
