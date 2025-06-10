@@ -473,6 +473,36 @@ LoadImage → DCI Image → DCI Image Preview
 
 ## 技术细节
 
+### 预览系统优化
+
+#### 动态文本宽度计算
+DCI Preview 节点现在支持智能的文本宽度计算，解决了长文件路径显示不全的问题：
+
+**主要改进**：
+- **动态宽度计算**：根据实际文本内容计算所需的最大宽度，而不是固定使用图像尺寸
+- **文本换行支持**：当文本仍然过长时，自动进行智能换行处理
+- **路径优化显示**：特别优化了长文件路径的显示效果
+- **字体测量**：使用实际字体进行精确的文本宽度测量
+- **自适应布局**：预览网格的单元格宽度自动适应文本内容需求
+
+**技术实现**：
+```python
+# 计算所需的最大文本宽度
+max_text_width = self._calculate_max_text_width(sorted_images)
+
+# 单元格宽度同时考虑图像和文本需求
+cell_width = max(max_image_size + margin * 2, max_text_width + margin * 2)
+
+# 智能文本换行处理
+wrapped_lines = self._wrap_text(line, text_width, font, draw)
+```
+
+**用户体验提升**：
+- ✅ 长文件路径完整显示，不再被截断
+- ✅ 自动换行保持可读性
+- ✅ 预览网格自动调整尺寸
+- ✅ 保持原有的视觉布局和美观性
+
 ### DCI 文件格式实现
 扩展实现了完整的 DCI 规范：
 

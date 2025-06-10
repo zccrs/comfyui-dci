@@ -438,9 +438,14 @@ class DCIPreviewGenerator:
         grid_rows = (len(sorted_images) + grid_cols - 1) // grid_cols
 
         # Find maximum image size for consistent cell sizing
-        max_size = max(img['image'].size[0] for img in sorted_images)
-        cell_width = max_size + self.margin * 2
-        cell_height = max_size + self.label_height + self.margin * 2
+        max_image_size = max(img['image'].size[0] for img in sorted_images)
+
+        # Calculate maximum text width needed
+        max_text_width = self._calculate_max_text_width(sorted_images)
+
+        # Cell width should accommodate both image and text
+        cell_width = max(max_image_size + self.margin * 2, max_text_width + self.margin * 2)
+        cell_height = max_image_size + self.label_height + self.margin * 2
 
         # Create preview canvas with specified background color
         canvas_width = cell_width * grid_cols
@@ -455,11 +460,48 @@ class DCIPreviewGenerator:
             x = col * cell_width + self.margin
             y = row * cell_height + self.margin
 
-            self._draw_image_cell(canvas, img_info, x, y, max_size)
+            self._draw_image_cell(canvas, img_info, x, y, max_image_size, cell_width - self.margin * 2)
 
         return canvas
 
-    def _draw_image_cell(self, canvas: Image.Image, img_info: Dict, x: int, y: int, cell_size: int):
+    def _calculate_max_text_width(self, images: List[Dict]) -> int:
+        """Calculate the maximum text width needed for metadata display"""
+        # Try to load a font for measurement
+        try:
+            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", self.font_size)
+        except:
+            try:
+                font = ImageFont.truetype("arial.ttf", self.font_size)
+            except:
+                font = ImageFont.load_default()
+
+        max_width = 0
+
+        # Create a temporary image for text measurement
+        temp_img = Image.new('RGB', (1, 1))
+        draw = ImageDraw.Draw(temp_img)
+
+        for img_info in images:
+            # Create metadata text lines
+            file_path = f"{img_info['path']}/{img_info['filename']}"
+            metadata_lines = [
+                f"Path: {file_path}",
+                f"Size: {img_info['size']}px",
+                f"State: {img_info['state']}",
+                f"Scale: {img_info['scale']:g}x",
+                f"File: {img_info['file_size']}B"
+            ]
+
+            # Find the maximum width among all lines
+            for line in metadata_lines:
+                bbox = draw.textbbox((0, 0), line, font=font)
+                line_width = bbox[2] - bbox[0]
+                max_width = max(max_width, line_width)
+
+        # Add some padding for safety
+        return max_width + 20
+
+    def _draw_image_cell(self, canvas: Image.Image, img_info: Dict, x: int, y: int, cell_size: int, text_width: int):
         """Draw a single image cell with metadata"""
         image = img_info['image']
 
@@ -500,9 +542,14 @@ class DCIPreviewGenerator:
             f"File: {img_info['file_size']}B"
         ]
 
+        # Process text lines with wrapping if needed
+        wrapped_lines = []
+        for line in metadata_lines:
+            wrapped_lines.extend(self._wrap_text(line, text_width, font, draw))
+
         # 计算实际需要的文本高度
         line_height = self.font_size + 2
-        total_text_height = len(metadata_lines) * line_height
+        total_text_height = len(wrapped_lines) * line_height
 
         # 确保文本区域有足够的空间
         text_start_y = y + cell_size + 5
@@ -511,20 +558,65 @@ class DCIPreviewGenerator:
         # 如果文本太多，调整行高或截断文本
         if total_text_height > available_height:
             # 调整行高以适应可用空间
-            line_height = max(self.font_size, available_height // len(metadata_lines))
+            line_height = max(self.font_size, available_height // len(wrapped_lines))
 
         # Draw metadata text with contrasting color
         text_y = text_start_y
-        for i, line in enumerate(metadata_lines):
+        for i, line in enumerate(wrapped_lines):
             # 确保不超出可用区域
             if text_y + line_height <= text_start_y + available_height:
                 draw.text((x, text_y), line, fill=self.text_color, font=font)
                 text_y += line_height
             else:
                 # 如果空间不够，显示省略号
-                if i < len(metadata_lines) - 1:
+                if i < len(wrapped_lines) - 1:
                     draw.text((x, text_y), "...", fill=self.text_color, font=font)
                 break
+
+    def _wrap_text(self, text: str, max_width: int, font, draw) -> List[str]:
+        """Wrap text to fit within the specified width"""
+        # Check if text fits in one line
+        bbox = draw.textbbox((0, 0), text, font=font)
+        text_width = bbox[2] - bbox[0]
+
+        if text_width <= max_width:
+            return [text]
+
+        # Text is too long, need to wrap
+        words = text.split(' ')
+        lines = []
+        current_line = ""
+
+        for word in words:
+            test_line = current_line + (" " if current_line else "") + word
+            bbox = draw.textbbox((0, 0), test_line, font=font)
+            test_width = bbox[2] - bbox[0]
+
+            if test_width <= max_width:
+                current_line = test_line
+            else:
+                if current_line:
+                    lines.append(current_line)
+                    current_line = word
+                else:
+                    # Single word is too long, truncate it
+                    truncated_word = word
+                    while len(truncated_word) > 3:
+                        test_word = truncated_word[:-3] + "..."
+                        bbox = draw.textbbox((0, 0), test_word, font=font)
+                        test_width = bbox[2] - bbox[0]
+                        if test_width <= max_width:
+                            lines.append(test_word)
+                            break
+                        truncated_word = truncated_word[:-1]
+                    else:
+                        lines.append("...")
+                    current_line = ""
+
+        if current_line:
+            lines.append(current_line)
+
+        return lines
 
     def _create_empty_preview(self, background_color=None) -> Image.Image:
         """Create an empty preview image"""
