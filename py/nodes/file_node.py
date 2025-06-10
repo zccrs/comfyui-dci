@@ -353,8 +353,8 @@ class BinaryFileSaver(BaseNode):
             return ("",)
 
 
-class Base64Loader(BaseNode):
-    """ComfyUI node for loading binary data from base64 string"""
+class Base64Decoder(BaseNode):
+    """ComfyUI node for decoding binary data from base64 string"""
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -370,7 +370,7 @@ class Base64Loader(BaseNode):
     CATEGORY = f"DCI/{t('Files')}"
 
     def _execute(self, **kwargs):
-        """Load binary data from base64 string"""
+        """Decode binary data from base64 string"""
         # Extract parameters with translation support
         # Try both translated and original parameter names for compatibility
         base64_data = kwargs.get(t("base64_data")) if t("base64_data") in kwargs else kwargs.get("base64_data", "")
@@ -378,7 +378,7 @@ class Base64Loader(BaseNode):
         return self._execute_impl(base64_data)
 
     def _execute_impl(self, base64_data=""):
-        """Load binary data from base64 string"""
+        """Decode binary data from base64 string"""
         if not base64_data:
             print("No base64 data provided")
             return (b"",)
@@ -390,7 +390,7 @@ class Base64Loader(BaseNode):
             # Decode base64 to binary data
             binary_data = base64.b64decode(cleaned_base64)
 
-            print(f"Loaded binary data from base64: {len(binary_data)} bytes")
+            print(f"Decoded binary data from base64: {len(binary_data)} bytes")
             return (binary_data,)
 
         except Exception as e:
@@ -398,90 +398,52 @@ class Base64Loader(BaseNode):
             return (b"",)
 
 
-class Base64Saver(BaseNode):
-    """ComfyUI node for saving binary data as base64 string to file"""
+class Base64Encoder(BaseNode):
+    """ComfyUI node for encoding binary data to base64 string"""
 
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
                 t("binary_data"): ("BINARY_DATA",),
-                t("file_name"): ("STRING", {"default": "data.txt", "multiline": False}),
-            },
-            "optional": {
-                t("output_directory"): ("STRING", {"default": "", "multiline": False}),
-                t("allow_overwrite"): ("BOOLEAN", {"default": False}),
             }
         }
 
-    RETURN_TYPES = ("STRING", "STRING")
-    RETURN_NAMES = (t("saved_path"), t("base64_data"))
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = (t("base64_data"),)
     FUNCTION = "execute"
     CATEGORY = f"DCI/{t('Files')}"
-    OUTPUT_NODE = True
 
     def _execute(self, **kwargs):
-        """Save binary data as base64 string to file"""
+        """Encode binary data to base64 string"""
         # Extract parameters with translation support
         # Try both translated and original parameter names for compatibility
         binary_data = kwargs.get(t("binary_data")) if t("binary_data") in kwargs else kwargs.get("binary_data")
-        file_name = kwargs.get(t("file_name")) if t("file_name") in kwargs else kwargs.get("file_name")
-        output_directory = kwargs.get(t("output_directory")) if t("output_directory") in kwargs else kwargs.get("output_directory", "")
-        allow_overwrite = kwargs.get(t("allow_overwrite")) if t("allow_overwrite") in kwargs else kwargs.get("allow_overwrite", False)
 
-        return self._execute_impl(binary_data, file_name, output_directory, allow_overwrite)
+        return self._execute_impl(binary_data)
 
-    def _execute_impl(self, binary_data, file_name, output_directory="", allow_overwrite=False):
-        """Save binary data as base64 string to file"""
+    def _execute_impl(self, binary_data):
+        """Encode binary data to base64 string"""
         # Check if binary_data is valid
         if binary_data is None:
             print("No binary data provided (None)")
-            return ("", "")
+            return ("",)
 
         if isinstance(binary_data, bytes) and len(binary_data) == 0:
             print("Empty binary data provided")
-            return ("", "")
+            return ("",)
 
         if not isinstance(binary_data, bytes):
             print(f"Invalid binary data type: {type(binary_data)}")
-            return ("", "")
+            return ("",)
 
         try:
             # Encode binary data to base64
             base64_data = base64.b64encode(binary_data).decode('utf-8')
 
-            print(f"Processing binary data: {len(binary_data)} bytes -> {len(base64_data)} base64 characters")
-
-            # Clean up file name
-            cleaned_file_name = clean_file_name(file_name)
-
-            # Determine output directory
-            if output_directory and os.path.exists(output_directory):
-                output_dir = output_directory
-            else:
-                output_dir = get_output_directory()
-
-            # Create full path
-            full_path = os.path.join(output_dir, cleaned_file_name)
-            print(f"Target file path: {full_path}")
-
-            # Check if file exists and overwrite is not allowed
-            if os.path.exists(full_path) and not allow_overwrite:
-                print(f"File already exists and overwrite is not allowed: {full_path}")
-                return ("", base64_data)
-
-            # Ensure directory exists
-            dir_path = os.path.dirname(full_path)
-            if dir_path:
-                ensure_directory(dir_path)
-
-            # Write base64 data to file
-            with open(full_path, 'w', encoding='utf-8') as f:
-                f.write(base64_data)
-
-            print(f"Base64 file saved successfully: {full_path} ({len(base64_data)} characters)")
-            return (full_path, base64_data)
+            print(f"Encoded binary data: {len(binary_data)} bytes -> {len(base64_data)} base64 characters")
+            return (base64_data,)
 
         except Exception as e:
-            print(f"Failed to encode/save base64 data: {e}")
-            return ("", "")
+            print(f"Failed to encode base64 data: {e}")
+            return ("",)

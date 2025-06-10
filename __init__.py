@@ -21,8 +21,8 @@ try:
         DCIFileNode,
         BinaryFileLoader,
         BinaryFileSaver,
-        Base64Loader,
-        Base64Saver,
+        Base64Decoder,
+        Base64Encoder,
         DCIFileSaver,
         DCIAnalysis
     )
@@ -41,8 +41,8 @@ except ImportError:
         DCIFileNode,
         BinaryFileLoader,
         BinaryFileSaver,
-        Base64Loader,
-        Base64Saver,
+        Base64Decoder,
+        Base64Encoder,
         DCIFileSaver,
         DCIAnalysis
     )
@@ -58,8 +58,8 @@ NODE_CLASS_MAPPINGS = {
     "DCI_FileNode": DCIFileNode,
     "DCI_BinaryFileLoader": BinaryFileLoader,
     "DCI_BinaryFileSaver": BinaryFileSaver,
-    "DCI_Base64Loader": Base64Loader,
-    "DCI_Base64Saver": Base64Saver,
+    "DCI_Base64Decoder": Base64Decoder,
+    "DCI_Base64Encoder": Base64Encoder,
     "DCI_FileSaver": DCIFileSaver,
     "DCI_Analysis": DCIAnalysis,
 }
@@ -73,8 +73,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "DCI_FileNode": t("DCI File"),
     "DCI_BinaryFileLoader": t("Binary File Loader"),
     "DCI_BinaryFileSaver": t("Binary File Saver"),
-    "DCI_Base64Loader": t("Base64 Loader"),
-    "DCI_Base64Saver": t("Base64 Saver"),
+    "DCI_Base64Decoder": t("Base64 Decoder"),
+    "DCI_Base64Encoder": t("Base64 Encoder"),
     "DCI_FileSaver": t("DCI File Saver"),
     "DCI_Analysis": t("DCI Analysis"),
 }

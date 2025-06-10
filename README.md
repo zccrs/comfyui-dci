@@ -329,9 +329,9 @@ Supports 20 preset colors including:
 **Output:**
 - **`saved_path`** (STRING): Actual saved file path
 
-#### 8. Base64 Loader
+#### 8. Base64 Decoder
 **Node Category**: `DCI/Files`
-**Function Description**: Load binary data from base64 encoded strings, supporting multiline input for large data sets.
+**Function Description**: Decode binary data from base64 encoded strings, supporting multiline input for large data sets.
 
 **Required Input Parameters:**
 - **`base64_data`** (STRING): Base64 encoded string data (supports multiline input)
@@ -344,21 +344,20 @@ Supports 20 preset colors including:
 - **Error Handling**: Gracefully handles invalid base64 data
 - **Large Data Support**: Efficiently processes large base64 encoded files
 
-#### 9. Base64 Saver
+#### 9. Base64 Encoder
 **Node Category**: `DCI/Files`
-**Function Description**: Save binary data as base64 encoded text files, useful for data exchange and storage.
+**Function Description**: Encode binary data to base64 strings for data exchange and storage. This is a pure conversion node without file operations.
 
 **Required Input Parameters:**
-- **`binary_data`** (BINARY_DATA): Binary data to encode and save
-- **`file_name`** (STRING): Target filename, default "data.txt"
-
-**Optional Input Parameters:**
-- **`output_directory`** (STRING): Output directory, defaults to ComfyUI output directory
-- **`allow_overwrite`** (BOOLEAN): Allow overwriting existing files, default False
+- **`binary_data`** (BINARY_DATA): Binary data to encode
 
 **Output:**
-- **`saved_path`** (STRING): Actual saved file path
-- **`base64_data`** (STRING): Base64 encoded string (also returned for chaining)
+- **`base64_data`** (STRING): Base64 encoded string
+
+**Features:**
+- **Pure Conversion**: Only performs encoding, no file operations
+- **Efficient Processing**: Direct binary-to-base64 conversion
+- **Chain-Friendly**: Output can be directly used by other nodes or saved separately
 
 #### 10. Binary File Saver (Enhanced)
 **Node Category**: `DCI/Files`
@@ -843,9 +842,9 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 **输出：**
 - **`saved_path`** (STRING)：实际保存的文件路径
 
-#### 8. Base64 Loader（Base64 加载器）
+#### 8. Base64 Decoder（Base64 解码器）
 **节点类别**：`DCI/Files`
-**功能描述**：从base64编码字符串加载二进制数据，支持多行输入处理大型数据集。
+**功能描述**：从base64编码字符串解码二进制数据，支持多行输入处理大型数据集。
 
 **必需输入参数：**
 - **`base64_data`** (STRING)：Base64编码的字符串数据（支持多行输入）
@@ -858,21 +857,20 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **错误处理**：优雅处理无效的base64数据
 - **大数据支持**：高效处理大型base64编码文件
 
-#### 9. Base64 Saver（Base64 保存器）
+#### 9. Base64 Encoder（Base64 编码器）
 **节点类别**：`DCI/Files`
-**功能描述**：将二进制数据保存为base64编码的文本文件，用于数据交换和存储。
+**功能描述**：将二进制数据编码为base64字符串，用于数据交换和存储。这是一个纯转换节点，不涉及文件操作。
 
 **必需输入参数：**
-- **`binary_data`** (BINARY_DATA)：要编码和保存的二进制数据
-- **`file_name`** (STRING)：目标文件名，默认"data.txt"
-
-**可选输入参数：**
-- **`output_directory`** (STRING)：输出目录，默认使用 ComfyUI 输出目录
-- **`allow_overwrite`** (BOOLEAN)：允许覆盖现有文件，默认False
+- **`binary_data`** (BINARY_DATA)：要编码的二进制数据
 
 **输出：**
-- **`saved_path`** (STRING)：实际保存的文件路径
-- **`base64_data`** (STRING)：Base64编码字符串（也返回用于链式操作）
+- **`base64_data`** (STRING)：Base64编码字符串
+
+**功能特性：**
+- **纯转换**：只执行编码操作，无文件操作
+- **高效处理**：直接的二进制到base64转换
+- **链式友好**：输出可直接被其他节点使用或单独保存
 
 #### 10. Binary File Saver（二进制文件保存器 - 增强版）
 **节点类别**：`DCI/Files`

@@ -10,8 +10,8 @@
   "DCI File Saver": "DCI 文件保存器",
   "Binary File Loader": "二进制文件加载器",
   "Binary File Saver": "二进制文件保存器",
-  "Base64 Loader": "Base64 加载器",
-  "Base64 Saver": "Base64 保存器",
+  "Base64 Decoder": "Base64 解码器",
+  "Base64 Encoder": "Base64 编码器",
 
   "Export": "导出",
   "Preview": "预览",
