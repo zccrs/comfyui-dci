@@ -387,7 +387,9 @@ class DCIPreviewGenerator:
     def __init__(self, background_color=(240, 240, 240), font_size=12):
         self.font_size = font_size
         self.margin = 10
-        self.label_height = 100  # Increased to accommodate additional path line
+        # 动态计算label_height，根据字体大小和文本行数
+        # 6行文本 + 行间距，确保有足够空间显示所有文本（移除了tone字段）
+        self.label_height = max(100, (self.font_size + 2) * 6 + 20)  # 6行文本 + 额外空间
         self.background_color = background_color
         self.text_color = self._get_contrasting_text_color(background_color)
 
@@ -494,17 +496,36 @@ class DCIPreviewGenerator:
             f"Path: {file_path}",
             f"Size: {img_info['size']}px",
             f"State: {img_info['state']}",
-            f"Tone: {img_info['tone']}",
             f"Scale: {img_info['scale']:g}x",
             f"Format: {img_info['format']}",
             f"File: {img_info['file_size']}B"
         ]
 
+        # 计算实际需要的文本高度
+        line_height = self.font_size + 2
+        total_text_height = len(metadata_lines) * line_height
+
+        # 确保文本区域有足够的空间
+        text_start_y = y + cell_size + 5
+        available_height = self.label_height - 10  # 留一些边距
+
+        # 如果文本太多，调整行高或截断文本
+        if total_text_height > available_height:
+            # 调整行高以适应可用空间
+            line_height = max(self.font_size, available_height // len(metadata_lines))
+
         # Draw metadata text with contrasting color
-        text_y = y + cell_size + 5
-        for line in metadata_lines:
-            draw.text((x, text_y), line, fill=self.text_color, font=font)
-            text_y += self.font_size + 2
+        text_y = text_start_y
+        for i, line in enumerate(metadata_lines):
+            # 确保不超出可用区域
+            if text_y + line_height <= text_start_y + available_height:
+                draw.text((x, text_y), line, fill=self.text_color, font=font)
+                text_y += line_height
+            else:
+                # 如果空间不够，显示省略号
+                if i < len(metadata_lines) - 1:
+                    draw.text((x, text_y), "...", fill=self.text_color, font=font)
+                break
 
     def _create_empty_preview(self, background_color=None) -> Image.Image:
         """Create an empty preview image"""
