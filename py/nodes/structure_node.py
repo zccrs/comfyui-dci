@@ -124,17 +124,18 @@ class DCIAnalysis(BaseNode):
                         file_indent = scale_indent + ("    " if is_last_scale else "│   ")
                         file_prefix = "└── " if is_last_file else "├── "
 
-                                                # Build file display with metadata
+                        # Build file display with metadata
                         filename = file_info['filename']
                         metadata = file_info['metadata']
-                        metadata_str = self._format_metadata(metadata)
 
                         # Add filename
                         lines.append(f"{file_indent}{file_prefix}{filename}")
 
-                        # Add metadata on next line with proper indentation
+                        # Add metadata lines with proper indentation
                         metadata_indent = file_indent + ("    " if is_last_file else "│   ")
-                        lines.append(f"{metadata_indent}    {metadata_str}")
+                        metadata_lines = self._format_metadata_lines(metadata)
+                        for meta_line in metadata_lines:
+                            lines.append(f"{metadata_indent}    {meta_line}")
 
         return "\n".join(lines)
 
@@ -214,15 +215,15 @@ class DCIAnalysis(BaseNode):
 
         return metadata
 
-    def _format_metadata(self, metadata):
-        """Format metadata into readable string"""
-        parts = []
+    def _format_metadata_lines(self, metadata):
+        """Format metadata into separate lines"""
+        lines = []
 
         # Scale (always show)
-        parts.append(f"Scale: {metadata.get('scale', '1x')}")
+        lines.append(f"[Scale: {metadata.get('scale', '1x')}]")
 
         # Priority (always show)
-        parts.append(f"Priority: {metadata.get('priority', 1)}")
+        lines.append(f"[Priority: {metadata.get('priority', 1)}]")
 
         # Palette (only show if not default)
         palette_value = metadata.get('palette', -1)
@@ -234,38 +235,34 @@ class DCIAnalysis(BaseNode):
                 3: "Highlight"
             }
             palette_name = palette_names.get(palette_value, f"Palette{palette_value}")
-            parts.append(f"Palette: {palette_name}")
+            lines.append(f"[Palette: {palette_name}]")
 
         # Padding (only show if not zero)
         padding = metadata.get('padding', 0)
         if padding > 0:
-            parts.append(f"Padding: {padding}px")
+            lines.append(f"[Padding: {padding}px]")
 
-        # Color adjustments (only show non-zero values)
-        color_adjustments = []
+        # Color adjustments (only show non-zero values, with clear descriptions)
         if metadata.get('hue', 0) != 0:
-            color_adjustments.append(f"H{metadata['hue']:+d}%")
+            lines.append(f"[色调调整: {metadata['hue']:+d}%]")
         if metadata.get('saturation', 0) != 0:
-            color_adjustments.append(f"S{metadata['saturation']:+d}%")
+            lines.append(f"[饱和度调整: {metadata['saturation']:+d}%]")
         if metadata.get('brightness', 0) != 0:
-            color_adjustments.append(f"B{metadata['brightness']:+d}%")
+            lines.append(f"[亮度调整: {metadata['brightness']:+d}%]")
         if metadata.get('red', 0) != 0:
-            color_adjustments.append(f"R{metadata['red']:+d}%")
+            lines.append(f"[红色分量: {metadata['red']:+d}%]")
         if metadata.get('green', 0) != 0:
-            color_adjustments.append(f"G{metadata['green']:+d}%")
+            lines.append(f"[绿色分量: {metadata['green']:+d}%]")
         if metadata.get('blue', 0) != 0:
-            color_adjustments.append(f"B{metadata['blue']:+d}%")
+            lines.append(f"[蓝色分量: {metadata['blue']:+d}%]")
         if metadata.get('alpha', 0) != 0:
-            color_adjustments.append(f"A{metadata['alpha']:+d}%")
-
-        if color_adjustments:
-            parts.append(f"Colors: {', '.join(color_adjustments)}")
+            lines.append(f"[透明度调整: {metadata['alpha']:+d}%]")
 
         # Alpha8 format (special indicator)
         if metadata.get('is_alpha8', False):
-            parts.append("Alpha8")
+            lines.append("[Alpha8格式]")
 
-        return f"[{'] ['.join(parts)}]"
+        return lines
 
 
 # Register the node
