@@ -1,6 +1,12 @@
-from PIL import Image
+try:
+    from PIL import Image
+    from ..utils.image_utils import tensor_to_pil, apply_background
+    _image_support = True
+except ImportError as e:
+    print(f"Warning: Image support not available in image_node: {e}")
+    _image_support = False
+
 from io import BytesIO
-from ..utils.image_utils import tensor_to_pil, apply_background
 from ..utils.ui_utils import format_dci_path
 from .base_node import BaseNode
 
@@ -34,6 +40,9 @@ class DCIImage(BaseNode):
     def _execute(self, image, icon_size, icon_state, tone_type, scale, image_format,
                 background_color="transparent", custom_bg_r=255, custom_bg_g=255, custom_bg_b=255):
         """Create DCI image metadata and data"""
+        if not _image_support:
+            return ({},)
+
         # Convert ComfyUI image tensor to PIL Image
         pil_image = tensor_to_pil(image)
 

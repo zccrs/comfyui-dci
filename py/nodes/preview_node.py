@@ -1,4 +1,11 @@
-from ..utils.image_utils import create_checkerboard_background, pil_to_comfyui_format
+try:
+    from PIL import Image
+    from ..utils.image_utils import create_checkerboard_background, pil_to_comfyui_format
+    _image_support = True
+except ImportError as e:
+    print(f"Warning: Image support not available in preview_node: {e}")
+    _image_support = False
+
 from ..utils.ui_utils import format_image_info
 from .base_node import BaseNode
 
@@ -35,6 +42,9 @@ class DCIPreviewNode(BaseNode):
 
     def _execute(self, dci_binary_data, light_background_color="light_gray", dark_background_color="dark_gray", text_font_size=12):
         """Preview DCI file contents with in-node display"""
+        if not _image_support:
+            return {"ui": {"text": ["Image support not available - missing PIL/torch dependencies"]}}
+
         # Use binary data
         reader = DCIReader(binary_data=dci_binary_data)
         source_name = "binary_data"

@@ -1,4 +1,5 @@
 import struct
+import os
 from io import BytesIO
 from ..utils.file_utils import load_binary_data, save_binary_data, get_output_directory, clean_file_name, ensure_directory
 from .base_node import BaseNode
@@ -218,7 +219,7 @@ class BinaryFileSaver(BaseNode):
         print(f"Processing binary data: {len(binary_data)} bytes")
 
         # Clean up file name
-        clean_file_name = clean_file_name(file_name)
+        cleaned_file_name = clean_file_name(file_name)
 
         # Determine output directory
         if output_directory and os.path.exists(output_directory):
@@ -227,7 +228,7 @@ class BinaryFileSaver(BaseNode):
             output_dir = get_output_directory()
 
         # Create full path
-        full_path = os.path.join(output_dir, clean_file_name)
+        full_path = os.path.join(output_dir, cleaned_file_name)
         print(f"Target file path: {full_path}")
 
         # Ensure directory exists

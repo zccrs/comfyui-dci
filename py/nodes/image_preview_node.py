@@ -1,6 +1,12 @@
-from PIL import Image
+try:
+    from PIL import Image
+    from ..utils.image_utils import apply_background, create_checkerboard_background, pil_to_comfyui_format
+    _image_support = True
+except ImportError as e:
+    print(f"Warning: Image support not available in image_preview_node: {e}")
+    _image_support = False
+
 from io import BytesIO
-from ..utils.image_utils import apply_background, create_checkerboard_background, pil_to_comfyui_format
 from .base_node import BaseNode
 
 class DCIImagePreview(BaseNode):
@@ -25,6 +31,9 @@ class DCIImagePreview(BaseNode):
 
     def _execute(self, dci_image_data, preview_background="checkerboard"):
         """Preview DCI image data"""
+        if not _image_support:
+            return {"ui": {"text": ["Image support not available - missing PIL/torch dependencies"]}}
+
         if not dci_image_data or not isinstance(dci_image_data, dict):
             return {"ui": {"text": ["Invalid DCI image data"]}}
 
