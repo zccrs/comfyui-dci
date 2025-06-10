@@ -161,31 +161,30 @@ pip install -r requirements.txt
 - **`icon_state`** (COMBO)：图标状态（normal/disabled/hover/pressed），默认normal
 - **`scale`** (FLOAT)：缩放因子（0.1-10.0），默认1.0，支持小数如1.25
 
-**可选输入参数（高级设置，默认折叠）：**
+**可选输入参数（高级设置）：**
 
 *基础设置：*
-- **`tone_type`** (COMBO)：色调类型（light/dark），默认light
 - **`image_format`** (COMBO)：图像格式（webp/png/jpg），默认webp
 
-*背景色设置：*
-- **`background_color`** (COMBO)：背景色处理（transparent/white/black/custom），默认transparent
-- **`custom_bg_r`** (INT)：自定义背景色红色分量（0-255），默认255
-- **`custom_bg_g`** (INT)：自定义背景色绿色分量（0-255），默认255
-- **`custom_bg_b`** (INT)：自定义背景色蓝色分量（0-255），默认255
+*高级背景色设置（以 adv_ 前缀标识）：*
+- **`adv_background_color`** (COMBO)：背景色处理（transparent/white/black/custom），默认transparent
+- **`adv_custom_bg_r`** (INT)：自定义背景色红色分量（0-255），默认255
+- **`adv_custom_bg_g`** (INT)：自定义背景色绿色分量（0-255），默认255
+- **`adv_custom_bg_b`** (INT)：自定义背景色蓝色分量（0-255），默认255
 
-*图层设置（符合 DCI 规范）：*
-- **`layer_priority`** (INT)：图层优先级（1-100），默认1，数值越大绘制越靠上
-- **`layer_padding`** (INT)：外边框值（0-100），默认0，用于阴影效果等
-- **`palette_type`** (COMBO)：调色板类型（none/foreground/background/highlight_foreground/highlight），默认none
+*高级图层设置（符合 DCI 规范，以 adv_ 前缀标识）：*
+- **`adv_layer_priority`** (INT)：图层优先级（1-100），默认1，数值越大绘制越靠上
+- **`adv_layer_padding`** (INT)：外边框值（0-100），默认0，用于阴影效果等
+- **`adv_palette_type`** (COMBO)：调色板类型（none/foreground/background/highlight_foreground/highlight），默认none
 
-*颜色调整参数（-100 到 100）：*
-- **`hue_adjustment`** (INT)：色调调整，默认0
-- **`saturation_adjustment`** (INT)：饱和度调整，默认0
-- **`brightness_adjustment`** (INT)：亮度调整，默认0
-- **`red_adjustment`** (INT)：红色分量调整，默认0
-- **`green_adjustment`** (INT)：绿色分量调整，默认0
-- **`blue_adjustment`** (INT)：蓝色分量调整，默认0
-- **`alpha_adjustment`** (INT)：透明度调整，默认0
+*高级颜色调整参数（-100 到 100，以 adv_ 前缀标识）：*
+- **`adv_hue_adjustment`** (INT)：色调调整，默认0
+- **`adv_saturation_adjustment`** (INT)：饱和度调整，默认0
+- **`adv_brightness_adjustment`** (INT)：亮度调整，默认0
+- **`adv_red_adjustment`** (INT)：红色分量调整，默认0
+- **`adv_green_adjustment`** (INT)：绿色分量调整，默认0
+- **`adv_blue_adjustment`** (INT)：蓝色分量调整，默认0
+- **`adv_alpha_adjustment`** (INT)：透明度调整，默认0
 
 **输出：**
 - **`dci_image_data`** (DCI_IMAGE_DATA)：包含路径、内容、元数据和图层信息的字典数据
@@ -502,6 +501,37 @@ wrapped_lines = self._wrap_text(line, text_width, font, draw)
 - ✅ 自动换行保持可读性
 - ✅ 预览网格自动调整尺寸
 - ✅ 保持原有的视觉布局和美观性
+
+#### 节点界面优化
+DCI Image 节点现在采用更清晰的参数组织方式，提升用户体验：
+
+**主要改进**：
+- **核心参数前置**：将最常用的参数（icon_size、icon_state、scale、tone_type）放在必需参数区域
+- **高级参数分组**：所有高级选项使用 `adv_` 前缀标识，便于识别和管理
+- **简化界面**：默认情况下只显示核心参数，减少界面复杂度
+- **逻辑分组**：高级参数按功能分为背景色设置、图层设置、颜色调整三个逻辑组
+
+**参数组织结构**：
+```
+必需参数：
+├── image (图像输入)
+├── icon_size (图标尺寸)
+├── icon_state (图标状态)
+├── scale (缩放因子)
+└── tone_type (色调类型)
+
+可选参数：
+├── image_format (图像格式)
+└── 高级设置 (adv_ 前缀)
+    ├── 背景色设置
+    ├── 图层属性
+    └── 颜色调整
+```
+
+**使用建议**：
+- 🎯 **新用户**：只需关注必需参数和 image_format，即可创建基本的DCI图像
+- 🎯 **高级用户**：使用 adv_ 前缀参数进行精细控制和专业定制
+- 🎯 **批量处理**：核心参数的简化使得批量创建图标更加高效
 
 ### DCI 文件格式实现
 扩展实现了完整的 DCI 规范：
