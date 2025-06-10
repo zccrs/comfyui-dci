@@ -36,7 +36,7 @@ class DCIPreviewNode(BaseNode):
 
     RETURN_TYPES = ()
     RETURN_NAMES = ()
-    FUNCTION = "preview_dci"
+    FUNCTION = "execute"
     CATEGORY = "DCI/Preview"
     OUTPUT_NODE = True
 

@@ -34,7 +34,7 @@ class DCIImage(BaseNode):
 
     RETURN_TYPES = ("DCI_IMAGE_DATA",)
     RETURN_NAMES = ("dci_image_data",)
-    FUNCTION = "create_dci_image"
+    FUNCTION = "execute"
     CATEGORY = "DCI/Export"
 
     def _execute(self, image, icon_size, icon_state, tone_type, scale, image_format,

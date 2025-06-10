@@ -25,7 +25,7 @@ class DCIImagePreview(BaseNode):
 
     RETURN_TYPES = ()
     RETURN_NAMES = ()
-    FUNCTION = "preview_dci_image"
+    FUNCTION = "execute"
     CATEGORY = "Preview"
     OUTPUT_NODE = True
 

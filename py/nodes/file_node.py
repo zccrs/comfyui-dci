@@ -38,7 +38,7 @@ class DCIFileNode(BaseNode):
 
     RETURN_TYPES = ("BINARY_DATA",)
     RETURN_NAMES = ("dci_binary_data",)
-    FUNCTION = "create_dci_file"
+    FUNCTION = "execute"
     CATEGORY = "DCI/Export"
 
     def _execute(self, **kwargs):
@@ -163,7 +163,7 @@ class BinaryFileLoader(BaseNode):
 
     RETURN_TYPES = ("BINARY_DATA", "STRING")
     RETURN_NAMES = ("binary_data", "file_path")
-    FUNCTION = "load_binary_file"
+    FUNCTION = "execute"
     CATEGORY = "DCI/Files"
 
     def _execute(self, file_path=""):
@@ -197,7 +197,7 @@ class BinaryFileSaver(BaseNode):
 
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("saved_path",)
-    FUNCTION = "save_binary_file"
+    FUNCTION = "execute"
     CATEGORY = "DCI/Files"
     OUTPUT_NODE = True
 
