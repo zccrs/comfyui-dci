@@ -27,25 +27,25 @@ class DCIImage(BaseNode):
                 # Basic format setting
                 "image_format": (["webp", "png", "jpg"], {"default": "webp"}),
 
-                # Advanced settings - Background color
-                "adv_background_color": (["transparent", "white", "black", "custom"], {"default": "transparent"}),
-                "adv_custom_bg_r": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
-                "adv_custom_bg_g": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
-                "adv_custom_bg_b": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
+                # Background color settings
+                "background_color": (["transparent", "white", "black", "custom"], {"default": "transparent"}),
+                "custom_bg_r": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
+                "custom_bg_g": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
+                "custom_bg_b": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
 
-                # Advanced settings - Layer properties
-                "adv_layer_priority": ("INT", {"default": 1, "min": 1, "max": 100, "step": 1}),
-                "adv_layer_padding": ("INT", {"default": 0, "min": 0, "max": 100, "step": 1}),
-                "adv_palette_type": (["none", "foreground", "background", "highlight_foreground", "highlight"], {"default": "none"}),
+                # Layer properties
+                "layer_priority": ("INT", {"default": 1, "min": 1, "max": 100, "step": 1}),
+                "layer_padding": ("INT", {"default": 0, "min": 0, "max": 100, "step": 1}),
+                "palette_type": (["none", "foreground", "background", "highlight_foreground", "highlight"], {"default": "none"}),
 
-                # Advanced settings - Color adjustments
-                "adv_hue_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
-                "adv_saturation_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
-                "adv_brightness_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
-                "adv_red_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
-                "adv_green_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
-                "adv_blue_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
-                "adv_alpha_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
+                # Color adjustments
+                "hue_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
+                "saturation_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
+                "brightness_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
+                "red_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
+                "green_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
+                "blue_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
+                "alpha_adjustment": ("INT", {"default": 0, "min": -100, "max": 100, "step": 1}),
             }
         }
 
@@ -56,10 +56,10 @@ class DCIImage(BaseNode):
 
     def _execute(self, image, icon_size, icon_state, scale, tone_type="light",
                  image_format="webp",
-                 adv_background_color="transparent", adv_custom_bg_r=255, adv_custom_bg_g=255, adv_custom_bg_b=255,
-                 adv_layer_priority=1, adv_layer_padding=0, adv_palette_type="none",
-                 adv_hue_adjustment=0, adv_saturation_adjustment=0, adv_brightness_adjustment=0,
-                 adv_red_adjustment=0, adv_green_adjustment=0, adv_blue_adjustment=0, adv_alpha_adjustment=0):
+                 background_color="transparent", custom_bg_r=255, custom_bg_g=255, custom_bg_b=255,
+                 layer_priority=1, layer_padding=0, palette_type="none",
+                 hue_adjustment=0, saturation_adjustment=0, brightness_adjustment=0,
+                 red_adjustment=0, green_adjustment=0, blue_adjustment=0, alpha_adjustment=0):
         """Create DCI image metadata and data with layer support"""
         if not _image_support:
             return ({},)
@@ -68,9 +68,9 @@ class DCIImage(BaseNode):
         pil_image = tensor_to_pil(image)
 
         # Handle background color for images with transparency
-        if adv_background_color != "transparent" and pil_image.mode in ('RGBA', 'LA'):
-            bg_color = (adv_custom_bg_r, adv_custom_bg_g, adv_custom_bg_b) if adv_background_color == "custom" else None
-            pil_image = apply_background(pil_image, adv_background_color, bg_color)
+        if background_color != "transparent" and pil_image.mode in ('RGBA', 'LA'):
+            bg_color = (custom_bg_r, custom_bg_g, custom_bg_b) if background_color == "custom" else None
+            pil_image = apply_background(pil_image, background_color, bg_color)
 
         # Calculate actual size with scale
         actual_size = int(icon_size * scale)
@@ -86,13 +86,13 @@ class DCIImage(BaseNode):
             "highlight_foreground": 2,
             "highlight": 3
         }
-        palette_value = palette_map.get(adv_palette_type, -1)
+        palette_value = palette_map.get(palette_type, -1)
 
         # Convert to bytes
         img_bytes = BytesIO()
         if image_format == 'webp':
             # For WebP, preserve transparency if available
-            if resized_image.mode == 'RGBA' and adv_background_color == "transparent":
+            if resized_image.mode == 'RGBA' and background_color == "transparent":
                 resized_image.save(img_bytes, format='WEBP', quality=90, lossless=True)
             else:
                 # Convert to RGB for lossy WebP
@@ -119,9 +119,9 @@ class DCIImage(BaseNode):
         # Create DCI path with layer parameters
         dci_path = format_dci_path(
             icon_size, icon_state, tone_type, scale, image_format,
-            priority=adv_layer_priority, padding=adv_layer_padding, palette=palette_value,
-            hue=adv_hue_adjustment, saturation=adv_saturation_adjustment, brightness=adv_brightness_adjustment,
-            red=adv_red_adjustment, green=adv_green_adjustment, blue=adv_blue_adjustment, alpha=adv_alpha_adjustment
+            priority=layer_priority, padding=layer_padding, palette=palette_value,
+            hue=hue_adjustment, saturation=saturation_adjustment, brightness=brightness_adjustment,
+            red=red_adjustment, green=green_adjustment, blue=blue_adjustment, alpha=alpha_adjustment
         )
 
         # Create metadata dictionary with layer information
@@ -135,26 +135,26 @@ class DCIImage(BaseNode):
             'format': image_format,
             'actual_size': actual_size,
             'file_size': len(img_content),
-            'background_color': adv_background_color,
+            'background_color': background_color,
             'pil_image': resized_image,  # Store PIL image for debug purposes
 
             # Layer metadata
-            'layer_priority': adv_layer_priority,
-            'layer_padding': adv_layer_padding,
-            'palette_type': adv_palette_type,
+            'layer_priority': layer_priority,
+            'layer_padding': layer_padding,
+            'palette_type': palette_type,
             'palette_value': palette_value,
-            'hue_adjustment': adv_hue_adjustment,
-            'saturation_adjustment': adv_saturation_adjustment,
-            'brightness_adjustment': adv_brightness_adjustment,
-            'red_adjustment': adv_red_adjustment,
-            'green_adjustment': adv_green_adjustment,
-            'blue_adjustment': adv_blue_adjustment,
-            'alpha_adjustment': adv_alpha_adjustment,
+            'hue_adjustment': hue_adjustment,
+            'saturation_adjustment': saturation_adjustment,
+            'brightness_adjustment': brightness_adjustment,
+            'red_adjustment': red_adjustment,
+            'green_adjustment': green_adjustment,
+            'blue_adjustment': blue_adjustment,
+            'alpha_adjustment': alpha_adjustment,
         }
 
         print(f"Created DCI image with layers: {dci_path} ({len(img_content)} bytes)")
-        print(f"  Layer priority: {adv_layer_priority}, padding: {adv_layer_padding}, palette: {adv_palette_type}")
-        print(f"  Color adjustments - H:{adv_hue_adjustment} S:{adv_saturation_adjustment} B:{adv_brightness_adjustment}")
-        print(f"  RGBA adjustments - R:{adv_red_adjustment} G:{adv_green_adjustment} B:{adv_blue_adjustment} A:{adv_alpha_adjustment}")
+        print(f"  Layer priority: {layer_priority}, padding: {layer_padding}, palette: {palette_type}")
+        print(f"  Color adjustments - H:{hue_adjustment} S:{saturation_adjustment} B:{brightness_adjustment}")
+        print(f"  RGBA adjustments - R:{red_adjustment} G:{green_adjustment} B:{blue_adjustment} A:{alpha_adjustment}")
 
         return (dci_image_data,)

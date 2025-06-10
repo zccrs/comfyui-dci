@@ -16,6 +16,7 @@ try:
     from .py.nodes import (
         DCIPreviewNode,
         DCIImage,
+        DCISampleImage,
         DCIImagePreview,
         DCIFileNode,
         BinaryFileLoader,
@@ -31,6 +32,7 @@ except ImportError:
     from py.nodes import (
         DCIPreviewNode,
         DCIImage,
+        DCISampleImage,
         DCIImagePreview,
         DCIFileNode,
         BinaryFileLoader,
@@ -43,6 +45,7 @@ except ImportError:
 NODE_CLASS_MAPPINGS = {
     "DCI_PreviewNode": DCIPreviewNode,
     "DCI_Image": DCIImage,
+    "DCI_SampleImage": DCISampleImage,
     "DCI_ImagePreview": DCIImagePreview,
     "DCI_FileNode": DCIFileNode,
     "DCI_BinaryFileLoader": BinaryFileLoader,
@@ -54,6 +57,7 @@ NODE_CLASS_MAPPINGS = {
 NODE_DISPLAY_NAME_MAPPINGS = {
     "DCI_PreviewNode": "DCI Preview",
     "DCI_Image": "DCI Image",
+    "DCI_SampleImage": "DCI Sample Image",
     "DCI_ImagePreview": "DCI Image Preview",
     "DCI_FileNode": "DCI File",
     "DCI_BinaryFileLoader": "Binary File Loader",

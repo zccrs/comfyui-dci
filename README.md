@@ -128,12 +128,13 @@ pip install -r requirements.txt
 
 ## ComfyUI 节点详细说明
 
-本扩展提供了 5 个 ComfyUI 节点，所有节点都统一归类在 **"DCI"** 分组下，并按功能分为三个子分类：
+本扩展提供了 8 个 ComfyUI 节点，所有节点都统一归类在 **"DCI"** 分组下，并按功能分为三个子分类：
 
 ### 节点分组
 
 #### DCI/Export（导出）
-- DCI_Image (DCI Image)
+- DCI_Image (DCI Image) - 完整功能的DCI图像创建节点
+- DCI_SampleImage (DCI Sample Image) - 简化的DCI图像创建节点
 - DCI_FileNode (DCI File)
 
 #### DCI/Preview（预览）
@@ -166,25 +167,25 @@ pip install -r requirements.txt
 *基础设置：*
 - **`image_format`** (COMBO)：图像格式（webp/png/jpg），默认webp
 
-*高级背景色设置（以 adv_ 前缀标识）：*
-- **`adv_background_color`** (COMBO)：背景色处理（transparent/white/black/custom），默认transparent
-- **`adv_custom_bg_r`** (INT)：自定义背景色红色分量（0-255），默认255
-- **`adv_custom_bg_g`** (INT)：自定义背景色绿色分量（0-255），默认255
-- **`adv_custom_bg_b`** (INT)：自定义背景色蓝色分量（0-255），默认255
+*背景色设置：*
+- **`background_color`** (COMBO)：背景色处理（transparent/white/black/custom），默认transparent
+- **`custom_bg_r`** (INT)：自定义背景色红色分量（0-255），默认255
+- **`custom_bg_g`** (INT)：自定义背景色绿色分量（0-255），默认255
+- **`custom_bg_b`** (INT)：自定义背景色蓝色分量（0-255），默认255
 
-*高级图层设置（符合 DCI 规范，以 adv_ 前缀标识）：*
-- **`adv_layer_priority`** (INT)：图层优先级（1-100），默认1，数值越大绘制越靠上
-- **`adv_layer_padding`** (INT)：外边框值（0-100），默认0，用于阴影效果等
-- **`adv_palette_type`** (COMBO)：调色板类型（none/foreground/background/highlight_foreground/highlight），默认none
+*图层设置（符合 DCI 规范）：*
+- **`layer_priority`** (INT)：图层优先级（1-100），默认1，数值越大绘制越靠上
+- **`layer_padding`** (INT)：外边框值（0-100），默认0，用于阴影效果等
+- **`palette_type`** (COMBO)：调色板类型（none/foreground/background/highlight_foreground/highlight），默认none
 
-*高级颜色调整参数（-100 到 100，以 adv_ 前缀标识）：*
-- **`adv_hue_adjustment`** (INT)：色调调整，默认0
-- **`adv_saturation_adjustment`** (INT)：饱和度调整，默认0
-- **`adv_brightness_adjustment`** (INT)：亮度调整，默认0
-- **`adv_red_adjustment`** (INT)：红色分量调整，默认0
-- **`adv_green_adjustment`** (INT)：绿色分量调整，默认0
-- **`adv_blue_adjustment`** (INT)：蓝色分量调整，默认0
-- **`adv_alpha_adjustment`** (INT)：透明度调整，默认0
+*颜色调整参数（-100 到 100）：*
+- **`hue_adjustment`** (INT)：色调调整，默认0
+- **`saturation_adjustment`** (INT)：饱和度调整，默认0
+- **`brightness_adjustment`** (INT)：亮度调整，默认0
+- **`red_adjustment`** (INT)：红色分量调整，默认0
+- **`green_adjustment`** (INT)：绿色分量调整，默认0
+- **`blue_adjustment`** (INT)：蓝色分量调整，默认0
+- **`alpha_adjustment`** (INT)：透明度调整，默认0
 
 **输出：**
 - **`dci_image_data`** (DCI_IMAGE_DATA)：包含路径、内容、元数据和图层信息的字典数据
@@ -204,7 +205,34 @@ pip install -r requirements.txt
 - **文件名省略**：支持DCI规范的优化策略，当参数为默认值时可省略（如简化为`1.webp`）
 - **向后兼容**：同时支持完整文件名和简化文件名格式，确保与真实DCI文件兼容
 
-#### 2. DCI File（DCI 文件）
+#### 2. DCI Sample Image（DCI 简单图像）
+**节点类别**：`DCI/Export`
+**功能描述**：创建简化的 DCI 图像数据，只包含最基本的参数设置，适合大多数常见使用场景。相比完整的 DCI Image 节点，此节点界面更简洁，参数更少。
+
+**必需输入参数：**
+- **`image`** (IMAGE)：ComfyUI 图像张量
+- **`icon_size`** (INT)：图标尺寸（16-1024像素），默认256
+- **`icon_state`** (COMBO)：图标状态（normal/disabled/hover/pressed），默认normal
+- **`scale`** (FLOAT)：缩放因子（0.1-10.0），默认1.0，支持小数如1.25
+- **`tone_type`** (COMBO)：色调类型（light/dark），默认light
+- **`image_format`** (COMBO)：图像格式（webp/png/jpg），默认webp
+
+**输出：**
+- **`dci_image_data`** (DCI_IMAGE_DATA)：包含路径、内容、元数据的字典数据
+
+**节点特点：**
+- **简化界面**：只显示最常用的5个基本参数，界面简洁易用
+- **默认设置**：所有高级参数使用合理的默认值（优先级1、无外边框、无调色板、无颜色调整）
+- **透明背景**：默认保持图像原始透明度，适合大多数图标制作场景
+- **快速创建**：适合快速创建标准DCI图像，无需复杂配置
+
+**使用场景：**
+- 快速创建标准图标，无需复杂的图层设置
+- 批量处理多个图标文件
+- 初学者或不需要高级功能的用户
+- 简单的图标转换和格式化工作
+
+#### 3. DCI File（DCI 文件）
 **节点类别**：`DCI/Export`
 **功能描述**：接收多个 DCI Image 输出并组合成完整的 DCI 文件，专注于生成二进制数据。如需保存文件，请使用 Binary File Saver 节点。
 
@@ -214,7 +242,7 @@ pip install -r requirements.txt
 **输出：**
 - **`dci_binary_data`** (BINARY_DATA)：DCI文件的二进制数据
 
-#### 3. DCI Preview（DCI 预览）
+#### 4. DCI Preview（DCI 预览）
 **节点类别**：`DCI/Preview`
 **功能描述**：直接在节点内显示 DCI 文件内容的可视化预览和详细元数据信息。专门用于预览 DCI 二进制数据，现支持将Light和Dark相关内容分开显示。
 
@@ -255,7 +283,7 @@ pip install -r requirements.txt
 
 **注意**：此节点专门用于处理二进制数据输入。不需要手动设置列数，默认将Light和Dark内容分开显示在两列，Light主题图标固定在左侧列，Dark主题图标固定在右侧列。文本格式会根据字体大小自动调整，提供最佳阅读体验。背景颜色选择简化为预设选项，移除了自定义RGB设置以提供更好的用户体验。
 
-#### 4. DCI Image Preview（DCI 图像预览）
+#### 5. DCI Image Preview（DCI 图像预览）
 **节点类别**：`Preview`
 **功能描述**：专门用于预览单个 DCI 图像数据，提供简洁的图像预览功能。
 
@@ -279,7 +307,7 @@ pip install -r requirements.txt
 - 检查图像质量和显示效果
 - 在工作流程中进行图像效果确认
 
-#### 5. Binary File Loader（二进制文件加载器）
+#### 6. Binary File Loader（二进制文件加载器）
 **节点类别**：`DCI/Files`
 **功能描述**：从文件系统加载二进制文件，专为处理 DCI 图标文件等二进制数据设计。
 
@@ -290,7 +318,7 @@ pip install -r requirements.txt
 - **`binary_data`** (BINARY_DATA)：文件的二进制内容（bytes 类型）
 - **`file_path`** (STRING)：加载文件的完整路径
 
-#### 6. Binary File Saver（二进制文件保存器）
+#### 7. Binary File Saver（二进制文件保存器）
 **节点类别**：`DCI/Files`
 **功能描述**：将二进制数据保存到文件系统，支持自定义输出路径和目录。
 
@@ -304,7 +332,7 @@ pip install -r requirements.txt
 **输出：**
 - **`saved_path`** (STRING)：实际保存的文件路径
 
-#### 7. DCI Structure Preview（DCI 结构预览）
+#### 8. DCI Structure Preview（DCI 结构预览）
 **节点类别**：`DCI/Preview`
 **功能描述**：以树状结构详细展示DCI文件的内部组织结构和元信息，专门用于分析和调试DCI文件内容。
 
