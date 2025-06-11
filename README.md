@@ -386,7 +386,7 @@ Supports 20 preset colors including:
 - **`file_name`** (STRING): Target filename, default "binary_file"
 
 **Optional Input Parameters:**
-- **`output_directory`** (STRING): Output directory, defaults to ComfyUI output directory. If specified directory doesn't exist, it will be created automatically
+- **`output_directory`** (STRING): Output directory, defaults to ComfyUI output directory. If specified directory doesn't exist, it will be created automatically. Supports paths with trailing slashes and automatically normalizes path separators
 - **`allow_overwrite`** (BOOLEAN): Allow overwriting existing files, default False
 
 **Output:**
@@ -401,7 +401,7 @@ Supports 20 preset colors including:
 - **`input_filename`** (STRING): Input filename or path, default "icon.png"
 
 **Optional Input Parameters:**
-- **`output_directory`** (STRING): Output directory, defaults to ComfyUI output directory. If specified directory doesn't exist, it will be created automatically
+- **`output_directory`** (STRING): Output directory, defaults to ComfyUI output directory. If specified directory doesn't exist, it will be created automatically. Supports paths with trailing slashes and automatically normalizes path separators
 - **`filename_prefix`** (STRING): Filename prefix, default empty string
 - **`filename_suffix`** (STRING): Filename suffix, default empty string
 - **`allow_overwrite`** (BOOLEAN): Allow overwriting existing files, default False
@@ -923,7 +923,7 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **`file_name`** (STRING)：目标文件名，默认"binary_file"
 
 **可选输入参数：**
-- **`output_directory`** (STRING)：输出目录，默认使用 ComfyUI 输出目录。如果指定的目录不存在，将自动创建
+- **`output_directory`** (STRING)：输出目录，默认使用 ComfyUI 输出目录。如果指定的目录不存在，将自动创建。支持以反斜杠结尾的路径，自动规范化路径分隔符
 - **`allow_overwrite`** (BOOLEAN)：允许覆盖现有文件，默认False
 
 **输出：**
@@ -938,7 +938,7 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **`input_filename`** (STRING)：输入文件名或路径，默认"icon.png"
 
 **可选输入参数：**
-- **`output_directory`** (STRING)：输出目录，默认使用 ComfyUI 输出目录。如果指定的目录不存在，将自动创建
+- **`output_directory`** (STRING)：输出目录，默认使用 ComfyUI 输出目录。如果指定的目录不存在，将自动创建。支持以反斜杠结尾的路径，自动规范化路径分隔符
 - **`filename_prefix`** (STRING)：文件名前缀，默认空字符串
 - **`filename_suffix`** (STRING)：文件名后缀，默认空字符串
 - **`allow_overwrite`** (BOOLEAN)：允许覆盖现有文件，默认False

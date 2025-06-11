@@ -23,8 +23,11 @@ def clean_file_name(file_name):
 def ensure_directory(directory_path):
     """Ensure directory exists, create if not"""
     if directory_path:
-        os.makedirs(directory_path, exist_ok=True)
-        return True
+        # Normalize the path and remove trailing separators
+        normalized_path = os.path.normpath(directory_path.strip())
+        if normalized_path and normalized_path != '.':
+            os.makedirs(normalized_path, exist_ok=True)
+            return True
     return False
 
 def save_binary_data(binary_data, file_path):

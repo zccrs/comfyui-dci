@@ -80,8 +80,9 @@ class DCIFileSaver(BaseNode):
         # Determine output directory
         try:
             if output_directory:
-                # Use specified output directory, create if it doesn't exist
-                output_dir = output_directory
+                # Use specified output directory, normalize and clean the path
+                output_dir = os.path.normpath(output_directory.strip())
+                print(f"Normalized output directory: {output_dir}")
                 # Ensure the directory exists
                 if not ensure_directory(output_dir):
                     error_msg = f"错误：无法创建输出目录: {output_dir}"
