@@ -12,6 +12,7 @@ from .structure_node import DCIAnalysis
 from .directory_loader_node import DirectoryLoader
 from .deb_packager_node import DebPackager
 from .deb_loader_node import DebLoader
+from .drop_shadow_node import DropShadowNode
 from ..utils.i18n import t
 
 NODE_CLASS_MAPPINGS = {
@@ -29,6 +30,7 @@ NODE_CLASS_MAPPINGS = {
     "DirectoryLoader": DirectoryLoader,
     "DebPackager": DebPackager,
     "DebLoader": DebLoader,
+    "DropShadowNode": DropShadowNode,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -46,6 +48,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "DirectoryLoader": t("Directory Loader"),
     "DebPackager": t("Deb Packager"),
     "DebLoader": t("Deb Loader"),
+    "DropShadowNode": t("Drop Shadow"),
 }
 
 __all__ = [
@@ -63,6 +66,7 @@ __all__ = [
     'DirectoryLoader',
     'DebPackager',
     'DebLoader',
+    'DropShadowNode',
     'NODE_CLASS_MAPPINGS',
     'NODE_DISPLAY_NAME_MAPPINGS',
 ]

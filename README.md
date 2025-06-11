@@ -179,6 +179,9 @@ This extension provides 8 ComfyUI nodes, all unified under the **"DCI"** group a
 #### DCI/Analysis
 - DCI_Analysis (DCI Analysis)
 
+#### DCI/Effects
+- DropShadowNode (Drop Shadow)
+
 #### DCI/Files
 - DCI_BinaryFileLoader (Binary File Loader)
 - DCI_BinaryFileSaver (Binary File Saver)
@@ -341,7 +344,56 @@ Supports 20 preset colors including:
 - **Independent Processing**: Each DCI image is processed independently, generating separate preview images
 - **Batch Output**: All preview images are combined into a single IMAGE tensor for downstream processing
 
-#### 6. Binary File Loader
+#### 6. Drop Shadow
+**Node Category**: `DCI/Effects`
+**Function Description**: Apply drop shadow effects to images, similar to CSS drop-shadow filter. Supports all standard drop shadow parameters including offset, blur, spread, color, and opacity. Automatically handles canvas expansion and provides cross-platform compatibility.
+
+**Required Input Parameters:**
+- **`image`** (IMAGE): ComfyUI image tensor to apply shadow effect
+
+**Optional Input Parameters:**
+
+*Shadow Position:*
+- **`offset_x`** (INT): Horizontal shadow offset (-100 to 100 pixels), default 4
+- **`offset_y`** (INT): Vertical shadow offset (-100 to 100 pixels), default 4
+
+*Shadow Appearance:*
+- **`blur_radius`** (INT): Shadow blur radius (0-100 pixels), default 8
+- **`spread_radius`** (INT): Shadow spread radius (-50 to 50 pixels), default 0
+  - Positive values expand the shadow
+  - Negative values shrink the shadow
+
+*Shadow Color (RGBA):*
+- **`shadow_color_r`** (INT): Shadow red component (0-255), default 0
+- **`shadow_color_g`** (INT): Shadow green component (0-255), default 0
+- **`shadow_color_b`** (INT): Shadow blue component (0-255), default 0
+- **`shadow_opacity`** (FLOAT): Shadow opacity (0.0-1.0), default 0.5
+
+*Canvas Options:*
+- **`auto_expand_canvas`** (BOOLEAN): Automatically expand canvas to fit shadow, default True
+- **`canvas_padding`** (INT): Additional canvas padding (0-200 pixels), default 20
+
+**Output:**
+- **`image`** (IMAGE): Image with applied drop shadow effect
+
+**CSS Compatibility Examples:**
+```css
+/* CSS: drop-shadow(4px 4px 8px rgba(0,0,0,0.5)) */
+/* Node: offset_x=4, offset_y=4, blur_radius=8, shadow_color=(0,0,0), shadow_opacity=0.5 */
+
+/* CSS: drop-shadow(-2px -2px 6px rgba(255,0,0,0.7)) */
+/* Node: offset_x=-2, offset_y=-2, blur_radius=6, shadow_color=(255,0,0), shadow_opacity=0.7 */
+```
+
+**Technical Features:**
+- **Pure Python Implementation**: No external dependencies, uses PIL and numpy
+- **Alpha Channel Support**: Properly handles transparent images and creates shadows from alpha masks
+- **Spread Effect**: Supports both positive (expand) and negative (shrink) spread values
+- **Cross-Platform**: Works on Windows, Linux, and macOS
+- **Performance Optimized**: Efficient shadow generation with optional scipy acceleration
+- **Canvas Management**: Intelligent canvas sizing to accommodate shadow effects
+
+#### 7. Binary File Loader
 **Node Category**: `DCI/Files`
 **Function Description**: Load binary files from the file system, designed for handling DCI icon files and other binary data.
 
@@ -352,7 +404,7 @@ Supports 20 preset colors including:
 - **`binary_data`** (BINARY_DATA): Binary content of the file (bytes type)
 - **`file_path`** (STRING): Complete path of the loaded file
 
-#### 6.1. Directory Loader
+#### 7.1. Directory Loader
 **Node Category**: `DCI/Files`
 **Function Description**: Batch load multiple binary files from a directory with filtering and recursive search capabilities. Uses breadth-first traversal for consistent file ordering. **NEW**: Automatically detects and decodes image files, providing separate image outputs for direct use in ComfyUI workflows.
 
@@ -774,6 +826,9 @@ pip install -r requirements.txt
 #### DCI/Analysis（分析）
 - DCI_Analysis (DCI Analysis)
 
+#### DCI/Effects（效果）
+- DropShadowNode（投影效果）
+
 #### DCI/Files（文件处理）
 - DCI_BinaryFileLoader (Binary File Loader)
 - DCI_BinaryFileSaver (Binary File Saver)
@@ -1003,7 +1058,56 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - 检查图像质量和显示效果
 - 在工作流程中进行图像效果确认
 
-#### 6. Binary File Loader（二进制文件加载器）
+#### 6. Drop Shadow（投影效果）
+**节点类别**：`DCI/Effects`
+**功能描述**：为图像应用投影效果，类似于CSS的drop-shadow滤镜。支持所有标准投影参数，包括偏移、模糊、扩散、颜色和透明度。自动处理画布扩展，提供跨平台兼容性。
+
+**必需输入参数：**
+- **`image`** (IMAGE)：要应用阴影效果的ComfyUI图像张量
+
+**可选输入参数：**
+
+*阴影位置：*
+- **`offset_x`** (INT)：水平阴影偏移（-100到100像素），默认4
+- **`offset_y`** (INT)：垂直阴影偏移（-100到100像素），默认4
+
+*阴影外观：*
+- **`blur_radius`** (INT)：阴影模糊半径（0-100像素），默认8
+- **`spread_radius`** (INT)：阴影扩散半径（-50到50像素），默认0
+  - 正值扩展阴影
+  - 负值收缩阴影
+
+*阴影颜色（RGBA）：*
+- **`shadow_color_r`** (INT)：阴影红色分量（0-255），默认0
+- **`shadow_color_g`** (INT)：阴影绿色分量（0-255），默认0
+- **`shadow_color_b`** (INT)：阴影蓝色分量（0-255），默认0
+- **`shadow_opacity`** (FLOAT)：阴影透明度（0.0-1.0），默认0.5
+
+*画布选项：*
+- **`auto_expand_canvas`** (BOOLEAN)：自动扩展画布以适应阴影，默认True
+- **`canvas_padding`** (INT)：额外画布填充（0-200像素），默认20
+
+**输出：**
+- **`image`** (IMAGE)：应用了投影效果的图像
+
+**CSS兼容性示例：**
+```css
+/* CSS: drop-shadow(4px 4px 8px rgba(0,0,0,0.5)) */
+/* 节点: offset_x=4, offset_y=4, blur_radius=8, shadow_color=(0,0,0), shadow_opacity=0.5 */
+
+/* CSS: drop-shadow(-2px -2px 6px rgba(255,0,0,0.7)) */
+/* 节点: offset_x=-2, offset_y=-2, blur_radius=6, shadow_color=(255,0,0), shadow_opacity=0.7 */
+```
+
+**技术特性：**
+- **纯Python实现**：无外部依赖，使用PIL和numpy
+- **Alpha通道支持**：正确处理透明图像并从alpha遮罩创建阴影
+- **扩散效果**：支持正值（扩展）和负值（收缩）扩散值
+- **跨平台**：在Windows、Linux和macOS上工作
+- **性能优化**：高效的阴影生成，可选scipy加速
+- **画布管理**：智能画布尺寸调整以适应阴影效果
+
+#### 7. Binary File Loader（二进制文件加载器）
 **节点类别**：`DCI/Files`
 **功能描述**：从文件系统加载二进制文件，专为处理 DCI 图标文件等二进制数据设计。
 
@@ -1014,7 +1118,7 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **`binary_data`** (BINARY_DATA)：文件的二进制内容（bytes 类型）
 - **`file_path`** (STRING)：加载文件的完整路径
 
-#### 6.1. Directory Loader（目录加载器）
+#### 7.1. Directory Loader（目录加载器）
 **节点类别**：`DCI/Files`
 **功能描述**：批量加载目录中的多个二进制文件，支持过滤条件和递归搜索功能。使用广度优先遍历确保文件顺序的一致性。**新功能**：自动识别和解码图像文件，提供独立的图像输出，可直接用于ComfyUI工作流。
 
@@ -1054,7 +1158,7 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **目录内容分析**：分析目录结构和文件分布情况
 - **工作流自动化**：在自动化工作流中批量处理文件
 
-#### 6.2. Deb Packager（Deb 打包器）
+#### 7.2. Deb Packager（Deb 打包器）
 **节点类别**：`DCI/Files`
 **功能描述**：创建Debian软件包，支持基于现有deb包扩展或从头创建，具有文件过滤、目录扫描、智能包信息管理和自动版本递增功能。生成的deb包直接保存到指定目录，文件名按照标准格式自动生成。
 
@@ -1120,7 +1224,7 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **依赖管理**：利用deb包的依赖系统管理图标包关系，继承现有依赖配置
 - **开发测试**：快速生成测试用deb包，可用dpkg-deb命令验证包结构
 
-#### 6.3. Deb Loader（Deb 加载器）
+#### 7.3. Deb Loader（Deb 加载器）
 **节点类别**：`DCI/Files`
 **功能描述**：从Debian软件包（.deb文件）中提取和加载文件，支持文件过滤功能。解析deb包内的control.tar.*和data.tar.*归档文件，提取符合条件的文件。**新功能**：自动识别和解码deb包中的图像文件，提供独立的图像输出，可直接用于ComfyUI工作流。
 
@@ -1174,7 +1278,7 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **Python模块**：使用标准库模块（tarfile、tempfile、os、struct）
 - **路径处理**：增强的跨平台路径规范化，支持在Linux/Unix系统上处理Windows路径
 
-#### 7. Binary File Saver（二进制文件保存器）
+#### 8. Binary File Saver（二进制文件保存器）
 **节点类别**：`DCI/Files`
 **功能描述**：将二进制数据保存到文件系统，具有高级文件名处理、前缀后缀支持和跨平台路径处理功能。
 
