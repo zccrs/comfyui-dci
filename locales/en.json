@@ -48,6 +48,7 @@
   "light_background_color": "Light Background Color",
   "dark_background_color": "Dark Background Color",
   "text_font_size": "Text Font Size",
+  "image_quality": "Image Quality",
 
   "normal": "Normal",
   "disabled": "Disabled",

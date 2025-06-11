@@ -28,6 +28,7 @@ class DCISampleImage(BaseNode):
                 t("scale"): ("FLOAT", {"default": 1.0, "min": 0.1, "max": 10.0, "step": 0.1}),
                 t("tone_type"): (get_enum_ui_options(ToneType, t), {"default": get_enum_default_ui_value(ToneType.LIGHT, t)}),
                 t("image_format"): ([fmt.value for fmt in ImageFormat], {"default": ImageFormat.WEBP.value}),
+                t("image_quality"): ("INT", {"default": 90, "min": 1, "max": 100, "step": 1}),
             }
         }
 
@@ -55,9 +56,11 @@ class DCISampleImage(BaseNode):
         image_format_ui = kwargs.get(t("image_format")) if t("image_format") in kwargs else kwargs.get("image_format", ImageFormat.WEBP.value)
         image_format = ImageFormat(image_format_ui) if image_format_ui else ImageFormat.WEBP
 
-        return self._execute_impl(image, icon_size, icon_state, scale, tone_type, image_format)
+        image_quality = kwargs.get(t("image_quality")) if t("image_quality") in kwargs else kwargs.get("image_quality", 90)
 
-    def _execute_impl(self, image, icon_size, icon_state: IconState, scale, tone_type: ToneType = ToneType.LIGHT, image_format: ImageFormat = ImageFormat.WEBP):
+        return self._execute_impl(image, icon_size, icon_state, scale, tone_type, image_format, image_quality)
+
+    def _execute_impl(self, image, icon_size, icon_state: IconState, scale, tone_type: ToneType = ToneType.LIGHT, image_format: ImageFormat = ImageFormat.WEBP, image_quality: int = 90):
         """Create simple DCI image data with basic settings only"""
         if not _image_support:
             return ({},)
@@ -76,9 +79,9 @@ class DCISampleImage(BaseNode):
         if image_format == ImageFormat.WEBP:
             # For WebP, preserve transparency if available
             if resized_image.mode == 'RGBA':
-                resized_image.save(img_bytes, format='WEBP', quality=90, lossless=True)
+                resized_image.save(img_bytes, format='WEBP', quality=image_quality, lossless=True)
             else:
-                resized_image.save(img_bytes, format='WEBP', quality=90)
+                resized_image.save(img_bytes, format='WEBP', quality=image_quality)
         elif image_format == ImageFormat.PNG:
             # PNG supports transparency
             resized_image.save(img_bytes, format='PNG')
@@ -90,7 +93,7 @@ class DCISampleImage(BaseNode):
                     resized_image = resized_image.convert('RGBA')
                 rgb_image.paste(resized_image, mask=resized_image.split()[-1] if resized_image.mode in ('RGBA', 'LA') else None)
                 resized_image = rgb_image
-            resized_image.save(img_bytes, format='JPEG', quality=90)
+            resized_image.save(img_bytes, format='JPEG', quality=image_quality)
 
         img_content = img_bytes.getvalue()
 

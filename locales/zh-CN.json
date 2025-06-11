@@ -52,6 +52,7 @@
   "text_font_size": "文本字体大小",
   "base64_data": "Base64 数据",
   "allow_overwrite": "允许覆盖",
+  "image_quality": "图片质量",
 
   "normal": "正常",
   "disabled": "禁用",

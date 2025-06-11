@@ -202,6 +202,7 @@ This extension provides 8 ComfyUI nodes, all unified under the **"DCI"** group a
 
 *Basic Settings:*
 - **`image_format`** (COMBO): Image format (webp/png/jpg), default webp
+- **`image_quality** (INT): Image quality (1-100), default 90, only effective for webp and jpg formats
 
 *Background Color Settings:*
 - **`background_color`** (COMBO): Background color processing (transparent/white/black/custom), default transparent
@@ -658,6 +659,7 @@ pip install -r requirements.txt
 
 *基础设置：*
 - **`image_format`** (COMBO)：图像格式（webp/png/jpg），默认webp
+- **`image_quality`** (INT)：图片质量（1-100），默认90，仅对webp和jpg格式有效
 
 *背景色设置：*
 - **`background_color`** (COMBO)：背景色处理（transparent/white/black/custom），默认transparent
@@ -708,14 +710,16 @@ pip install -r requirements.txt
 - **`scale`** (FLOAT)：缩放因子（0.1-10.0），默认1.0，支持小数如1.25
 - **`tone_type`** (COMBO)：色调类型（light/dark），默认light
 - **`image_format`** (COMBO)：图像格式（webp/png/jpg），默认webp
+- **`image_quality`** (INT)：图片质量（1-100），默认90，仅对webp和jpg格式有效
 
 **输出：**
 - **`dci_image_data`** (DCI_IMAGE_DATA)：包含路径、内容、元数据的字典数据
 
 **节点特点：**
-- **简化界面**：只显示最常用的5个基本参数，界面简洁易用
+- **简化界面**：只显示最常用的6个基本参数，界面简洁易用
 - **默认设置**：所有高级参数使用合理的默认值（优先级1、无外边框、无调色板、无颜色调整）
 - **透明背景**：默认保持图像原始透明度，适合大多数图标制作场景
+- **质量控制**：支持图片质量设置，在文件大小和图像质量之间找到平衡
 - **快速创建**：适合快速创建标准DCI图像，无需复杂配置
 
 **使用场景：**
@@ -1140,103 +1144,6 @@ wrapped_lines = self._wrap_text(line, text_width, font, draw)
 DCI Image 节点现在采用更清晰的参数组织方式，提升用户体验：
 
 **主要改进**：
-- **核心参数前置**：将最常用的参数（icon_size、icon_state、scale、tone_type）放在必需参数区域
-- **高级参数分组**：所有高级选项使用 `adv_` 前缀标识，便于识别和管理
-- **简化界面**：默认情况下只显示核心参数，减少界面复杂度
-- **逻辑分组**：高级参数按功能分为背景色设置、图层设置、颜色调整三个逻辑组
-
-**参数组织结构**：
-```
-必需参数：
-├── image (图像输入)
-├── icon_size (图标尺寸)
-├── icon_state (图标状态)
-├── scale (缩放因子)
-└── tone_type (色调类型)
-
-可选参数：
-├── image_format (图像格式)
-└── 高级设置 (adv_ 前缀)
-    ├── 背景色设置
-    ├── 图层属性
-    └── 颜色调整
-```
-
-**使用建议**：
-- 🎯 **新用户**：只需关注必需参数和 image_format，即可创建基本的DCI图像
-- 🎯 **高级用户**：使用 adv_ 前缀参数进行精细控制和专业定制
-- 🎯 **批量处理**：核心参数的简化使得批量创建图标更加高效
-
-### DCI 文件格式实现
-扩展实现了完整的 DCI 规范：
-
-**二进制结构**：
-```
-DCI 头部（8 字节）：
-├── 魔术（4 字节）：'DCI\0'
-├── 版本（1 字节）：1
-└── 文件计数（3 字节）：文件数量
-
-文件条目（每个文件 72+ 字节）：
-├── 文件类型（1 字节）：1=文件，2=目录
-├── 文件名（63 字节）：以空字符结尾的 UTF-8
-├── 内容大小（8 字节）：小端序 uint64
-└── 内容（可变）：文件数据或目录内容
-```
-
-**目录结构**：
-```
-size/                    # 图标尺寸（16、32、64、128、256、512、1024）
-└── state.tone/          # state: normal|disabled|hover|pressed
-    └── scale/           # 缩放因子（1、1.25、1.5、2 等，支持小数）
-        └── layer.format # priority.padding.palette.hue.saturation.brightness.red.green.blue.alpha.format
-```
-
-## 依赖项
-
-- **Pillow**：图像处理和操作
-- **NumPy**：ComfyUI 张量转换的数组操作
-- **PyTorch**：ComfyUI 张量兼容性
-
-## 故障排除
-
-如果在 ComfyUI 中看不到 DCI 节点：
-
-1. 确保已正确安装所有依赖项
-2. 重启 ComfyUI
-3. 检查 ComfyUI 控制台是否有错误信息
-4. 确保扩展文件夹位于正确的 `custom_nodes` 目录中
-
-### 已知问题和修复
-
-#### DCIAnalysis 节点输出为空（已修复）
-**问题描述**：DCIAnalysis 节点在某些情况下可能输出空字符串，无法显示DCI文件的树形结构。
-
-**原因**：节点期望的路径格式与DCIReader实际返回的数据结构不匹配。DCIReader将目录路径和文件名分别存储在`path`和`filename`字段中，而不是组合在一起。
-
-**修复方案**：
-- 更新路径解析逻辑，正确处理独立的`path`和`filename`字段
-- 调整路径组件解析，期望3个部分（size/state.tone/scale）而不是4个
-- 确保与DCIReader的数据结构完全兼容
-
-**修复状态**：✅ 已在最新版本中修复
-
-**验证方法**：
-```python
-# 测试DCIAnalysis节点是否正常工作
-from py.nodes.structure_node import DCIAnalysis
-analysis_node = DCIAnalysis()
-result = analysis_node._execute(dci_binary_data)
-# 应该返回包含树形结构的非空字符串
-```
-
-## 贡献
-
-欢迎贡献！请提交 Pull Request 或创建 Issue 来报告问题或建议新功能。
-
-## 许可证
-
-本项目采用 MIT 许可证。详见 LICENSE 文件。
 - **核心参数前置**：将最常用的参数（icon_size、icon_state、scale、tone_type）放在必需参数区域
 - **高级参数分组**：所有高级选项使用 `adv_` 前缀标识，便于识别和管理
 - **简化界面**：默认情况下只显示核心参数，减少界面复杂度

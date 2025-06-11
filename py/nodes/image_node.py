@@ -31,6 +31,7 @@ class DCIImage(BaseNode):
             "optional": {
                 # Basic format setting
                 t("image_format"): ([fmt.value for fmt in ImageFormat], {"default": ImageFormat.WEBP.value}),
+                t("image_quality"): ("INT", {"default": 90, "min": 1, "max": 100, "step": 1}),
 
                 # Background color settings
                 t("background_color"): (get_enum_ui_options(BackgroundColor, t), {"default": get_enum_default_ui_value(BackgroundColor.TRANSPARENT, t)}),
@@ -78,6 +79,8 @@ class DCIImage(BaseNode):
         image_format_ui = kwargs.get(t("image_format")) if t("image_format") in kwargs else kwargs.get("image_format", ImageFormat.WEBP.value)
         image_format = ImageFormat(image_format_ui) if image_format_ui else ImageFormat.WEBP
 
+        image_quality = kwargs.get(t("image_quality")) if t("image_quality") in kwargs else kwargs.get("image_quality", 90)
+
         background_color_ui = kwargs.get(t("background_color")) if t("background_color") in kwargs else kwargs.get("background_color")
         background_color = translate_ui_to_enum(background_color_ui, BackgroundColor, t) if background_color_ui else BackgroundColor.TRANSPARENT
 
@@ -99,13 +102,13 @@ class DCIImage(BaseNode):
         alpha_adjustment = kwargs.get(t("alpha_adjustment")) if t("alpha_adjustment") in kwargs else kwargs.get("alpha_adjustment", 0)
 
         return self._execute_impl(image, icon_size, icon_state, scale, tone_type,
-                                 image_format, background_color, custom_bg_r, custom_bg_g, custom_bg_b,
+                                 image_format, image_quality, background_color, custom_bg_r, custom_bg_g, custom_bg_b,
                                  layer_priority, layer_padding, palette_type,
                                  hue_adjustment, saturation_adjustment, brightness_adjustment,
                                  red_adjustment, green_adjustment, blue_adjustment, alpha_adjustment)
 
     def _execute_impl(self, image, icon_size, icon_state: IconState, scale, tone_type: ToneType = ToneType.LIGHT,
-                     image_format: ImageFormat = ImageFormat.WEBP,
+                     image_format: ImageFormat = ImageFormat.WEBP, image_quality=90,
                      background_color: BackgroundColor = BackgroundColor.TRANSPARENT, custom_bg_r=255, custom_bg_g=255, custom_bg_b=255,
                      layer_priority=1, layer_padding=0, palette_type: PaletteType = PaletteType.NONE,
                      hue_adjustment=0, saturation_adjustment=0, brightness_adjustment=0,
@@ -136,14 +139,14 @@ class DCIImage(BaseNode):
         if image_format == ImageFormat.WEBP:
             # For WebP, preserve transparency if available
             if resized_image.mode == 'RGBA' and background_color == BackgroundColor.TRANSPARENT:
-                resized_image.save(img_bytes, format='WEBP', quality=90, lossless=True)
+                resized_image.save(img_bytes, format='WEBP', quality=image_quality, lossless=True)
             else:
                 # Convert to RGB for lossy WebP
                 if resized_image.mode == 'RGBA':
                     rgb_image = Image.new('RGB', resized_image.size, (255, 255, 255))
                     rgb_image.paste(resized_image, mask=resized_image.split()[-1] if resized_image.mode == 'RGBA' else None)
                     resized_image = rgb_image
-                resized_image.save(img_bytes, format='WEBP', quality=90)
+                resized_image.save(img_bytes, format='WEBP', quality=image_quality)
         elif image_format == ImageFormat.PNG:
             # PNG supports transparency
             resized_image.save(img_bytes, format='PNG')
@@ -155,7 +158,7 @@ class DCIImage(BaseNode):
                     resized_image = resized_image.convert('RGBA')
                 rgb_image.paste(resized_image, mask=resized_image.split()[-1] if resized_image.mode in ('RGBA', 'LA') else None)
                 resized_image = rgb_image
-            resized_image.save(img_bytes, format='JPEG', quality=90)
+            resized_image.save(img_bytes, format='JPEG', quality=image_quality)
 
         img_content = img_bytes.getvalue()
 

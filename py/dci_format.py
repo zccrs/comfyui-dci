@@ -125,7 +125,7 @@ class DCIIconBuilder:
         self.directory_structure = {}  # Track directory structure
 
     def add_icon_image(self, image: Image.Image, size: int, state: str = 'normal',
-                      tone: str = 'dark', scale: float = 1.0, format: str = 'webp'):
+                      tone: str = 'dark', scale: float = 1.0, format: str = 'webp', quality: int = 90):
         """Add an icon image for specific state, tone, and scale"""
 
         if state not in self.ICON_STATES:
@@ -146,7 +146,7 @@ class DCIIconBuilder:
         # Convert to bytes
         img_bytes = BytesIO()
         if format == 'webp':
-            resized_image.save(img_bytes, format='WEBP', quality=90)
+            resized_image.save(img_bytes, format='WEBP', quality=quality)
         elif format == 'png':
             resized_image.save(img_bytes, format='PNG')
         elif format == 'jpg':
@@ -157,7 +157,7 @@ class DCIIconBuilder:
                     resized_image = resized_image.convert('RGBA')
                 rgb_image.paste(resized_image, mask=resized_image.split()[-1] if resized_image.mode in ('RGBA', 'LA') else None)
                 resized_image = rgb_image
-            resized_image.save(img_bytes, format='JPEG', quality=90)
+            resized_image.save(img_bytes, format='JPEG', quality=quality)
 
         img_content = img_bytes.getvalue()
 
@@ -265,7 +265,7 @@ class DCIIconBuilder:
 
 def create_dci_icon(image: Image.Image, output_path: str, size: int = 256,
                    states: List[str] = None, tones: List[str] = None,
-                   scales: List[float] = None, format: str = 'webp'):
+                   scales: List[float] = None, format: str = 'webp', quality: int = 90):
     """Create a DCI icon file from an image"""
 
     if states is None:
@@ -281,6 +281,6 @@ def create_dci_icon(image: Image.Image, output_path: str, size: int = 256,
     for state in states:
         for tone in tones:
             for scale in scales:
-                builder.add_icon_image(image, size, state, tone, scale, format)
+                builder.add_icon_image(image, size, state, tone, scale, format, quality)
 
     builder.build(output_path)

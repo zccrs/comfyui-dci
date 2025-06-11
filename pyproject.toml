@@ -37,7 +37,7 @@ Documentation = "https://github.com/zccrs/comfyui-dci/blob/master/README.md"
 "Bug Reports" = "https://github.com/zccrs/comfyui-dci/issues"
 
 [tool.comfy]
-PublisherId = ""  # TODO: Fill in Publisher ID from Comfy Registry Website
+PublisherId = "zccrs"
 DisplayName = "DCI Image Export Extension"
 Icon = "https://raw.githubusercontent.com/zccrs/comfyui-dci/master/resources/icon.svg"
 
