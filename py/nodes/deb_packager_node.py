@@ -653,46 +653,38 @@ class DebPackager(BaseNode):
         filename = os.path.basename(original_file_path)
         name_without_ext, ext = os.path.splitext(filename)
 
-        # 检查是否有匹配的映射
-        for source_pattern, target_names in symlink_mappings.items():
-            if name_without_ext.startswith(source_pattern):
-                print(f"  为文件 {filename} 准备软链接 (匹配模式: {source_pattern})")
+                # 检查是否有完全匹配的映射
+        if name_without_ext in symlink_mappings:
+            target_names = symlink_mappings[name_without_ext]
+            print(f"  为文件 {filename} 准备软链接 (完全匹配: {name_without_ext})")
 
-                # 为每个目标名称收集软链接信息
-                for target_name in target_names:
-                    try:
-                        # 构建软链接文件名
-                        symlink_filename = f"{target_name}{ext}"
+            # 为每个目标名称收集软链接信息
+            for target_name in target_names:
+                try:
+                    # 构建软链接文件名
+                    symlink_filename = f"{target_name}{ext}"
 
-                        # 计算软链接的相对路径
-                        symlink_relative_path = os.path.join(os.path.dirname(relative_path), symlink_filename)
+                    # 计算软链接的相对路径（与源文件在同一目录）
+                    symlink_relative_path = os.path.join(os.path.dirname(relative_path), symlink_filename)
 
-                        # 计算在tar归档中的路径
-                        symlink_arcname = symlink_relative_path.replace('\\', '/')
+                    # 计算在tar归档中的路径
+                    symlink_arcname = symlink_relative_path.replace('\\', '/')
 
-                        # 计算目标文件的相对路径（从软链接位置到目标文件）
-                        # 在同一目录下，直接使用文件名
-                        if os.path.dirname(relative_path) == os.path.dirname(symlink_relative_path):
-                            target_relative = filename
-                        else:
-                            # 计算相对路径
-                            target_relative = os.path.relpath(relative_path, os.path.dirname(symlink_relative_path))
-                            target_relative = target_relative.replace('\\', '/')
+                    # 软链接目标直接使用文件名（同一目录下）
+                    target_relative = filename
 
-                        # 添加到软链接信息列表
-                        symlink_info = {
-                            'name': symlink_filename,
-                            'arcname': symlink_arcname,
-                            'target': target_relative,
-                            'deb_path': os.path.join(install_target_path, symlink_relative_path).replace('\\', '/')
-                        }
-                        symlinks_info.append(symlink_info)
+                    # 添加到软链接信息列表
+                    symlink_info = {
+                        'name': symlink_filename,
+                        'arcname': symlink_arcname,
+                        'target': target_relative,
+                        'deb_path': os.path.join(install_target_path, symlink_relative_path).replace('\\', '/')
+                    }
+                    symlinks_info.append(symlink_info)
 
-                        print(f"    ✓ 准备软链接: {symlink_filename} -> {target_relative}")
+                    print(f"    ✓ 准备软链接: {symlink_filename} -> {target_relative}")
 
-                    except Exception as e:
-                        print(f"    ❌ 准备软链接失败 {target_name}{ext}: {str(e)}")
-
-                break  # 找到匹配后停止检查其他模式
+                except Exception as e:
+                    print(f"    ❌ 准备软链接失败 {target_name}{ext}: {str(e)}")
 
         return symlinks_info
