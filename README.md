@@ -1072,6 +1072,7 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **`maintainer_name`** (STRING)：打包人姓名
 - **`maintainer_email`** (STRING)：打包人邮箱
 - **`package_description`** (STRING)：软件包描述信息，支持多行输入
+- **`symlink_csv_path`** (STRING)：软链接表格，可选的CSV文件路径，用于自动创建软链接
 
 **输出：**
 - **`saved_deb_path`** (STRING)：保存成功时为完整deb包路径，失败时为错误信息
@@ -1100,6 +1101,14 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **目录结构保持**：自动保持子目录的目录结构关系
 - **路径规范化**：自动处理跨平台路径分隔符
 
+*软链接自动创建：*
+- **CSV映射表**：支持通过CSV文件定义源文件到目标软链接的映射关系
+- **模式匹配**：根据文件名前缀自动匹配CSV中的映射规则
+- **多目标支持**：一个源文件可以创建多个软链接（如微信图标同时创建weixin和uos.web.qq.wx软链接）
+- **相对路径**：软链接使用相对路径指向源文件，确保包的可移植性
+- **扩展名保持**：软链接文件自动保持与源文件相同的扩展名
+- **CSV格式**：第一列为源文件名（不含扩展名），第二列为目标名称（支持换行分隔的多个目标）
+
 *deb格式支持：*
 - **标准格式**：完全符合Debian包格式规范
 - **压缩支持**：支持gzip、xz、bz2等多种压缩格式
@@ -1111,6 +1120,16 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - 从头创建DCI图标包：`local_directory="/path/to/icons", file_filter="*.dci", output_directory="/tmp/output", package_name="my-icons", package_version="1.0.0"`
 - 基于现有包自动递增版本：`base_deb_path="/path/to/base.deb", local_directory="/path/to/new/icons", output_directory="/tmp/output"`
 - 指定新版本号：`base_deb_path="/path/to/base.deb", local_directory="/path/to/icons", package_version="2.0.0", output_directory="/tmp/output"`
+- 使用软链接表格：`local_directory="/path/to/icons", file_filter="*.dci", symlink_csv_path="/path/to/symlinks.csv", output_directory="/tmp/output"`
+
+**软链接CSV格式示例：**
+```csv
+com.qq.weixin.deepin,"weixin
+uos.web.qq.wx"
+netease-cloud-music,uos.web.163.music
+libreoffice,libreoffice7.0
+```
+此配置将为`com.qq.weixin.deepin.dci`创建`weixin.dci`和`uos.web.qq.wx.dci`两个软链接。
 
 **使用场景：**
 - **DCI图标包分发**：将DCI图标文件打包成标准的Debian软件包，直接保存到指定目录
@@ -1119,6 +1138,8 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **批量部署**：在多个系统间标准化部署图标资源，文件名格式统一
 - **依赖管理**：利用deb包的依赖系统管理图标包关系，继承现有依赖配置
 - **开发测试**：快速生成测试用deb包，可用dpkg-deb命令验证包结构
+- **图标兼容性**：通过软链接自动创建多个名称的图标文件，支持不同应用的图标命名需求
+- **系统迁移**：为旧系统图标名称创建软链接，确保向后兼容性
 
 #### 6.3. Deb Loader（Deb 加载器）
 **节点类别**：`DCI/Files`

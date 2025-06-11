@@ -33,6 +33,7 @@ class DebPackager(BaseNode):
                 t("maintainer_name"): ("STRING", {"default": "", "multiline": False}),
                 t("maintainer_email"): ("STRING", {"default": "", "multiline": False}),
                 t("package_description"): ("STRING", {"default": "", "multiline": True}),
+                t("symlink_csv_path"): ("STRING", {"default": "", "multiline": False}),
             }
         }
 
@@ -57,17 +58,18 @@ class DebPackager(BaseNode):
         maintainer_name = kwargs.get(t("maintainer_name")) if t("maintainer_name") in kwargs else kwargs.get("maintainer_name", "")
         maintainer_email = kwargs.get(t("maintainer_email")) if t("maintainer_email") in kwargs else kwargs.get("maintainer_email", "")
         package_description = kwargs.get(t("package_description")) if t("package_description") in kwargs else kwargs.get("package_description", "")
+        symlink_csv_path = kwargs.get(t("symlink_csv_path")) if t("symlink_csv_path") in kwargs else kwargs.get("symlink_csv_path", "")
 
         return self._execute_impl(
             local_directory, file_filter, include_subdirectories, install_target_path, output_directory,
             base_deb_path, package_name, package_version,
-            maintainer_name, maintainer_email, package_description
+            maintainer_name, maintainer_email, package_description, symlink_csv_path
         )
 
     def _execute_impl(self, local_directory="", file_filter="*.dci", include_subdirectories=True,
                      install_target_path="/usr/share/dsg/icons", output_directory="",
                      base_deb_path="", package_name="", package_version="",
-                     maintainer_name="", maintainer_email="", package_description=""):
+                     maintainer_name="", maintainer_email="", package_description="", symlink_csv_path=""):
         """Create Debian package with file filtering and directory scanning"""
 
         try:
@@ -108,6 +110,13 @@ class DebPackager(BaseNode):
                 print("警告：未找到匹配的文件")
                 return ("警告：未找到匹配的文件", [])
 
+            # Parse symlink CSV if provided
+            symlink_mappings = {}
+            if symlink_csv_path and os.path.exists(symlink_csv_path):
+                print(f"解析软链接表格: {symlink_csv_path}")
+                symlink_mappings = self._parse_symlink_csv(symlink_csv_path)
+                print(f"软链接映射: {len(symlink_mappings)} 项")
+
             # Parse base deb if provided to get control info
             base_control_info = {}
             if base_deb_path and os.path.exists(base_deb_path):
@@ -132,7 +141,7 @@ class DebPackager(BaseNode):
                 # Create deb package
                 success, file_list = self._create_deb_package(
                     temp_dir, matching_files, normalized_path, install_target_path,
-                    pkg_info, deb_output_path
+                    pkg_info, deb_output_path, symlink_mappings
                 )
 
                 if success:
@@ -449,7 +458,7 @@ class DebPackager(BaseNode):
         return pkg_info
 
     def _create_deb_package(self, temp_dir, matching_files, source_dir, install_target_path,
-                          pkg_info, output_deb_path):
+                          pkg_info, output_deb_path, symlink_mappings=None):
         """Create the actual deb package and save to specified path"""
         try:
             # Create package structure
@@ -482,6 +491,14 @@ class DebPackager(BaseNode):
                 # Add to file list
                 deb_internal_path = os.path.join(install_target_path, relative_path).replace('\\', '/')
                 file_list.append(deb_internal_path)
+
+                # Create symlinks if mappings exist
+                if symlink_mappings:
+                    symlinks_created = self._create_symlinks_for_file(
+                        file_path, target_file_path, relative_path,
+                        target_base, install_target_path, symlink_mappings
+                    )
+                    file_list.extend(symlinks_created)
 
             # Create control.tar.gz
             control_tar_path = os.path.join(temp_dir, "control.tar.gz")
@@ -552,3 +569,96 @@ class DebPackager(BaseNode):
                     file_path = os.path.join(root, file)
                     arcname = os.path.relpath(file_path, data_dir)
                     tar.add(file_path, arcname=f"./{arcname}")
+
+    def _parse_symlink_csv(self, csv_path):
+        """Parse CSV file for symlink mappings"""
+        import csv
+        symlink_mappings = {}
+
+        try:
+            with open(csv_path, 'r', encoding='utf-8') as csvfile:
+                # 尝试自动检测分隔符
+                sample = csvfile.read(1024)
+                csvfile.seek(0)
+                sniffer = csv.Sniffer()
+                delimiter = sniffer.sniff(sample).delimiter
+
+                reader = csv.reader(csvfile, delimiter=delimiter)
+
+                for row_num, row in enumerate(reader, 1):
+                    if len(row) < 2:
+                        continue
+
+                    source_name = row[0].strip()
+                    target_names_str = row[1].strip()
+
+                    if not source_name or not target_names_str:
+                        continue
+
+                    # 解析目标名称，可能包含换行符分隔的多个名称
+                    target_names = []
+                    for name in target_names_str.split('\n'):
+                        name = name.strip()
+                        if name:
+                            target_names.append(name)
+
+                    if target_names:
+                        symlink_mappings[source_name] = target_names
+                        print(f"  映射: {source_name} -> {target_names}")
+
+        except Exception as e:
+            print(f"警告：解析CSV文件失败: {str(e)}")
+            return {}
+
+        return symlink_mappings
+
+    def _create_symlinks_for_file(self, original_file_path, target_file_path, relative_path,
+                                 target_base, install_target_path, symlink_mappings):
+        """Create symlinks for a file based on mappings"""
+        symlinks_created = []
+
+        # 获取文件名（不含扩展名）和扩展名
+        filename = os.path.basename(original_file_path)
+        name_without_ext, ext = os.path.splitext(filename)
+
+        # 检查是否有匹配的映射
+        for source_pattern, target_names in symlink_mappings.items():
+            if name_without_ext.startswith(source_pattern):
+                print(f"  为文件 {filename} 创建软链接 (匹配模式: {source_pattern})")
+
+                # 为每个目标名称创建软链接
+                for target_name in target_names:
+                    try:
+                        # 构建软链接文件名
+                        symlink_filename = f"{target_name}{ext}"
+
+                        # 计算软链接的完整路径
+                        symlink_relative_path = os.path.join(os.path.dirname(relative_path), symlink_filename)
+                        symlink_target_path = os.path.join(target_base, symlink_relative_path)
+
+                        # 确保目录存在
+                        symlink_dir = os.path.dirname(symlink_target_path)
+                        if symlink_dir:
+                            os.makedirs(symlink_dir, exist_ok=True)
+
+                        # 计算相对路径（从软链接位置到目标文件）
+                        relative_to_target = os.path.relpath(target_file_path, symlink_dir)
+
+                        # 创建软链接
+                        if os.path.exists(symlink_target_path) or os.path.islink(symlink_target_path):
+                            os.remove(symlink_target_path)
+
+                        os.symlink(relative_to_target, symlink_target_path)
+
+                        # 添加到文件列表
+                        deb_internal_symlink_path = os.path.join(install_target_path, symlink_relative_path).replace('\\', '/')
+                        symlinks_created.append(deb_internal_symlink_path)
+
+                        print(f"    ✓ 创建软链接: {symlink_filename} -> {relative_to_target}")
+
+                    except Exception as e:
+                        print(f"    ❌ 创建软链接失败 {target_name}{ext}: {str(e)}")
+
+                break  # 找到匹配后停止检查其他模式
+
+        return symlinks_created

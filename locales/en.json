@@ -69,6 +69,7 @@
   "maintainer_name": "Maintainer Name",
   "maintainer_email": "Maintainer Email",
   "package_description": "Package Description",
+  "symlink_csv_path": "Symlink CSV Path",
 
   "normal": "Normal",
   "disabled": "Disabled",
