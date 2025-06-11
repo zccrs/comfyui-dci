@@ -199,35 +199,35 @@ class DCIFileNode(BaseNode):
             existing_images = reader.get_icon_images()
 
             for image_info in existing_images:
-                # Reconstruct the path and content from image info
-                size_dir = str(image_info['size'])
-                state_tone_dir = f"{image_info['state']}.{image_info['tone']}"
-                # Format scale consistently with format_dci_path using :g format
-                scale_dir = f"{image_info['scale']:g}"
-                filename = image_info['filename']
+                # Build path from image metadata
+                size = image_info.get('size', 256)
+                state = image_info.get('state', 'normal')
+                tone = image_info.get('tone', 'light')
+                scale = image_info.get('scale', 1.0)
 
-                # Get the file content from the reader's directory structure
-                full_path = image_info['path']
-                if full_path in reader.directory_structure and filename in reader.directory_structure[full_path]:
-                    file_content = reader.directory_structure[full_path][filename]['content']
+                # Format path components
+                size_dir = str(size)
+                state_tone_dir = f"{state}.{tone}"
+                scale_dir = str(scale) if scale == int(scale) else f"{scale:.2f}".rstrip('0').rstrip('.')
 
-                    # Build nested directory structure
-                    if size_dir not in directory_structure:
-                        directory_structure[size_dir] = {}
-                    if state_tone_dir not in directory_structure[size_dir]:
-                        directory_structure[size_dir][state_tone_dir] = {}
-                    if scale_dir not in directory_structure[size_dir][state_tone_dir]:
-                        directory_structure[size_dir][state_tone_dir][scale_dir] = {}
+                # Get filename from metadata or use default
+                filename = image_info.get('filename', '1.webp')
 
-                    directory_structure[size_dir][state_tone_dir][scale_dir][filename] = file_content
+                # Build nested structure
+                if size_dir not in directory_structure:
+                    directory_structure[size_dir] = {}
+                if state_tone_dir not in directory_structure[size_dir]:
+                    directory_structure[size_dir][state_tone_dir] = {}
+                if scale_dir not in directory_structure[size_dir][state_tone_dir]:
+                    directory_structure[size_dir][state_tone_dir][scale_dir] = {}
 
-            print(f"Parsed existing DCI data: {len(existing_images)} images from {len(directory_structure)} size directories")
+                # Store file content
+                directory_structure[size_dir][state_tone_dir][scale_dir][filename] = image_info.get('content', b'')
+
             return directory_structure
 
         except Exception as e:
-            print(f"Error parsing existing DCI data: {e}")
-            import traceback
-            traceback.print_exc()
+            print(f"Error parsing existing DCI data: {str(e)}")
             return {}
 
 
@@ -260,14 +260,15 @@ class BinaryFileLoader(BaseNode):
         """Load binary file from file system"""
         if not file_path:
             print("No file path provided")
-            return (None, "")
+            return (b"", "")
 
-        content = load_binary_data(file_path)
-        if content is None:
-            return (None, "")
-
-        print(f"Loaded binary file: {os.path.basename(file_path)} ({len(content)} bytes)")
-        return (content, file_path)
+        binary_data = load_binary_data(file_path)
+        if binary_data is not None:
+            print(f"Loaded binary file: {file_path} ({len(binary_data)} bytes)")
+            return (binary_data, file_path)
+        else:
+            print(f"Failed to load binary file: {file_path}")
+            return (b"", file_path)
 
 
 class BinaryFileSaver(BaseNode):
@@ -472,17 +473,16 @@ class Base64Decoder(BaseNode):
             return (b"",)
 
         try:
-            # Remove any whitespace and newlines
-            cleaned_base64 = base64_data.strip().replace('\n', '').replace('\r', '').replace(' ', '')
+            # Remove whitespace and newlines
+            cleaned_data = ''.join(base64_data.split())
 
-            # Decode base64 to binary data
-            binary_data = base64.b64decode(cleaned_base64)
-
-            print(f"Decoded binary data from base64: {len(binary_data)} bytes")
+            # Decode base64
+            binary_data = base64.b64decode(cleaned_data)
+            print(f"Decoded base64 data: {len(binary_data)} bytes")
             return (binary_data,)
 
         except Exception as e:
-            print(f"Failed to decode base64 data: {e}")
+            print(f"Failed to decode base64 data: {str(e)}")
             return (b"",)
 
 
@@ -512,26 +512,16 @@ class Base64Encoder(BaseNode):
 
     def _execute_impl(self, binary_data):
         """Encode binary data to base64 string"""
-        # Check if binary_data is valid
-        if binary_data is None:
-            print("No binary data provided (None)")
-            return ("",)
-
-        if isinstance(binary_data, bytes) and len(binary_data) == 0:
-            print("Empty binary data provided")
-            return ("",)
-
-        if not isinstance(binary_data, bytes):
-            print(f"Invalid binary data type: {type(binary_data)}")
+        if binary_data is None or len(binary_data) == 0:
+            print("No binary data provided for encoding")
             return ("",)
 
         try:
-            # Encode binary data to base64
+            # Encode to base64
             base64_data = base64.b64encode(binary_data).decode('utf-8')
-
-            print(f"Encoded binary data: {len(binary_data)} bytes -> {len(base64_data)} base64 characters")
+            print(f"Encoded binary data to base64: {len(binary_data)} bytes -> {len(base64_data)} characters")
             return (base64_data,)
 
         except Exception as e:
-            print(f"Failed to encode base64 data: {e}")
+            print(f"Failed to encode binary data to base64: {str(e)}")
             return ("",)

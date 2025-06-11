@@ -443,7 +443,7 @@ Supports 20 preset colors including:
 - **`allow_overwrite`** (BOOLEAN): Allow overwriting existing files, default False
 
 **Output:**
-- **`saved_path`** (STRING): Actual saved file path on success, detailed error message on failure
+- **`saved_path`** (STRING): Complete saved file path on success, detailed error message on failure (consistent with DCI File Saver behavior)
 
 **Advanced Filename Handling Features:**
 
@@ -1176,7 +1176,7 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **`allow_overwrite`** (BOOLEAN)：允许覆盖现有文件，默认False
 
 **输出：**
-- **`saved_path`** (STRING)：保存成功时为实际保存的文件路径，保存失败时为详细错误信息
+- **`saved_path`** (STRING)：保存成功时为完整文件路径，保存失败时为详细错误信息（与DCI文件保存器行为保持一致）
 
 **高级文件名处理功能：**
 
