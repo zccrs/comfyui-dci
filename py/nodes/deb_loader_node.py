@@ -42,16 +42,16 @@ class DebLoader(BaseNode):
             # Validate deb file path
             if not deb_file_path:
                 print("错误：未提供deb文件路径")
-                return ([], [], None, None)
+                return ([], [], [], [])
 
             normalized_path = os.path.normpath(deb_file_path.strip())
             if not os.path.exists(normalized_path):
                 print(f"错误：deb文件不存在: {normalized_path}")
-                return ([], [], None, None)
+                return ([], [], [], [])
 
             if not os.path.isfile(normalized_path):
                 print(f"错误：路径不是文件: {normalized_path}")
-                return ([], [], None, None)
+                return ([], [], [], [])
 
             print(f"正在解析deb文件: {normalized_path}")
 
@@ -61,7 +61,7 @@ class DebLoader(BaseNode):
 
             if not all_files:
                 print("警告：deb文件中未找到任何文件")
-                return ([], [], None, None)
+                return ([], [], [], [])
 
             # Filter files based on pattern
             matching_files = self._filter_files(all_files, file_filter)
@@ -69,7 +69,7 @@ class DebLoader(BaseNode):
 
             if not matching_files:
                 print("警告：未找到匹配过滤条件的文件")
-                return ([], [], None, None)
+                return ([], [], [], [])
 
             # Extract binary data and process images
             binary_data_list = []
@@ -104,19 +104,19 @@ class DebLoader(BaseNode):
             print(f"成功解码 {successful_images} 个图像文件")
             print(f"总数据量: {sum(len(data) for data in binary_data_list)} 字节")
 
-            # Convert image list to ComfyUI format or None
+            # Convert image list to ComfyUI format or empty list
             if image_list:
                 # Stack all images into a batch tensor
                 images_tensor = torch.stack(image_list, dim=0)
                 return (binary_data_list, relative_paths, images_tensor, image_relative_paths)
             else:
-                return (binary_data_list, relative_paths, None, None)
+                return (binary_data_list, relative_paths, [], [])
 
         except Exception as e:
             print(f"错误：deb文件解析过程中发生异常: {str(e)}")
             import traceback
             traceback.print_exc()
-            return ([], [], None, None)
+            return ([], [], [], [])
 
     def _parse_deb_file(self, deb_file_path):
         """Parse deb file to extract all files from control.tar.* and data.tar.*"""

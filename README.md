@@ -586,6 +586,7 @@ Binary File Loader → DCI Analysis (text output)
 - **Graceful Degradation**: Continues operation when possible
 - **Detailed Logging**: Comprehensive error reporting
 - **User Feedback**: Clear error messages in UI
+- **Consistent List Outputs**: All LIST type outputs return empty lists instead of None when no data is available, ensuring workflow compatibility
 
 ## Contributing
 
@@ -1520,6 +1521,28 @@ DCI Image 节点现在采用更清晰的参数组织方式，提升用户体验�
 - 🎯 **新用户**：只需关注必需参数和 image_format，即可创建基本的DCI图像
 - 🎯 **高级用户**：使用 adv_ 前缀参数进行精细控制和专业定制
 - 🎯 **批量处理**：核心参数的简化使得批量创建图标更加高效
+
+### 输出类型一致性
+所有节点的LIST类型输出现在保持一致的行为：
+
+**主要改进**：
+- **空列表输出**：当没有数据时，所有LIST类型输出（BINARY_DATA_LIST、STRING_LIST）返回空列表`[]`而不是`None`
+- **工作流兼容性**：确保下游节点能够正确处理空列表，避免因`None`值导致的工作流中断
+- **类型安全**：保持输出类型的一致性，提高节点间的互操作性
+
+**影响的节点**：
+- **目录加载器**：`binary_data_list`、`relative_paths`、`image_relative_paths`输出
+- **Deb加载器**：`binary_data_list`、`relative_paths`、`image_relative_paths`输出
+- **Deb打包器**：`file_list`输出
+
+**技术实现**：
+```python
+# 修复前（可能返回None）
+return ([], [], None, None)
+
+# 修复后（始终返回列表）
+return ([], [], [], [])
+```
 
 ### DCI 文件格式实现
 扩展实现了完整的 DCI 规范：
