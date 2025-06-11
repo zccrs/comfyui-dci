@@ -473,11 +473,13 @@ class DebPackager(BaseNode):
             control_file_path = os.path.join(control_dir, "control")
             self._create_control_file(control_file_path, pkg_info)
 
-            # Copy matching files to target location
+                        # Copy matching files to target location
             target_base = os.path.join(data_dir, install_target_path.lstrip('/'))
             os.makedirs(target_base, exist_ok=True)
 
             file_list = []
+            symlink_info = []  # Store symlink information for tar creation
+
             for file_path in matching_files:
                 relative_path = os.path.relpath(file_path, source_dir)
                 target_file_path = os.path.join(target_base, relative_path)
@@ -492,21 +494,21 @@ class DebPackager(BaseNode):
                 deb_internal_path = os.path.join(install_target_path, relative_path).replace('\\', '/')
                 file_list.append(deb_internal_path)
 
-                # Create symlinks if mappings exist
+                # Collect symlink information if mappings exist
                 if symlink_mappings:
-                    symlinks_created = self._create_symlinks_for_file(
-                        file_path, target_file_path, relative_path,
-                        target_base, install_target_path, symlink_mappings
+                    symlinks_created = self._collect_symlink_info(
+                        file_path, relative_path, install_target_path, symlink_mappings
                     )
-                    file_list.extend(symlinks_created)
+                    symlink_info.extend(symlinks_created)
+                    file_list.extend([info['deb_path'] for info in symlinks_created])
 
             # Create control.tar.gz
             control_tar_path = os.path.join(temp_dir, "control.tar.gz")
             self._create_control_tar(control_tar_path, control_dir)
 
-            # Create data.tar.gz
+            # Create data.tar.gz with symlinks
             data_tar_path = os.path.join(temp_dir, "data.tar.gz")
-            self._create_data_tar(data_tar_path, data_dir)
+            self._create_data_tar_with_symlinks(data_tar_path, data_dir, symlink_info)
 
             # Create debian-binary
             debian_binary_path = os.path.join(temp_dir, "debian-binary")
@@ -570,6 +572,37 @@ class DebPackager(BaseNode):
                     arcname = os.path.relpath(file_path, data_dir)
                     tar.add(file_path, arcname=f"./{arcname}")
 
+    def _create_data_tar_with_symlinks(self, tar_path, data_dir, symlink_info):
+        """Create data.tar.gz from data directory with symlinks"""
+        with tarfile.open(tar_path, 'w:gz') as tar:
+            # Add regular files
+            for root, dirs, files in os.walk(data_dir):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    arcname = os.path.relpath(file_path, data_dir)
+                    tar.add(file_path, arcname=f"./{arcname}")
+
+            # Add symlinks using tarfile API
+            for symlink in symlink_info:
+                try:
+                    # Create a TarInfo object for the symlink
+                    tarinfo = tarfile.TarInfo(name=f"./{symlink['arcname']}")
+                    tarinfo.type = tarfile.SYMTYPE  # Symbolic link
+                    tarinfo.linkname = symlink['target']  # Target of the symlink
+                    tarinfo.size = 0
+                    tarinfo.mode = 0o777  # Standard symlink permissions
+                    tarinfo.uid = 0
+                    tarinfo.gid = 0
+                    tarinfo.mtime = int(time.time())
+
+                    # Add the symlink to the tar archive
+                    tar.addfile(tarinfo)
+
+                    print(f"    ✓ 在tar中创建软链接: {symlink['name']} -> {symlink['target']}")
+
+                except Exception as e:
+                    print(f"    ❌ 在tar中创建软链接失败 {symlink['name']}: {str(e)}")
+
     def _parse_symlink_csv(self, csv_path):
         """Parse CSV file for symlink mappings"""
         import csv
@@ -612,10 +645,9 @@ class DebPackager(BaseNode):
 
         return symlink_mappings
 
-    def _create_symlinks_for_file(self, original_file_path, target_file_path, relative_path,
-                                 target_base, install_target_path, symlink_mappings):
-        """Create symlinks for a file based on mappings"""
-        symlinks_created = []
+    def _collect_symlink_info(self, original_file_path, relative_path, install_target_path, symlink_mappings):
+        """Collect symlink information for a file based on mappings"""
+        symlinks_info = []
 
         # 获取文件名（不含扩展名）和扩展名
         filename = os.path.basename(original_file_path)
@@ -624,41 +656,43 @@ class DebPackager(BaseNode):
         # 检查是否有匹配的映射
         for source_pattern, target_names in symlink_mappings.items():
             if name_without_ext.startswith(source_pattern):
-                print(f"  为文件 {filename} 创建软链接 (匹配模式: {source_pattern})")
+                print(f"  为文件 {filename} 准备软链接 (匹配模式: {source_pattern})")
 
-                # 为每个目标名称创建软链接
+                # 为每个目标名称收集软链接信息
                 for target_name in target_names:
                     try:
                         # 构建软链接文件名
                         symlink_filename = f"{target_name}{ext}"
 
-                        # 计算软链接的完整路径
+                        # 计算软链接的相对路径
                         symlink_relative_path = os.path.join(os.path.dirname(relative_path), symlink_filename)
-                        symlink_target_path = os.path.join(target_base, symlink_relative_path)
 
-                        # 确保目录存在
-                        symlink_dir = os.path.dirname(symlink_target_path)
-                        if symlink_dir:
-                            os.makedirs(symlink_dir, exist_ok=True)
+                        # 计算在tar归档中的路径
+                        symlink_arcname = symlink_relative_path.replace('\\', '/')
 
-                        # 计算相对路径（从软链接位置到目标文件）
-                        relative_to_target = os.path.relpath(target_file_path, symlink_dir)
+                        # 计算目标文件的相对路径（从软链接位置到目标文件）
+                        # 在同一目录下，直接使用文件名
+                        if os.path.dirname(relative_path) == os.path.dirname(symlink_relative_path):
+                            target_relative = filename
+                        else:
+                            # 计算相对路径
+                            target_relative = os.path.relpath(relative_path, os.path.dirname(symlink_relative_path))
+                            target_relative = target_relative.replace('\\', '/')
 
-                        # 创建软链接
-                        if os.path.exists(symlink_target_path) or os.path.islink(symlink_target_path):
-                            os.remove(symlink_target_path)
+                        # 添加到软链接信息列表
+                        symlink_info = {
+                            'name': symlink_filename,
+                            'arcname': symlink_arcname,
+                            'target': target_relative,
+                            'deb_path': os.path.join(install_target_path, symlink_relative_path).replace('\\', '/')
+                        }
+                        symlinks_info.append(symlink_info)
 
-                        os.symlink(relative_to_target, symlink_target_path)
-
-                        # 添加到文件列表
-                        deb_internal_symlink_path = os.path.join(install_target_path, symlink_relative_path).replace('\\', '/')
-                        symlinks_created.append(deb_internal_symlink_path)
-
-                        print(f"    ✓ 创建软链接: {symlink_filename} -> {relative_to_target}")
+                        print(f"    ✓ 准备软链接: {symlink_filename} -> {target_relative}")
 
                     except Exception as e:
-                        print(f"    ❌ 创建软链接失败 {target_name}{ext}: {str(e)}")
+                        print(f"    ❌ 准备软链接失败 {target_name}{ext}: {str(e)}")
 
                 break  # 找到匹配后停止检查其他模式
 
-        return symlinks_created
+        return symlinks_info
