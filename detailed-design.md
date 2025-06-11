@@ -749,8 +749,11 @@ BINARY_DATA = bytes         # 直接的二进制数据内容，适用于所有�
 
 **路径处理逻辑**:
 ```python
-if output_directory and os.path.exists(output_directory):
-    final_path = os.path.join(output_directory, file_path)
+if output_directory:
+    # 使用指定的输出目录，如果不存在则自动创建
+    output_dir = output_directory
+    ensure_directory(output_dir)
+    final_path = os.path.join(output_dir, file_path)
 else:
     # 使用 ComfyUI 输出目录
     output_dir = folder_paths.get_output_directory()

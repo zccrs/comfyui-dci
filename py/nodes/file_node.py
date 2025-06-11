@@ -324,9 +324,13 @@ class BinaryFileSaver(BaseNode):
         cleaned_file_name = clean_file_name(file_name)
 
         # Determine output directory
-        if output_directory and os.path.exists(output_directory):
+        if output_directory:
+            # Use specified output directory, create if it doesn't exist
             output_dir = output_directory
+            # Ensure the directory exists
+            ensure_directory(output_dir)
         else:
+            # Use ComfyUI default output directory
             output_dir = get_output_directory()
 
         # Create full path

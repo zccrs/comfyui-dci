@@ -65,9 +65,13 @@ class DCIFileSaver(BaseNode):
         final_filename = self._apply_prefix_suffix(parsed_filename, filename_prefix, filename_suffix)
 
         # Determine output directory
-        if output_directory and os.path.exists(output_directory):
+        if output_directory:
+            # Use specified output directory, create if it doesn't exist
             output_dir = output_directory
+            # Ensure the directory exists
+            ensure_directory(output_dir)
         else:
+            # Use ComfyUI default output directory
             output_dir = get_output_directory()
 
         # Create full path
