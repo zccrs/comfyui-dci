@@ -9,6 +9,7 @@ from .image_preview_node import DCIImagePreview
 from .file_node import DCIFileNode, BinaryFileLoader, BinaryFileSaver, Base64Decoder, Base64Encoder
 from .dci_file_saver_node import DCIFileSaver
 from .structure_node import DCIAnalysis
+from .directory_loader_node import DirectoryLoader
 from ..utils.i18n import t
 
 NODE_CLASS_MAPPINGS = {
@@ -23,6 +24,7 @@ NODE_CLASS_MAPPINGS = {
     "Base64Encoder": Base64Encoder,
     "DCIFileSaver": DCIFileSaver,
     "DCIAnalysis": DCIAnalysis,
+    "DirectoryLoader": DirectoryLoader,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -37,6 +39,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "Base64Encoder": t("Base64 Encoder"),
     "DCIFileSaver": t("DCI File Saver"),
     "DCIAnalysis": t("DCI Analysis"),
+    "DirectoryLoader": t("Directory Loader"),
 }
 
 __all__ = [
@@ -51,6 +54,7 @@ __all__ = [
     'Base64Encoder',
     'DCIFileSaver',
     'DCIAnalysis',
+    'DirectoryLoader',
     'NODE_CLASS_MAPPINGS',
     'NODE_DISPLAY_NAME_MAPPINGS',
 ]

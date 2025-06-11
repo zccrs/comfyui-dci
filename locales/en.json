@@ -10,6 +10,7 @@
   "DCI File Saver": "DCI File Saver",
   "Binary File Loader": "Binary File Loader",
   "Binary File Saver": "Binary File Saver",
+  "Directory Loader": "Directory Loader",
 
   "Export": "Export",
   "Preview": "Preview",
@@ -52,6 +53,9 @@
   "webp_lossless": "WebP Lossless",
   "webp_alpha_quality": "WebP Alpha Quality",
   "png_compress_level": "PNG Compress Level",
+  "directory_path": "Directory Path",
+  "file_filter": "File Filter",
+  "include_subdirectories": "Include Subdirectories",
 
   "normal": "Normal",
   "disabled": "Disabled",
@@ -96,6 +100,8 @@
   "input_filename": "Input Filename",
   "filename_prefix": "Filename Prefix",
   "filename_suffix": "Filename Suffix",
+  "binary_data_list": "Binary Data List",
+  "relative_paths": "Relative Paths",
   "dci_image_1": "DCI Image 1",
   "dci_image_2": "DCI Image 2",
   "dci_image_3": "DCI Image 3",

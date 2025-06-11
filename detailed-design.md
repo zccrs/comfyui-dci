@@ -99,6 +99,7 @@ DCI/
 ├── Binary File Loader
 ├── Binary File Saver
 ├── DCI File Saver
+├── Directory Loader
 └── Binary File Uploader
 ```
 
@@ -764,6 +765,95 @@ else:
     output_dir = folder_paths.get_output_directory()
     final_path = os.path.join(output_dir, file_path)
 ```
+
+##### DirectoryLoader 类
+**职责**: 批量加载目录中的多个二进制文件，支持过滤条件和递归搜索功能
+
+**设计理念**:
+- 提供高效的批量文件加载能力
+- 支持灵活的文件过滤和目录遍历
+- 确保数据一致性和顺序稳定性
+- 优化大量文件的处理性能
+
+**输入参数**:
+- `directory_path`: 要扫描的目录路径 (STRING)
+- `file_filter`: 文件过滤模式，支持通配符 (STRING)，默认"*.dci"
+- `include_subdirectories`: 是否包含子目录搜索 (BOOLEAN)，默认True
+
+**输出数据**:
+- `binary_data_list`: 加载文件的二进制数据列表 (BINARY_DATA_LIST)
+- `relative_paths`: 相对文件路径列表 (STRING_LIST)
+
+**核心算法设计**:
+
+*广度优先遍历算法*:
+```python
+def _find_matching_files(self, directory_path, file_filter, include_subdirectories):
+    matching_files = []
+
+    if include_subdirectories:
+        # 使用广度优先搜索确保一致的遍历顺序
+        queue = deque([directory_path])
+
+        while queue:
+            current_dir = queue.popleft()
+            items = sorted(os.listdir(current_dir))  # 确保顺序一致性
+
+            for item in items:
+                item_path = os.path.join(current_dir, item)
+                if os.path.isfile(item_path):
+                    if self._matches_filter(item, file_filter):
+                        matching_files.append(item_path)
+                elif os.path.isdir(item_path):
+                    queue.append(item_path)  # 添加到队列末尾
+
+    matching_files.sort()  # 最终排序确保一致性
+    return matching_files
+```
+
+*通配符匹配算法*:
+```python
+def _matches_filter(self, filename, file_filter):
+    # 支持多种模式，用逗号或分号分隔
+    patterns = [pattern.strip() for pattern in file_filter.replace(';', ',').split(',')]
+
+    for pattern in patterns:
+        if pattern and fnmatch.fnmatch(filename, pattern):
+            return True
+    return False
+```
+
+**处理流程**:
+1. **路径验证**: 验证目录路径的有效性和可访问性
+2. **文件发现**: 使用广度优先算法遍历目录结构
+3. **模式匹配**: 应用通配符过滤器筛选文件
+4. **批量加载**: 逐个加载匹配的文件二进制内容
+5. **路径计算**: 计算相对于根目录的相对路径
+6. **数据同步**: 确保二进制数据列表和路径列表完全对应
+
+**错误处理策略**:
+- **权限错误**: 跳过无权限访问的目录，继续处理其他目录
+- **文件读取错误**: 记录失败的文件，继续处理其他文件
+- **路径错误**: 自动规范化路径，处理跨平台兼容性问题
+- **内存管理**: 大文件分批处理，避免内存溢出
+
+**性能优化**:
+- **排序优化**: 使用自然排序确保文件顺序的直观性
+- **内存效率**: 流式读取大文件，避免全部加载到内存
+- **缓存机制**: 目录结构信息缓存，减少重复文件系统调用
+- **并发安全**: 确保在多线程环境下的数据一致性
+
+**使用场景**:
+- **批量DCI文件分析**: 加载整个图标库进行批量分析
+- **文件格式转换**: 批量转换目录中的文件格式
+- **内容管理**: 扫描和管理大型文件集合
+- **工作流自动化**: 在自动化流程中处理文件批次
+
+**数据一致性保证**:
+- 二进制数据列表和路径列表的索引完全对应
+- 使用相同的排序算法确保顺序一致性
+- 失败的文件不会在任何一个输出列表中出现
+- 相对路径计算使用统一的基准目录
 
 ### 2.3 数据流转换
 

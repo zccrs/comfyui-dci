@@ -12,6 +12,7 @@
   "Binary File Saver": "二进制文件保存器",
   "Base64 Decoder": "Base64 解码器",
   "Base64 Encoder": "Base64 编码器",
+  "Directory Loader": "目录加载器",
 
   "Export": "导出",
   "Preview": "预览",
@@ -56,6 +57,9 @@
   "webp_lossless": "WebP无损压缩",
   "webp_alpha_quality": "WebP Alpha通道质量",
   "png_compress_level": "PNG压缩等级",
+  "directory_path": "目录路径",
+  "file_filter": "文件过滤器",
+  "include_subdirectories": "包含子目录",
 
   "normal": "正常",
   "disabled": "禁用",
@@ -100,6 +104,8 @@
   "input_filename": "输入文件名",
   "filename_prefix": "文件名前缀",
   "filename_suffix": "文件名后缀",
+  "binary_data_list": "二进制数据列表",
+  "relative_paths": "相对路径列表",
   "dci_image_1": "DCI 图像 1",
   "dci_image_2": "DCI 图像 2",
   "dci_image_3": "DCI 图像 3",

@@ -185,6 +185,7 @@ This extension provides 8 ComfyUI nodes, all unified under the **"DCI"** group a
 - DCI_FileSaver (DCI File Saver)
 - DCI_Base64Encoder (Base64 Encoder)
 - DCI_Base64Decoder (Base64 Decoder)
+- DCI_DirectoryLoader (Directory Loader)
 
 ### Available Node Detailed Description
 
@@ -332,6 +333,32 @@ Supports 20 preset colors including:
 **Output:**
 - **`binary_data`** (BINARY_DATA): Binary content of the file (bytes type)
 - **`file_path`** (STRING): Complete path of the loaded file
+
+#### 6.1. Directory Loader
+**Node Category**: `DCI/Files`
+**Function Description**: Batch load multiple binary files from a directory with filtering and recursive search capabilities. Uses breadth-first traversal for consistent file ordering.
+
+**Required Input Parameters:**
+- **`directory_path`** (STRING): Directory path to scan, default empty string
+- **`file_filter`** (STRING): File filter pattern using wildcards (e.g., "*.dci", "*.png,*.jpg"), default "*.dci"
+- **`include_subdirectories`** (BOOLEAN): Whether to include subdirectories in search, default True
+
+**Output:**
+- **`binary_data_list`** (BINARY_DATA_LIST): List of binary data from loaded files
+- **`relative_paths`** (STRING_LIST): List of relative file paths (relative to the specified directory)
+
+**Features:**
+- **Wildcard Filtering**: Support for multiple patterns separated by commas (e.g., "*.dci,*.png")
+- **Recursive Search**: Breadth-first directory traversal for consistent ordering
+- **Path Normalization**: Automatic path normalization and trailing slash handling
+- **Data Consistency**: Binary data list and path list maintain perfect order matching
+- **Error Resilience**: Continues processing even if individual files fail to load
+- **Cross-Platform**: Works on Windows, Linux, and macOS with proper path handling
+
+**Example Usage:**
+- Load all DCI files: `directory_path="/path/to/icons", file_filter="*.dci", include_subdirectories=True`
+- Load images only: `directory_path="/path/to/images", file_filter="*.png,*.jpg,*.webp", include_subdirectories=False`
+- Load all files: `directory_path="/path/to/data", file_filter="*", include_subdirectories=True`
 
 #### 7. Binary File Saver
 **Node Category**: `DCI/Files`
@@ -869,6 +896,39 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 **输出：**
 - **`binary_data`** (BINARY_DATA)：文件的二进制内容（bytes 类型）
 - **`file_path`** (STRING)：加载文件的完整路径
+
+#### 6.1. Directory Loader（目录加载器）
+**节点类别**：`DCI/Files`
+**功能描述**：批量加载目录中的多个二进制文件，支持过滤条件和递归搜索功能。使用广度优先遍历确保文件顺序的一致性。
+
+**必需输入参数：**
+- **`directory_path`** (STRING)：要扫描的目录路径，默认空字符串
+- **`file_filter`** (STRING)：文件过滤模式，支持通配符（如"*.dci"、"*.png,*.jpg"），默认"*.dci"
+- **`include_subdirectories`** (BOOLEAN)：是否包含子目录搜索，默认True
+
+**输出：**
+- **`binary_data_list`** (BINARY_DATA_LIST)：加载文件的二进制数据列表
+- **`relative_paths`** (STRING_LIST)：相对文件路径列表（相对于指定目录）
+
+**功能特性：**
+- **通配符过滤**：支持多种模式，用逗号分隔（如"*.dci,*.png"）
+- **递归搜索**：广度优先目录遍历，确保顺序一致性
+- **路径规范化**：自动路径规范化和尾部斜杠处理
+- **数据一致性**：二进制数据列表和路径列表保持完美的顺序匹配
+- **错误容错**：即使个别文件加载失败也会继续处理
+- **跨平台支持**：在Windows、Linux和macOS上正确处理路径
+
+**使用示例：**
+- 加载所有DCI文件：`directory_path="/path/to/icons", file_filter="*.dci", include_subdirectories=True`
+- 仅加载图像文件：`directory_path="/path/to/images", file_filter="*.png,*.jpg,*.webp", include_subdirectories=False`
+- 加载所有文件：`directory_path="/path/to/data", file_filter="*", include_subdirectories=True`
+
+**使用场景：**
+- **批量DCI文件处理**：一次性加载目录中的所有DCI文件进行批量分析
+- **图标库管理**：扫描图标目录，获取所有图标文件的列表和内容
+- **文件批量转换**：配合其他节点实现批量文件格式转换
+- **目录内容分析**：分析目录结构和文件分布情况
+- **工作流自动化**：在自动化工作流中批量处理文件
 
 #### 7. Binary File Saver（二进制文件保存器）
 **节点类别**：`DCI/Files`
