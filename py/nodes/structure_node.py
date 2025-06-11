@@ -334,13 +334,3 @@ class DCIAnalysis(BaseNode):
             lines.append(f"[{t('metadata.alpha8_format')}]")
 
         return lines
-
-
-# Register the node
-NODE_CLASS_MAPPINGS = {
-    "DCIAnalysis": DCIAnalysis
-}
-
-NODE_DISPLAY_NAME_MAPPINGS = {
-    "DCIAnalysis": t("DCI Analysis")
-}
