@@ -6,6 +6,9 @@ import gzip
 import subprocess
 import fnmatch
 import re
+import platform
+import struct
+import time
 from collections import deque
 from datetime import datetime
 from ..utils.file_utils import load_binary_data, ensure_directory
@@ -213,6 +216,69 @@ class DebPackager(BaseNode):
             print(f"警告：过滤器模式匹配失败: {file_filter} - {str(e)}")
             return False
 
+    def _is_ar_available(self):
+        """Check if ar command is available"""
+        try:
+            result = subprocess.run(
+                ["ar", "--version"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            return result.returncode == 0
+        except (FileNotFoundError, subprocess.TimeoutExpired, Exception):
+            return False
+
+    def _create_ar_archive_python(self, archive_path, files, working_dir):
+        """Create ar archive using pure Python implementation"""
+        try:
+            print("使用纯Python实现创建ar归档...")
+
+            with open(archive_path, 'wb') as ar_file:
+                # Write ar archive signature
+                ar_file.write(b"!<arch>\n")
+
+                for filename in files:
+                    file_path = os.path.join(working_dir, filename)
+
+                    if not os.path.exists(file_path):
+                        print(f"警告：文件不存在: {file_path}")
+                        continue
+
+                    # Get file stats
+                    stat = os.stat(file_path)
+                    file_size = stat.st_size
+
+                    # Read file content
+                    with open(file_path, 'rb') as f:
+                        file_content = f.read()
+
+                    # Create ar header (60 bytes)
+                    # Format: name(16) + date(12) + uid(6) + gid(6) + mode(8) + size(10) + end(2)
+                    name_field = filename.ljust(16)[:16].encode('ascii')
+                    date_field = str(int(stat.st_mtime)).ljust(12)[:12].encode('ascii')
+                    uid_field = b"0     "  # 6 bytes
+                    gid_field = b"0     "  # 6 bytes
+                    mode_field = b"100644  "  # 8 bytes
+                    size_field = str(file_size).ljust(10)[:10].encode('ascii')
+                    end_field = b"`\n"  # 2 bytes
+
+                    header = name_field + date_field + uid_field + gid_field + mode_field + size_field + end_field
+
+                    # Write header and content
+                    ar_file.write(header)
+                    ar_file.write(file_content)
+
+                    # Add padding if file size is odd
+                    if file_size % 2 == 1:
+                        ar_file.write(b"\n")
+
+            return True
+
+        except Exception as e:
+            print(f"错误：纯Python ar归档创建失败: {str(e)}")
+            return False
+
     def _parse_base_deb(self, deb_path):
         """Parse base deb package to extract control info"""
         control_info = {}
@@ -224,16 +290,23 @@ class DebPackager(BaseNode):
                 extract_dir = os.path.join(temp_dir, "extract")
                 os.makedirs(extract_dir)
 
-                # Use ar to extract deb components
-                result = subprocess.run(
-                    ["ar", "x", deb_path],
-                    cwd=extract_dir,
-                    capture_output=True,
-                    text=True
-                )
+                # Try ar command first, fallback to Python implementation
+                if self._is_ar_available():
+                    result = subprocess.run(
+                        ["ar", "x", deb_path],
+                        cwd=extract_dir,
+                        capture_output=True,
+                        text=True
+                    )
 
-                if result.returncode != 0:
-                    print(f"错误：无法解压基础deb包: {result.stderr}")
+                    if result.returncode != 0:
+                        print(f"错误：无法解压基础deb包: {result.stderr}")
+                        return control_info, data_files
+                else:
+                    print("ar命令不可用，使用纯Python实现解析deb包...")
+                    # For parsing, we would need to implement ar extraction too
+                    # For now, just return empty info on Windows
+                    print("警告：Windows系统上暂不支持解析基础deb包")
                     return control_info, data_files
 
                 # Parse control.tar.*
@@ -403,16 +476,36 @@ class DebPackager(BaseNode):
             with open(debian_binary_path, 'w') as f:
                 f.write("2.0\n")
 
-            # Create final deb package using ar
+            # Create final deb package using ar (with fallback)
             temp_deb_path = os.path.join(temp_dir, "package.deb")
-            result = subprocess.run([
-                "ar", "r", temp_deb_path,
-                "debian-binary", "control.tar.gz", "data.tar.gz"
-            ], cwd=temp_dir, capture_output=True, text=True)
 
-            if result.returncode != 0:
-                print(f"错误：创建deb包失败: {result.stderr}")
-                return False, []
+            # Try ar command first
+            if self._is_ar_available():
+                print("使用ar命令创建deb包...")
+                result = subprocess.run([
+                    "ar", "r", temp_deb_path,
+                    "debian-binary", "control.tar.gz", "data.tar.gz"
+                ], cwd=temp_dir, capture_output=True, text=True)
+
+                if result.returncode != 0:
+                    print(f"ar命令失败: {result.stderr}")
+                    print("回退到纯Python实现...")
+                    success = self._create_ar_archive_python(
+                        temp_deb_path,
+                        ["debian-binary", "control.tar.gz", "data.tar.gz"],
+                        temp_dir
+                    )
+                    if not success:
+                        return False, []
+            else:
+                # Use pure Python implementation
+                success = self._create_ar_archive_python(
+                    temp_deb_path,
+                    ["debian-binary", "control.tar.gz", "data.tar.gz"],
+                    temp_dir
+                )
+                if not success:
+                    return False, []
 
             # Copy the created deb file to output location
             shutil.copy2(temp_deb_path, output_deb_path)

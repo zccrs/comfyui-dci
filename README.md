@@ -1105,6 +1105,7 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **压缩支持**：支持gzip、xz、bz2等多种压缩格式
 - **控制文件**：自动生成标准的control文件和包结构
 - **dpkg兼容**：生成的deb包可用dpkg-deb命令验证和安装
+- **跨平台支持**：Windows系统自动使用纯Python ar实现，Linux/Unix优先使用ar命令
 
 **使用示例：**
 - 从头创建DCI图标包：`local_directory="/path/to/icons", file_filter="*.dci", output_directory="/tmp/output", package_name="my-icons", package_version="1.0.0"`
