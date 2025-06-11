@@ -416,17 +416,51 @@ Supports 20 preset colors including:
 
 #### 7. Binary File Saver
 **Node Category**: `DCI/Files`
-**Function Description**: Save binary data to the file system, supports custom output paths and directories.
+**Function Description**: Save binary data to the file system with advanced filename handling, prefix/suffix support, and cross-platform path processing.
 
 **Required Input Parameters:**
 - **`binary_data`** (BINARY_DATA): Binary data to save
-- **`file_name`** (STRING): Target filename, default "binary_file"
+- **`file_name`** (STRING): Target filename or path, default "binary_file"
 
 **Optional Input Parameters:**
-- **`output_directory`** (STRING): Output directory, defaults to ComfyUI output directory
+- **`output_directory`** (STRING): Output directory, defaults to ComfyUI output directory. If specified directory doesn't exist, it will be created automatically. Supports paths with trailing slashes and automatically normalizes path separators
+- **`filename_prefix`** (STRING): Filename prefix, default empty string
+- **`filename_suffix`** (STRING): Filename suffix, default empty string
+- **`allow_overwrite`** (BOOLEAN): Allow overwriting existing files, default False
 
 **Output:**
-- **`saved_path`** (STRING): Actual saved file path
+- **`saved_path`** (STRING): Actual saved file path on success, detailed error message on failure
+
+**Advanced Filename Handling Features:**
+
+*Path Processing:*
+- **Cross-Platform Compatibility**: Automatically handles Windows (`\`) and Linux (`/`) path separators
+- **Path Extraction**: Automatically extracts filename from full paths
+- **Example**: `/home/user/data.txt` → `data.txt`, `C:\Users\test\file.bin` → `file.bin`
+
+*Prefix and Suffix Support:*
+- **Flexible Naming**: Support for adding custom prefix and suffix to filenames
+- **Extension Preservation**: Automatically preserves file extensions when applying prefix/suffix
+- **Example**: Input `data.txt`, prefix `backup_`, suffix `_v2` → `backup_data_v2.txt`
+
+*Special Cases Handling:*
+- **Empty Input**: Uses default filename `binary_file` when input is empty
+- **Path-Only Input**: Uses default filename when input contains only path separators
+- **No Extension**: Handles files without extensions properly
+- **File Cleaning**: Removes invalid characters from filenames for filesystem compatibility
+
+**Usage Examples:**
+- Basic save: `file_name="data.bin", output_directory="/path/to/output"`
+- With prefix: `file_name="report.pdf", filename_prefix="backup_"`
+- With suffix: `file_name="image.png", filename_suffix="_processed"`
+- Full customization: `file_name="/tmp/data.txt", filename_prefix="new_", filename_suffix="_v2"`
+
+**Technical Features:**
+- **Path Safety**: Automatic path normalization and invalid character removal
+- **Directory Creation**: Automatically creates output directories if they don't exist
+- **Overwrite Protection**: Prevents accidental file overwriting with explicit control
+- **Error Handling**: Comprehensive error reporting for debugging
+- **Cross-Platform**: Works consistently on Windows, Linux, and macOS
 
 #### 8. Base64 Decoder
 **Node Category**: `DCI/Files`
@@ -1101,17 +1135,51 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 
 #### 7. Binary File Saver（二进制文件保存器）
 **节点类别**：`DCI/Files`
-**功能描述**：将二进制数据保存到文件系统，支持自定义输出路径和目录。
+**功能描述**：将二进制数据保存到文件系统，具有高级文件名处理、前缀后缀支持和跨平台路径处理功能。
 
 **必需输入参数：**
 - **`binary_data`** (BINARY_DATA)：要保存的二进制数据
-- **`file_name`** (STRING)：目标文件名，默认"binary_file"
+- **`file_name`** (STRING)：目标文件名或路径，默认"binary_file"
 
 **可选输入参数：**
-- **`output_directory`** (STRING)：输出目录，默认使用 ComfyUI 输出目录
+- **`output_directory`** (STRING)：输出目录，默认使用 ComfyUI 输出目录。如果指定的目录不存在，将自动创建。支持以反斜杠结尾的路径，自动规范化路径分隔符
+- **`filename_prefix`** (STRING)：文件名前缀，默认空字符串
+- **`filename_suffix`** (STRING)：文件名后缀，默认空字符串
+- **`allow_overwrite`** (BOOLEAN)：允许覆盖现有文件，默认False
 
 **输出：**
-- **`saved_path`** (STRING)：实际保存的文件路径
+- **`saved_path`** (STRING)：保存成功时为实际保存的文件路径，保存失败时为详细错误信息
+
+**高级文件名处理功能：**
+
+*路径处理：*
+- **跨平台兼容**：自动处理Windows（`\`）和Linux（`/`）路径分隔符
+- **路径提取**：从完整路径中自动提取文件名部分
+- **示例**：`/home/user/data.txt` → `data.txt`，`C:\Users\test\file.bin` → `file.bin`
+
+*前缀后缀支持：*
+- **灵活命名**：支持为文件名添加自定义前缀和后缀
+- **扩展名保持**：应用前缀后缀时自动保持文件扩展名
+- **示例**：输入`data.txt`，前缀`backup_`，后缀`_v2` → `backup_data_v2.txt`
+
+*特殊情况处理：*
+- **空输入**：输入为空时使用默认文件名`binary_file`
+- **纯路径**：输入只是路径分隔符时使用默认文件名
+- **无扩展名**：正确处理没有扩展名的文件
+- **文件名清理**：移除文件名中的无效字符以确保文件系统兼容性
+
+**使用示例：**
+- 基本保存：`file_name="data.bin", output_directory="/path/to/output"`
+- 添加前缀：`file_name="report.pdf", filename_prefix="backup_"`
+- 添加后缀：`file_name="image.png", filename_suffix="_processed"`
+- 完整自定义：`file_name="/tmp/data.txt", filename_prefix="new_", filename_suffix="_v2"`
+
+**技术特性：**
+- **路径安全**：自动路径规范化和无效字符移除
+- **目录创建**：如果输出目录不存在则自动创建
+- **覆盖保护**：通过明确控制防止意外文件覆盖
+- **错误处理**：全面的错误报告用于调试
+- **跨平台**：在Windows、Linux和macOS上保持一致工作
 
 #### 8. Base64 Decoder（Base64 解码器）
 **节点类别**：`DCI/Files`

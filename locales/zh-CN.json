@@ -62,6 +62,8 @@
   "directory_path": "目录路径",
   "file_filter": "文件过滤器",
   "include_subdirectories": "包含子目录",
+  "filename_prefix": "文件名前缀",
+  "filename_suffix": "文件名后缀",
   "local_directory": "本地目录",
   "install_target_path": "安装目标路径",
   "base_deb_path": "基础deb包路径",

@@ -58,6 +58,8 @@
   "directory_path": "Directory Path",
   "file_filter": "File Filter",
   "include_subdirectories": "Include Subdirectories",
+  "filename_prefix": "Filename Prefix",
+  "filename_suffix": "Filename Suffix",
   "local_directory": "Local Directory",
   "install_target_path": "Install Target Path",
   "base_deb_path": "Base Deb Path",

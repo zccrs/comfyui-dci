@@ -271,7 +271,7 @@ class BinaryFileLoader(BaseNode):
 
 
 class BinaryFileSaver(BaseNode):
-    """ComfyUI node for saving binary data to file system"""
+    """ComfyUI node for saving binary data to file system with prefix and suffix support"""
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -282,6 +282,8 @@ class BinaryFileSaver(BaseNode):
             },
             "optional": {
                 t("output_directory"): ("STRING", {"default": "", "multiline": False}),
+                t("filename_prefix"): ("STRING", {"default": "", "multiline": False}),
+                t("filename_suffix"): ("STRING", {"default": "", "multiline": False}),
                 t("allow_overwrite"): ("BOOLEAN", {"default": False}),
             }
         }
@@ -299,12 +301,14 @@ class BinaryFileSaver(BaseNode):
         binary_data = kwargs.get(t("binary_data")) if t("binary_data") in kwargs else kwargs.get("binary_data")
         file_name = kwargs.get(t("file_name")) if t("file_name") in kwargs else kwargs.get("file_name")
         output_directory = kwargs.get(t("output_directory")) if t("output_directory") in kwargs else kwargs.get("output_directory", "")
+        filename_prefix = kwargs.get(t("filename_prefix")) if t("filename_prefix") in kwargs else kwargs.get("filename_prefix", "")
+        filename_suffix = kwargs.get(t("filename_suffix")) if t("filename_suffix") in kwargs else kwargs.get("filename_suffix", "")
         allow_overwrite = kwargs.get(t("allow_overwrite")) if t("allow_overwrite") in kwargs else kwargs.get("allow_overwrite", False)
 
-        return self._execute_impl(binary_data, file_name, output_directory, allow_overwrite)
+        return self._execute_impl(binary_data, file_name, output_directory, filename_prefix, filename_suffix, allow_overwrite)
 
-    def _execute_impl(self, binary_data, file_name, output_directory="", allow_overwrite=False):
-        """Save binary data to file system"""
+    def _execute_impl(self, binary_data, file_name, output_directory="", filename_prefix="", filename_suffix="", allow_overwrite=False):
+        """Save binary data to file system with prefix and suffix support"""
         # Check if binary_data is valid
         if binary_data is None:
             error_msg = "错误：未提供二进制数据 (None)"
@@ -323,11 +327,19 @@ class BinaryFileSaver(BaseNode):
 
         print(f"Processing binary data: {len(binary_data)} bytes")
 
-        # Clean up file name
+        # Parse and clean up file name
         try:
-            cleaned_file_name = clean_file_name(file_name)
+            parsed_filename = self._parse_filename(file_name)
         except Exception as e:
-            error_msg = f"错误：文件名清理失败: {str(e)}"
+            error_msg = f"错误：文件名解析失败: {str(e)}"
+            print(error_msg)
+            return (error_msg,)
+
+        # Apply prefix and suffix
+        try:
+            final_filename = self._apply_prefix_suffix(parsed_filename, filename_prefix, filename_suffix)
+        except Exception as e:
+            error_msg = f"错误：文件名前缀后缀处理失败: {str(e)}"
             print(error_msg)
             return (error_msg,)
 
@@ -352,7 +364,7 @@ class BinaryFileSaver(BaseNode):
 
         # Create full path
         try:
-            full_path = os.path.join(output_dir, cleaned_file_name)
+            full_path = os.path.join(output_dir, final_filename)
             print(f"Target file path: {full_path}")
         except Exception as e:
             error_msg = f"错误：文件路径构建失败: {str(e)}"
@@ -381,7 +393,8 @@ class BinaryFileSaver(BaseNode):
         try:
             bytes_written = save_binary_data(binary_data, full_path)
             if bytes_written > 0:
-                print(f"File saved successfully: {full_path} ({bytes_written} bytes)")
+                print(f"File saved successfully: {final_filename} ({bytes_written} bytes)")
+                print(f"Full path: {full_path}")
                 return (full_path,)
             else:
                 error_msg = f"错误：文件保存失败，写入0字节: {full_path}"
@@ -391,6 +404,41 @@ class BinaryFileSaver(BaseNode):
             error_msg = f"错误：文件写入失败: {str(e)} (路径: {full_path})"
             print(error_msg)
             return (error_msg,)
+
+    def _parse_filename(self, input_filename):
+        """Parse filename from input string, handling both filenames and full paths"""
+        if not input_filename:
+            return "binary_file"
+
+        # Normalize path separators for cross-platform compatibility
+        normalized_path = input_filename.replace('\\', '/')
+
+        # Extract basename from path (handles both Windows and Linux separators)
+        basename = os.path.basename(normalized_path)
+
+        # If basename is empty (input was just a path separator), use default
+        if not basename:
+            return "binary_file"
+
+        # Clean the filename (remove invalid characters)
+        from ..utils.file_utils import clean_file_name
+        cleaned_filename = clean_file_name(basename)
+
+        return cleaned_filename
+
+    def _apply_prefix_suffix(self, filename, prefix, suffix):
+        """Apply prefix and suffix to filename while preserving the file extension"""
+        # Split filename and extension
+        name_part, extension = os.path.splitext(filename)
+
+        # Apply prefix and suffix
+        if prefix:
+            name_part = f"{prefix}{name_part}"
+        if suffix:
+            name_part = f"{name_part}{suffix}"
+
+        # Reconstruct filename with extension
+        return f"{name_part}{extension}"
 
 
 class Base64Decoder(BaseNode):
