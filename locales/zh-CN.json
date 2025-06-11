@@ -92,6 +92,7 @@
 
   "dci_image_data": "DCI 图像",
   "dci_binary_data": "DCI 二进制数据",
+  "path": "路径",
   "analysis_text": "分析文本",
   "saved_path": "保存路径",
   "saved_filename": "保存的文件名",

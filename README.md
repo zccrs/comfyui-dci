@@ -226,6 +226,8 @@ This extension provides 8 ComfyUI nodes, all unified under the **"DCI"** group a
 
 **Output:**
 - **`dci_image_data`** (DCI_IMAGE_DATA): DCI image metadata structure
+- **`path`** (STRING): DCI image internal path string (e.g., "256/normal.light/1/1.0p.-1.0_0_0_0_0_0_0.webp")
+- **`binary_data`** (BINARY_DATA): Binary data content of the image
 
 **Usage Example:**
 ```
@@ -246,6 +248,8 @@ Image Input → DCI Image Node → DCI Image Data → DCI File Node → DCI Bina
 
 **Output:**
 - **`dci_image_data`** (DCI_IMAGE_DATA): Dictionary data containing path, content, and metadata
+- **`path`** (STRING): DCI image internal path string (e.g., "256/normal.light/1/1.0p.-1.0_0_0_0_0_0_0.webp")
+- **`binary_data`** (BINARY_DATA): Binary data content of the image
 
 **Node Features:**
 - **Simplified Interface**: Only shows the 5 most commonly used basic parameters, clean and easy to use
@@ -690,6 +694,8 @@ pip install -r requirements.txt
 
 **输出：**
 - **`dci_image_data`** (DCI_IMAGE_DATA)：包含路径、内容、元数据和图层信息的字典数据
+- **`path`** (STRING)：DCI图像的内部路径字符串（如："256/normal.light/1/1.0p.-1.0_0_0_0_0_0_0.webp"）
+- **`binary_data`** (BINARY_DATA)：图像的二进制数据内容
 
 **背景色处理说明：**
 - **transparent**：保持原始透明度（仅PNG和WebP支持）
@@ -728,6 +734,8 @@ pip install -r requirements.txt
 
 **输出：**
 - **`dci_image_data`** (DCI_IMAGE_DATA)：包含路径、内容、元数据的字典数据
+- **`path`** (STRING)：DCI图像的内部路径字符串（如："256/normal.light/1/1.0p.-1.0_0_0_0_0_0_0.webp"）
+- **`binary_data`** (BINARY_DATA)：图像的二进制数据内容
 
 **节点特点：**
 - **简化界面**：显示最常用的基本参数和高级压缩设置，界面清晰易用

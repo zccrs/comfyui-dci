@@ -456,6 +456,11 @@ state_images = {
 - `blue_adjustment`: 蓝色分量调整 (-100 到 100)
 - `alpha_adjustment`: 透明度调整 (-100 到 100)
 
+**输出**:
+- `dci_image_data` (DCI_IMAGE_DATA): 包含路径、内容、元数据和图层信息的字典数据
+- `path` (STRING): DCI图像的内部路径字符串
+- `binary_data` (BINARY_DATA): 图像的二进制数据内容
+
 **输出数据结构**:
 ```python
 DCI_IMAGE_DATA = {

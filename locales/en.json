@@ -88,6 +88,7 @@
 
   "dci_image_data": "DCI Image Data",
   "dci_binary_data": "DCI Binary Data",
+  "path": "Path",
   "analysis_text": "Analysis Text",
   "saved_path": "Saved Path",
   "saved_filename": "Saved Filename",

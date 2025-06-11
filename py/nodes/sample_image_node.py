@@ -39,8 +39,8 @@ class DCISampleImage(BaseNode):
             }
         }
 
-    RETURN_TYPES = ("DCI_IMAGE_DATA",)
-    RETURN_NAMES = (t("dci_image_data"),)
+    RETURN_TYPES = ("DCI_IMAGE_DATA", "STRING", "BINARY_DATA")
+    RETURN_NAMES = (t("dci_image_data"), t("path"), t("binary_data"))
     FUNCTION = "execute"
     CATEGORY = f"DCI/{t('Export')}"
 
@@ -79,7 +79,7 @@ class DCISampleImage(BaseNode):
                      webp_lossless: bool = False, webp_alpha_quality: int = 100, png_compress_level: int = 6):
         """Create simple DCI image data with basic settings only"""
         if not _image_support:
-            return ({},)
+            return ({}, "", "")
 
         # Convert ComfyUI image tensor to PIL Image
         pil_image = tensor_to_pil(image)
@@ -162,4 +162,4 @@ class DCISampleImage(BaseNode):
 
         print(f"Created simple DCI image: {dci_path} ({len(img_content)} bytes)")
 
-        return (dci_image_data,)
+        return (dci_image_data, dci_path, img_content)

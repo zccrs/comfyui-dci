@@ -62,8 +62,8 @@ class DCIImage(BaseNode):
             }
         }
 
-    RETURN_TYPES = ("DCI_IMAGE_DATA",)
-    RETURN_NAMES = (t("dci_image_data"),)
+    RETURN_TYPES = ("DCI_IMAGE_DATA", "STRING", "BINARY_DATA")
+    RETURN_NAMES = (t("dci_image_data"), t("path"), t("binary_data"))
     FUNCTION = "execute"
     CATEGORY = f"DCI/{t('Export')}"
 
@@ -131,7 +131,7 @@ class DCIImage(BaseNode):
                      red_adjustment=0, green_adjustment=0, blue_adjustment=0, alpha_adjustment=0):
         """Create DCI image metadata and data with layer support"""
         if not _image_support:
-            return ({},)
+            return ({}, "", "")
 
         # Convert ComfyUI image tensor to PIL Image
         pil_image = tensor_to_pil(image)
@@ -231,4 +231,4 @@ class DCIImage(BaseNode):
         print(f"  {t('Color adjustments')} - H:{hue_adjustment} S:{saturation_adjustment} B:{brightness_adjustment}")
         print(f"  {t('RGBA adjustments')} - R:{red_adjustment} G:{green_adjustment} B:{blue_adjustment} A:{alpha_adjustment}")
 
-        return (dci_image_data,)
+        return (dci_image_data, dci_path, img_content)
