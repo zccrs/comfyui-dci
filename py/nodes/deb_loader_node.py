@@ -1,14 +1,12 @@
 import os
+import fnmatch
 import tempfile
 import tarfile
-import subprocess
-import fnmatch
-import platform
-import shutil
-from PIL import Image
 import io
+from PIL import Image
 import torch
 import numpy as np
+from ..utils.file_utils import load_binary_data
 from ..utils.i18n import t
 from .base_node import BaseNode
 
@@ -41,149 +39,134 @@ class DebLoader(BaseNode):
     def _execute_impl(self, deb_file_path="", file_filter="*.dci"):
         """Load files from deb package with filtering"""
 
+        # Validate deb file path
+        if not deb_file_path:
+            print("错误：未提供deb文件路径")
+            return ([], [], [], [])
+
+        # Normalize cross-platform path
+        normalized_path = self._normalize_cross_platform_path(deb_file_path)
+
+        # Check if file exists
+        if not os.path.exists(normalized_path):
+            print(f"错误：deb文件不存在: {normalized_path}")
+            return ([], [], [], [])
+
+        print(f"正在解析deb文件: {normalized_path}")
+
+        # Parse deb file and extract all files
         try:
-            # Validate deb file path
-            if not deb_file_path:
-                print("错误：未提供deb文件路径")
-                return ([], [], [], [])
-
-            # Enhanced path normalization for cross-platform support
-            normalized_path = self._normalize_cross_platform_path(deb_file_path.strip())
-            print(f"规范化路径: {deb_file_path} -> {normalized_path}")
-
-            if not os.path.exists(normalized_path):
-                print(f"错误：deb文件不存在: {normalized_path}")
-                print(f"原始路径: {deb_file_path}")
-                return ([], [], [], [])
-
-            if not os.path.isfile(normalized_path):
-                print(f"错误：路径不是文件: {normalized_path}")
-                return ([], [], [], [])
-
-            print(f"正在解析deb文件: {normalized_path}")
-
-            # Parse deb file to extract all files
             all_files = self._parse_deb_file(normalized_path)
-            print(f"deb文件中找到 {len(all_files)} 个文件")
+            print(f"从deb包中提取 {len(all_files)} 个文件")
+        except Exception as e:
+            print(f"错误：解析deb文件失败: {str(e)}")
+            return ([], [], [], [])
 
-            if not all_files:
-                print("警告：deb文件中未找到任何文件")
-                return ([], [], [], [])
-
-            # Filter files based on pattern
+        # Filter files based on pattern
+        try:
             matching_files = self._filter_files(all_files, file_filter)
             print(f"过滤后匹配 {len(matching_files)} 个文件")
-
-            if not matching_files:
-                print("警告：未找到匹配过滤条件的文件")
-                return ([], [], [], [])
-
-            # Extract binary data and process images
-            binary_data_list = []
-            relative_paths = []
-            image_list = []
-            image_relative_paths = []
-            successful_loads = 0
-            successful_images = 0
-
-            for file_path, file_content in matching_files.items():
-                try:
-                    if file_content is not None:
-                        binary_data_list.append(file_content)
-                        relative_paths.append(file_path)
-                        successful_loads += 1
-                        print(f"  ✓ 提取成功: {file_path} ({len(file_content)} 字节)")
-
-                        # Try to decode as image
-                        image_tensor = self._try_decode_image(file_content, file_path)
-                        if image_tensor is not None:
-                            image_list.append(image_tensor)
-                            image_relative_paths.append(file_path)
-                            successful_images += 1
-                            print(f"    ✓ 图像解码成功: {file_path}")
-                    else:
-                        print(f"  ❌ 提取失败: {file_path}")
-
-                except Exception as e:
-                    print(f"  ❌ 提取异常: {file_path} - {str(e)}")
-
-            print(f"成功提取 {successful_loads}/{len(matching_files)} 个文件")
-            print(f"成功解码 {successful_images} 个图像文件")
-            print(f"总数据量: {sum(len(data) for data in binary_data_list)} 字节")
-
-            # Convert image list to ComfyUI format or empty list
-            if image_list:
-                # Stack all images into a batch tensor
-                images_tensor = torch.stack(image_list, dim=0)
-                return (binary_data_list, relative_paths, images_tensor, image_relative_paths)
-            else:
-                return (binary_data_list, relative_paths, [], [])
-
         except Exception as e:
-            print(f"错误：deb文件解析过程中发生异常: {str(e)}")
-            import traceback
-            traceback.print_exc()
+            print(f"错误：文件过滤失败: {str(e)}")
             return ([], [], [], [])
+
+        # Process results
+        binary_data_list = []
+        relative_paths = []
+        image_list = []
+        image_relative_paths = []
+        successful_loads = 0
+        successful_images = 0
+
+        for file_path, file_content in matching_files.items():
+            try:
+                if file_content is not None:
+                    binary_data_list.append(file_content)
+                    relative_paths.append(file_path)
+                    successful_loads += 1
+                    print(f"  ✓ 加载成功: {file_path} ({len(file_content)} 字节)")
+
+                    # Try to decode as image
+                    image_tensor = self._try_decode_image(file_content, file_path)
+                    if image_tensor is not None:
+                        image_list.append(image_tensor)
+                        image_relative_paths.append(file_path)
+                        successful_images += 1
+                        print(f"    ✓ 图像解码成功: {file_path}")
+                else:
+                    print(f"  ❌ 文件内容为空: {file_path}")
+
+            except Exception as e:
+                print(f"  ❌ 处理异常: {file_path} - {str(e)}")
+
+        print(f"成功加载 {successful_loads}/{len(matching_files)} 个文件")
+        print(f"成功解码 {successful_images} 个图像文件")
+        print(f"总数据量: {sum(len(data) for data in binary_data_list)} 字节")
+
+        # Convert image list to ComfyUI format or empty list
+        if image_list:
+            # Stack all images into a batch tensor
+            images_tensor = torch.stack(image_list, dim=0)
+            return (binary_data_list, relative_paths, images_tensor, image_relative_paths)
+        else:
+            return (binary_data_list, relative_paths, [], [])
 
     def _normalize_cross_platform_path(self, path):
         """Normalize path for cross-platform compatibility"""
         try:
             # Handle Windows paths on Linux/Unix systems
-            if platform.system() != "Windows" and ":" in path and "\\" in path:
-                # This looks like a Windows path on a non-Windows system
-                print(f"检测到Windows路径格式在非Windows系统上: {path}")
+            if os.name != 'nt' and ':' in path and '\\' in path:
+                # This looks like a Windows path on a Unix system
+                print(f"检测到Windows路径格式: {path}")
 
-                # Try to convert Windows path to Unix path
-                # Remove drive letter and convert backslashes to forward slashes
-                if len(path) > 2 and path[1] == ":":
-                    # Remove drive letter (e.g., "D:" -> "")
-                    path_without_drive = path[2:]
-                    # Convert backslashes to forward slashes
-                    unix_path = path_without_drive.replace("\\", "/")
-                    # Remove leading slash if present
-                    unix_path = unix_path.lstrip("/")
+                # Extract filename from Windows path
+                filename = os.path.basename(path.replace('\\', '/'))
+                print(f"提取文件名: {filename}")
 
-                    print(f"尝试转换为Unix路径: {unix_path}")
+                # Search in common locations
+                search_paths = [
+                    '/tmp',
+                    os.path.expanduser('~'),
+                    os.getcwd(),
+                    '/home',
+                    '/var/tmp'
+                ]
 
-                    # Try to find the file in common locations
-                    possible_paths = [
-                        unix_path,  # Direct conversion
-                        os.path.join("/tmp", os.path.basename(unix_path)),  # /tmp directory
-                        os.path.join("/home", os.getenv("USER", "user"), os.path.basename(unix_path)),  # User home
-                        os.path.join(os.getcwd(), os.path.basename(unix_path)),  # Current directory
-                        os.path.basename(unix_path),  # Just filename in current directory
-                    ]
+                for search_dir in search_paths:
+                    if os.path.exists(search_dir):
+                        candidate_path = os.path.join(search_dir, filename)
+                        if os.path.exists(candidate_path):
+                            print(f"找到文件: {candidate_path}")
+                            return candidate_path
 
-                    for possible_path in possible_paths:
-                        if os.path.exists(possible_path):
-                            print(f"找到文件: {possible_path}")
-                            return os.path.normpath(possible_path)
+                # If not found, try the original path converted to Unix format
+                unix_path = '/' + path.replace('\\', '/').replace(':', '')
+                if os.path.exists(unix_path):
+                    print(f"使用转换后的Unix路径: {unix_path}")
+                    return unix_path
 
-                    print(f"警告：无法找到文件，尝试的路径: {possible_paths}")
-
-            # Standard path normalization
-            return os.path.normpath(path)
+                print(f"警告：未找到对应文件，使用原始路径: {path}")
+                return path
+            else:
+                # Normal path normalization
+                return os.path.normpath(path.strip())
 
         except Exception as e:
             print(f"路径规范化失败: {str(e)}")
-            return os.path.normpath(path)
+            return path
 
     def _parse_deb_file(self, deb_file_path):
-        """Parse deb file to extract all files from control.tar.* and data.tar.*"""
+        """Parse deb file and extract all files using pure Python implementation"""
         all_files = {}
 
         try:
             with tempfile.TemporaryDirectory() as temp_dir:
-                # Extract deb package using ar
+                # Extract deb package using pure Python ar implementation
                 extract_dir = os.path.join(temp_dir, "extract")
                 os.makedirs(extract_dir)
 
-                # Try to use ar command first, fallback to Python implementation
-                if self._extract_with_ar(deb_file_path, extract_dir):
-                    print("使用ar命令成功解压deb包")
-                elif self._extract_with_python(deb_file_path, extract_dir):
-                    print("使用Python实现成功解压deb包")
-                else:
+                # Extract ar archive using pure Python
+                if not self._extract_ar_archive_python(deb_file_path, extract_dir):
                     print("错误：无法解压deb包")
                     return all_files
 
@@ -208,45 +191,11 @@ class DebLoader(BaseNode):
 
         return all_files
 
-    def _extract_with_ar(self, deb_file_path, extract_dir):
-        """Try to extract deb file using ar command"""
+    def _extract_ar_archive_python(self, deb_file_path, extract_dir):
+        """Extract ar archive using pure Python implementation"""
         try:
-            # Check if ar command is available
-            result = subprocess.run(
-                ["ar", "--version"],
-                capture_output=True,
-                text=True
-            )
+            print("使用纯Python实现解析ar归档...")
 
-            if result.returncode != 0:
-                print("ar命令不可用")
-                return False
-
-            # Use ar to extract deb components
-            result = subprocess.run(
-                ["ar", "x", deb_file_path],
-                cwd=extract_dir,
-                capture_output=True,
-                text=True
-            )
-
-            if result.returncode != 0:
-                print(f"ar命令执行失败: {result.stderr}")
-                return False
-
-            return True
-
-        except FileNotFoundError:
-            print("ar命令未找到")
-            return False
-        except Exception as e:
-            print(f"ar命令执行异常: {str(e)}")
-            return False
-
-    def _extract_with_python(self, deb_file_path, extract_dir):
-        """Extract deb file using pure Python implementation"""
-        try:
-            # Deb files are ar archives, we can parse them manually
             with open(deb_file_path, 'rb') as f:
                 # Read ar header
                 magic = f.read(8)
@@ -281,11 +230,12 @@ class DebLoader(BaseNode):
                         output_path = os.path.join(extract_dir, filename)
                         with open(output_path, 'wb') as out_f:
                             out_f.write(content)
+                        print(f"  提取文件: {filename} ({size} 字节)")
 
             return True
 
         except Exception as e:
-            print(f"Python解压实现失败: {str(e)}")
+            print(f"Python ar解析失败: {str(e)}")
             return False
 
     def _extract_tar_files(self, tar_path, tar_type):

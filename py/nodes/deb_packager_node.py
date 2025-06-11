@@ -3,10 +3,8 @@ import tempfile
 import shutil
 import tarfile
 import gzip
-import subprocess
 import fnmatch
 import re
-import platform
 import struct
 import time
 from collections import deque
@@ -216,18 +214,7 @@ class DebPackager(BaseNode):
             print(f"警告：过滤器模式匹配失败: {file_filter} - {str(e)}")
             return False
 
-    def _is_ar_available(self):
-        """Check if ar command is available"""
-        try:
-            result = subprocess.run(
-                ["ar", "--version"],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
-            return result.returncode == 0
-        except (FileNotFoundError, subprocess.TimeoutExpired, Exception):
-            return False
+
 
     def _create_ar_archive_python(self, archive_path, files, working_dir):
         """Create ar archive using pure Python implementation"""
@@ -280,33 +267,19 @@ class DebPackager(BaseNode):
             return False
 
     def _parse_base_deb(self, deb_path):
-        """Parse base deb package to extract control info"""
+        """Parse base deb package to extract control info using pure Python"""
         control_info = {}
         data_files = {}  # Not used anymore, but kept for compatibility
 
         try:
             with tempfile.TemporaryDirectory() as temp_dir:
-                # Extract deb package using ar
+                # Extract deb package using pure Python ar implementation
                 extract_dir = os.path.join(temp_dir, "extract")
                 os.makedirs(extract_dir)
 
-                # Try ar command first, fallback to Python implementation
-                if self._is_ar_available():
-                    result = subprocess.run(
-                        ["ar", "x", deb_path],
-                        cwd=extract_dir,
-                        capture_output=True,
-                        text=True
-                    )
-
-                    if result.returncode != 0:
-                        print(f"错误：无法解压基础deb包: {result.stderr}")
-                        return control_info, data_files
-                else:
-                    print("ar命令不可用，使用纯Python实现解析deb包...")
-                    # For parsing, we would need to implement ar extraction too
-                    # For now, just return empty info on Windows
-                    print("警告：Windows系统上暂不支持解析基础deb包")
+                # Use pure Python ar extraction
+                if not self._extract_ar_archive_python(deb_path, extract_dir):
+                    print("错误：无法解压基础deb包")
                     return control_info, data_files
 
                 # Parse control.tar.*
@@ -319,6 +292,53 @@ class DebPackager(BaseNode):
             print(f"错误：解析基础deb包失败: {str(e)}")
 
         return control_info, data_files
+
+    def _extract_ar_archive_python(self, deb_file_path, extract_dir):
+        """Extract ar archive using pure Python implementation"""
+        try:
+            print("使用纯Python实现解析ar归档...")
+
+            with open(deb_file_path, 'rb') as f:
+                # Read ar header
+                magic = f.read(8)
+                if magic != b'!<arch>\n':
+                    print("错误：不是有效的ar归档文件")
+                    return False
+
+                while True:
+                    # Read file header (60 bytes)
+                    header = f.read(60)
+                    if len(header) < 60:
+                        break
+
+                    # Parse header
+                    filename = header[0:16].decode('ascii').strip()
+                    size_str = header[48:58].decode('ascii').strip()
+
+                    if not size_str:
+                        break
+
+                    size = int(size_str)
+
+                    # Read file content
+                    content = f.read(size)
+
+                    # Pad to even boundary
+                    if size % 2 == 1:
+                        f.read(1)
+
+                    # Save file
+                    if filename and not filename.startswith('/'):
+                        output_path = os.path.join(extract_dir, filename)
+                        with open(output_path, 'wb') as out_f:
+                            out_f.write(content)
+                        print(f"  提取文件: {filename} ({size} 字节)")
+
+            return True
+
+        except Exception as e:
+            print(f"Python ar解析失败: {str(e)}")
+            return False
 
     def _parse_control_tar(self, control_tar_path):
         """Parse control.tar.* to extract control file content"""
@@ -476,36 +496,17 @@ class DebPackager(BaseNode):
             with open(debian_binary_path, 'w') as f:
                 f.write("2.0\n")
 
-            # Create final deb package using ar (with fallback)
+            # Create final deb package using pure Python ar implementation
             temp_deb_path = os.path.join(temp_dir, "package.deb")
 
-            # Try ar command first
-            if self._is_ar_available():
-                print("使用ar命令创建deb包...")
-                result = subprocess.run([
-                    "ar", "r", temp_deb_path,
-                    "debian-binary", "control.tar.gz", "data.tar.gz"
-                ], cwd=temp_dir, capture_output=True, text=True)
-
-                if result.returncode != 0:
-                    print(f"ar命令失败: {result.stderr}")
-                    print("回退到纯Python实现...")
-                    success = self._create_ar_archive_python(
-                        temp_deb_path,
-                        ["debian-binary", "control.tar.gz", "data.tar.gz"],
-                        temp_dir
-                    )
-                    if not success:
-                        return False, []
-            else:
-                # Use pure Python implementation
-                success = self._create_ar_archive_python(
-                    temp_deb_path,
-                    ["debian-binary", "control.tar.gz", "data.tar.gz"],
-                    temp_dir
-                )
-                if not success:
-                    return False, []
+            # Use pure Python implementation
+            success = self._create_ar_archive_python(
+                temp_deb_path,
+                ["debian-binary", "control.tar.gz", "data.tar.gz"],
+                temp_dir
+            )
+            if not success:
+                return False, []
 
             # Copy the created deb file to output location
             shutil.copy2(temp_deb_path, output_deb_path)

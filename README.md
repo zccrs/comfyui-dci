@@ -1105,7 +1105,7 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **压缩支持**：支持gzip、xz、bz2等多种压缩格式
 - **控制文件**：自动生成标准的control文件和包结构
 - **dpkg兼容**：生成的deb包可用dpkg-deb命令验证和安装
-- **跨平台支持**：Windows系统自动使用纯Python ar实现，Linux/Unix优先使用ar命令
+- **跨平台支持**：所有平台均使用纯Python ar实现，无需外部依赖
 
 **使用示例：**
 - 从头创建DCI图标包：`local_directory="/path/to/icons", file_filter="*.dci", output_directory="/tmp/output", package_name="my-icons", package_version="1.0.0"`
@@ -1137,13 +1137,13 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 **功能特性：**
 
 *deb包解析：*
-- **ar命令支持**：使用`ar`命令提取deb包组件
+- **纯Python实现**：使用纯Python解析ar归档格式，无需外部命令
 - **多归档支持**：处理control.tar.*和data.tar.*两个归档文件
 - **压缩格式支持**：处理.gz、.xz、.bz2和未压缩的tar归档文件
 - **通配符过滤**：支持多种模式，用逗号分隔（如"*.dci,*.png"）
 - **路径清理**：自动移除提取路径中的前导"./"
 - **错误恢复**：即使个别文件提取失败也继续处理
-- **跨平台支持**：在有`ar`命令的系统上工作
+- **跨平台支持**：Linux、Windows、macOS等所有平台均支持
 - **🆕 自动图像识别**：根据扩展名识别图像文件（.png、.jpg、.jpeg、.bmp、.gif、.tiff、.webp、.ico）
 - **🆕 图像解码**：自动将识别的图像解码为ComfyUI IMAGE格式（RGB，0-1范围）
 - **🆕 双输出系统**：同时提供二进制数据（所有文件）和解码图像（仅图像文件）
@@ -1169,9 +1169,9 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **批量处理**：从多个deb包中批量提取文件进行分析
 
 **依赖要求：**
-- **系统要求**：推荐使用`ar`命令但非必需（通常是binutils包的一部分）
-- **跨平台支持**：当`ar`命令不可用时自动回退到纯Python实现
-- **Python模块**：使用标准库模块（tarfile、subprocess、tempfile）
+- **系统要求**：无需外部依赖，完全使用Python标准库实现
+- **跨平台支持**：所有平台均使用纯Python实现，无需安装额外工具
+- **Python模块**：使用标准库模块（tarfile、tempfile、os、struct）
 - **路径处理**：增强的跨平台路径规范化，支持在Linux/Unix系统上处理Windows路径
 
 #### 7. Binary File Saver（二进制文件保存器）
