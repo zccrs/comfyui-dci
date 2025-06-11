@@ -31,10 +31,10 @@ def test_webp_settings():
 
     # 测试不同的WebP设置
     settings = [
-        {"name": "标准有损", "lossless": False, "quality": 80, "near_lossless": 100, "alpha_quality": 100},
-        {"name": "无损压缩", "lossless": True, "quality": 80, "near_lossless": 100, "alpha_quality": 100},
-        {"name": "近无损80", "lossless": False, "quality": 80, "near_lossless": 80, "alpha_quality": 100},
-        {"name": "低透明度质量", "lossless": False, "quality": 80, "near_lossless": 100, "alpha_quality": 50},
+        {"name": "标准有损", "lossless": False, "quality": 80, "alpha_quality": 100},
+        {"name": "无损压缩", "lossless": True, "quality": 80, "alpha_quality": 100},
+        {"name": "低Alpha质量", "lossless": False, "quality": 80, "alpha_quality": 50},
+        {"name": "极低Alpha质量", "lossless": False, "quality": 80, "alpha_quality": 10},
     ]
 
     results = []
@@ -44,8 +44,6 @@ def test_webp_settings():
 
         if setting["lossless"]:
             img.save(webp_bytes, format='WEBP', lossless=True)
-        elif setting["near_lossless"] < 100:
-            img.save(webp_bytes, format='WEBP', quality=setting["quality"], method=6, near_lossless=setting["near_lossless"])
         else:
             img.save(webp_bytes, format='WEBP', quality=setting["quality"], alpha_quality=setting["alpha_quality"])
 

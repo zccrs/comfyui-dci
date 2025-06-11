@@ -663,8 +663,7 @@ pip install -r requirements.txt
 
 *WebP高级设置：*
 - **`webp_lossless`** (BOOLEAN)：WebP无损压缩，默认False
-- **`webp_near_lossless`** (INT)：WebP近无损质量（60-100），默认100
-- **`webp_alpha_quality`** (INT)：WebP透明度质量（0-100），默认100
+- **`webp_alpha_quality`** (INT)：WebP Alpha通道质量（0-100），默认100
 
 *PNG高级设置：*
 - **`png_compress_level`** (INT)：PNG压缩等级（0-9），默认6
@@ -722,8 +721,7 @@ pip install -r requirements.txt
 
 *WebP高级设置：*
 - **`webp_lossless`** (BOOLEAN)：WebP无损压缩，默认False
-- **`webp_near_lossless`** (INT)：WebP近无损质量（60-100），默认100
-- **`webp_alpha_quality`** (INT)：WebP透明度质量（0-100），默认100
+- **`webp_alpha_quality`** (INT)：WebP Alpha通道质量（0-100），默认100
 
 *PNG高级设置：*
 - **`png_compress_level`** (INT)：PNG压缩等级（0-9），默认6
@@ -735,7 +733,7 @@ pip install -r requirements.txt
 - **简化界面**：显示最常用的基本参数和高级压缩设置，界面清晰易用
 - **默认设置**：所有高级参数使用合理的默认值（优先级1、无外边框、无调色板、无颜色调整）
 - **透明背景**：默认保持图像原始透明度，适合大多数图标制作场景
-- **高级压缩**：支持WebP无损/近无损压缩、透明度质量控制和PNG压缩等级设置
+- **高级压缩**：支持WebP无损压缩、Alpha通道质量控制和PNG压缩等级设置
 - **质量控制**：在文件大小和图像质量之间提供精细平衡控制
 - **快速创建**：适合快速创建标准DCI图像，无需复杂配置
 

@@ -32,7 +32,6 @@ class DCISampleImage(BaseNode):
 
                 # WebP advanced settings
                 t("webp_lossless"): ("BOOLEAN", {"default": False}),
-                t("webp_near_lossless"): ("INT", {"default": 100, "min": 60, "max": 100, "step": 1}),
                 t("webp_alpha_quality"): ("INT", {"default": 100, "min": 0, "max": 100, "step": 1}),
 
                 # PNG advanced settings
@@ -68,17 +67,16 @@ class DCISampleImage(BaseNode):
 
         # WebP advanced settings
         webp_lossless = kwargs.get(t("webp_lossless")) if t("webp_lossless") in kwargs else kwargs.get("webp_lossless", False)
-        webp_near_lossless = kwargs.get(t("webp_near_lossless")) if t("webp_near_lossless") in kwargs else kwargs.get("webp_near_lossless", 100)
         webp_alpha_quality = kwargs.get(t("webp_alpha_quality")) if t("webp_alpha_quality") in kwargs else kwargs.get("webp_alpha_quality", 100)
 
         # PNG advanced settings
         png_compress_level = kwargs.get(t("png_compress_level")) if t("png_compress_level") in kwargs else kwargs.get("png_compress_level", 6)
 
         return self._execute_impl(image, icon_size, icon_state, scale, tone_type, image_format, image_quality,
-                                 webp_lossless, webp_near_lossless, webp_alpha_quality, png_compress_level)
+                                 webp_lossless, webp_alpha_quality, png_compress_level)
 
     def _execute_impl(self, image, icon_size, icon_state: IconState, scale, tone_type: ToneType = ToneType.LIGHT, image_format: ImageFormat = ImageFormat.WEBP, image_quality: int = 90,
-                     webp_lossless: bool = False, webp_near_lossless: int = 100, webp_alpha_quality: int = 100, png_compress_level: int = 6):
+                     webp_lossless: bool = False, webp_alpha_quality: int = 100, png_compress_level: int = 6):
         """Create simple DCI image data with basic settings only"""
         if not _image_support:
             return ({},)
@@ -99,9 +97,6 @@ class DCISampleImage(BaseNode):
             if webp_lossless:
                 # Lossless WebP
                 resized_image.save(img_bytes, format='WEBP', lossless=True)
-            elif webp_near_lossless < 100:
-                # Near-lossless WebP
-                resized_image.save(img_bytes, format='WEBP', quality=image_quality, method=6, near_lossless=webp_near_lossless)
             else:
                 # Standard lossy WebP with alpha quality control
                 if resized_image.mode == 'RGBA':

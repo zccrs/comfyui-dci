@@ -35,7 +35,6 @@ class DCIImage(BaseNode):
 
                 # WebP advanced settings
                 t("webp_lossless"): ("BOOLEAN", {"default": False}),
-                t("webp_near_lossless"): ("INT", {"default": 100, "min": 60, "max": 100, "step": 1}),
                 t("webp_alpha_quality"): ("INT", {"default": 100, "min": 0, "max": 100, "step": 1}),
 
                 # PNG advanced settings
@@ -91,7 +90,6 @@ class DCIImage(BaseNode):
 
         # WebP advanced settings
         webp_lossless = kwargs.get(t("webp_lossless")) if t("webp_lossless") in kwargs else kwargs.get("webp_lossless", False)
-        webp_near_lossless = kwargs.get(t("webp_near_lossless")) if t("webp_near_lossless") in kwargs else kwargs.get("webp_near_lossless", 100)
         webp_alpha_quality = kwargs.get(t("webp_alpha_quality")) if t("webp_alpha_quality") in kwargs else kwargs.get("webp_alpha_quality", 100)
 
         # PNG advanced settings
@@ -118,7 +116,7 @@ class DCIImage(BaseNode):
         alpha_adjustment = kwargs.get(t("alpha_adjustment")) if t("alpha_adjustment") in kwargs else kwargs.get("alpha_adjustment", 0)
 
         return self._execute_impl(image, icon_size, icon_state, scale, tone_type,
-                                 image_format, image_quality, webp_lossless, webp_near_lossless, webp_alpha_quality, png_compress_level,
+                                 image_format, image_quality, webp_lossless, webp_alpha_quality, png_compress_level,
                                  background_color, custom_bg_r, custom_bg_g, custom_bg_b,
                                  layer_priority, layer_padding, palette_type,
                                  hue_adjustment, saturation_adjustment, brightness_adjustment,
@@ -126,7 +124,7 @@ class DCIImage(BaseNode):
 
     def _execute_impl(self, image, icon_size, icon_state: IconState, scale, tone_type: ToneType = ToneType.LIGHT,
                      image_format: ImageFormat = ImageFormat.WEBP, image_quality=90,
-                     webp_lossless=False, webp_near_lossless=100, webp_alpha_quality=100, png_compress_level=6,
+                     webp_lossless=False, webp_alpha_quality=100, png_compress_level=6,
                      background_color: BackgroundColor = BackgroundColor.TRANSPARENT, custom_bg_r=255, custom_bg_g=255, custom_bg_b=255,
                      layer_priority=1, layer_padding=0, palette_type: PaletteType = PaletteType.NONE,
                      hue_adjustment=0, saturation_adjustment=0, brightness_adjustment=0,
@@ -159,9 +157,6 @@ class DCIImage(BaseNode):
             if webp_lossless:
                 # Lossless WebP
                 resized_image.save(img_bytes, format='WEBP', lossless=True)
-            elif webp_near_lossless < 100:
-                # Near-lossless WebP
-                resized_image.save(img_bytes, format='WEBP', quality=image_quality, method=6, near_lossless=webp_near_lossless)
             else:
                 # Standard lossy WebP with alpha quality control
                 if resized_image.mode == 'RGBA' and background_color == BackgroundColor.TRANSPARENT:

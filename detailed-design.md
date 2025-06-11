@@ -434,8 +434,7 @@ state_images = {
 
 *WebP高级参数*:
 - `webp_lossless`: 无损压缩 (boolean)，优先级最高
-- `webp_near_lossless`: 近无损质量 (60-100)，当lossless=False时生效
-- `webp_alpha_quality`: 透明度质量 (0-100)，控制透明通道压缩
+- `webp_alpha_quality`: Alpha通道质量 (0-100)，控制Alpha通道压缩
 
 *PNG高级参数*:
 - `png_compress_level`: 压缩等级 (0-9)，0=无压缩，9=最高压缩
@@ -507,8 +506,7 @@ DCI_IMAGE_DATA = {
 
 *WebP压缩模式优先级*:
 1. 如果 `webp_lossless=True`：使用无损压缩，忽略其他参数
-2. 如果 `webp_near_lossless<100`：使用近无损压缩，结合quality参数
-3. 否则：使用标准有损压缩，应用alpha_quality控制透明度
+2. 否则：使用标准有损压缩，应用alpha_quality控制Alpha通道
 
 *PNG压缩等级说明*:
 - 等级0：无压缩，文件最大，速度最快

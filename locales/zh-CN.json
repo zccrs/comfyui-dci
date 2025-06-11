@@ -54,8 +54,7 @@
   "allow_overwrite": "允许覆盖",
   "image_quality": "图片质量",
   "webp_lossless": "WebP无损压缩",
-  "webp_near_lossless": "WebP近无损压缩",
-  "webp_alpha_quality": "WebP透明度质量",
+  "webp_alpha_quality": "WebP Alpha通道质量",
   "png_compress_level": "PNG压缩等级",
 
   "normal": "正常",
