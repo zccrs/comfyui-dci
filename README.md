@@ -378,6 +378,42 @@ Supports 20 preset colors including:
 - Load images only: `directory_path="/path/to/images", file_filter="*.png,*.jpg,*.webp", include_subdirectories=False`
 - Load all files: `directory_path="/path/to/data", file_filter="*", include_subdirectories=True`
 
+#### 6.2. Deb Loader
+**Node Category**: `DCI/Files`
+**Function Description**: Extract and load files from Debian packages (.deb files) with filtering capabilities. Parses both control.tar.* and data.tar.* archives within the deb package to extract matching files.
+
+**Required Input Parameters:**
+- **`deb_file_path`** (STRING): Path to the .deb file to parse, default empty string
+- **`file_filter`** (STRING): File filter pattern using wildcards (e.g., "*.dci", "*.png,*.jpg"), default "*.dci"
+
+**Output:**
+- **`binary_data_list`** (BINARY_DATA_LIST): List of binary data from extracted files
+- **`relative_paths`** (STRING_LIST): List of relative file paths within the deb package
+
+**Features:**
+- **Deb Package Parsing**: Uses `ar` command to extract deb package components
+- **Multi-Archive Support**: Processes both control.tar.* and data.tar.* archives
+- **Compression Support**: Handles .gz, .xz, .bz2, and uncompressed tar archives
+- **Wildcard Filtering**: Support for multiple patterns separated by commas (e.g., "*.dci,*.png")
+- **Path Cleaning**: Automatically removes leading "./" from extracted paths
+- **Error Resilience**: Continues processing even if individual files fail to extract
+- **Cross-Platform**: Works on systems with `ar` command available
+
+**Technical Details:**
+- **Extraction Process**: Uses temporary directories for safe extraction
+- **Archive Detection**: Automatically detects compression format from file extension
+- **Memory Efficient**: Processes files in memory without creating temporary files
+- **Path Normalization**: Ensures consistent path formatting across platforms
+
+**Example Usage:**
+- Extract DCI files from deb: `deb_file_path="/path/to/package.deb", file_filter="*.dci"`
+- Extract images from deb: `deb_file_path="/path/to/icons.deb", file_filter="*.png,*.svg"`
+- Extract all files from deb: `deb_file_path="/path/to/data.deb", file_filter="*"`
+
+**Dependencies:**
+- **System Requirement**: `ar` command must be available (usually part of binutils package)
+- **Python Modules**: Uses standard library modules (tarfile, subprocess, tempfile)
+
 #### 7. Binary File Saver
 **Node Category**: `DCI/Files`
 **Function Description**: Save binary data to the file system, supports custom output paths and directories.
@@ -1017,6 +1053,51 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **版本管理**：基于现有包创建新版本，支持增量更新
 - **批量部署**：在多个系统间标准化部署图标资源
 - **依赖管理**：利用deb包的依赖系统管理图标包关系
+
+#### 6.3. Deb Loader（Deb 加载器）
+**节点类别**：`DCI/Files`
+**功能描述**：从Debian软件包（.deb文件）中提取和加载文件，支持文件过滤功能。解析deb包内的control.tar.*和data.tar.*归档文件，提取符合条件的文件。
+
+**必需输入参数：**
+- **`deb_file_path`** (STRING)：要解析的.deb文件路径，默认空字符串
+- **`file_filter`** (STRING)：文件过滤模式，支持通配符（如"*.dci"、"*.png,*.jpg"），默认"*.dci"
+
+**输出：**
+- **`binary_data_list`** (BINARY_DATA_LIST)：提取文件的二进制数据列表
+- **`relative_paths`** (STRING_LIST)：deb包内文件的相对路径列表
+
+**功能特性：**
+
+*deb包解析：*
+- **ar命令支持**：使用`ar`命令提取deb包组件
+- **多归档支持**：处理control.tar.*和data.tar.*两个归档文件
+- **压缩格式支持**：处理.gz、.xz、.bz2和未压缩的tar归档文件
+- **通配符过滤**：支持多种模式，用逗号分隔（如"*.dci,*.png"）
+- **路径清理**：自动移除提取路径中的前导"./"
+- **错误恢复**：即使个别文件提取失败也继续处理
+- **跨平台支持**：在有`ar`命令的系统上工作
+
+*技术细节：*
+- **提取过程**：使用临时目录进行安全提取
+- **归档检测**：根据文件扩展名自动检测压缩格式
+- **内存高效**：在内存中处理文件，不创建临时文件
+- **路径规范化**：确保跨平台的路径格式一致性
+
+**使用示例：**
+- 从deb包提取DCI文件：`deb_file_path="/path/to/package.deb", file_filter="*.dci"`
+- 从deb包提取图像文件：`deb_file_path="/path/to/icons.deb", file_filter="*.png,*.svg"`
+- 从deb包提取所有文件：`deb_file_path="/path/to/data.deb", file_filter="*"`
+
+**使用场景：**
+- **DCI图标包分析**：从已安装或下载的deb包中提取DCI图标文件
+- **包内容检查**：检查deb包内包含的文件和内容
+- **文件提取**：从deb包中提取特定类型的文件进行处理
+- **逆向工程**：分析现有deb包的文件结构和内容
+- **批量处理**：从多个deb包中批量提取文件进行分析
+
+**依赖要求：**
+- **系统要求**：必须有`ar`命令可用（通常是binutils包的一部分）
+- **Python模块**：使用标准库模块（tarfile、subprocess、tempfile）
 
 #### 7. Binary File Saver（二进制文件保存器）
 **节点类别**：`DCI/Files`

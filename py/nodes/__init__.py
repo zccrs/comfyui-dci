@@ -11,6 +11,7 @@ from .dci_file_saver_node import DCIFileSaver
 from .structure_node import DCIAnalysis
 from .directory_loader_node import DirectoryLoader
 from .deb_packager_node import DebPackager
+from .deb_loader_node import DebLoader
 from ..utils.i18n import t
 
 NODE_CLASS_MAPPINGS = {
@@ -27,6 +28,7 @@ NODE_CLASS_MAPPINGS = {
     "DCIAnalysis": DCIAnalysis,
     "DirectoryLoader": DirectoryLoader,
     "DebPackager": DebPackager,
+    "DebLoader": DebLoader,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -43,6 +45,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "DCIAnalysis": t("DCI Analysis"),
     "DirectoryLoader": t("Directory Loader"),
     "DebPackager": t("Deb Packager"),
+    "DebLoader": t("Deb Loader"),
 }
 
 __all__ = [
@@ -59,6 +62,7 @@ __all__ = [
     'DCIAnalysis',
     'DirectoryLoader',
     'DebPackager',
+    'DebLoader',
     'NODE_CLASS_MAPPINGS',
     'NODE_DISPLAY_NAME_MAPPINGS',
 ]
