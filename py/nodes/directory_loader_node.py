@@ -1,6 +1,10 @@
 import os
 import fnmatch
 from collections import deque
+from PIL import Image
+import io
+import torch
+import numpy as np
 from ..utils.file_utils import load_binary_data
 from ..utils.i18n import t
 from .base_node import BaseNode
@@ -18,8 +22,8 @@ class DirectoryLoader(BaseNode):
             }
         }
 
-    RETURN_TYPES = ("BINARY_DATA_LIST", "STRING_LIST")
-    RETURN_NAMES = (t("binary_data_list"), t("relative_paths"))
+    RETURN_TYPES = ("BINARY_DATA_LIST", "STRING_LIST", "IMAGE", "STRING_LIST")
+    RETURN_NAMES = (t("binary_data_list"), t("relative_paths"), t("image_list"), t("image_relative_paths"))
     FUNCTION = "execute"
     CATEGORY = f"DCI/{t('Files')}"
 
@@ -39,7 +43,7 @@ class DirectoryLoader(BaseNode):
         # Validate directory path
         if not directory_path:
             print("错误：未提供目录路径")
-            return ([], [])
+            return ([], [], None, None)
 
         # Normalize the directory path
         try:
@@ -47,16 +51,16 @@ class DirectoryLoader(BaseNode):
             print(f"正在扫描目录: {normalized_path}")
         except Exception as e:
             print(f"错误：目录路径规范化失败: {str(e)}")
-            return ([], [])
+            return ([], [], None, None)
 
         # Check if directory exists
         if not os.path.exists(normalized_path):
             print(f"错误：目录不存在: {normalized_path}")
-            return ([], [])
+            return ([], [], None, None)
 
         if not os.path.isdir(normalized_path):
             print(f"错误：路径不是目录: {normalized_path}")
-            return ([], [])
+            return ([], [], None, None)
 
         # Find matching files
         try:
@@ -64,12 +68,15 @@ class DirectoryLoader(BaseNode):
             print(f"找到 {len(matching_files)} 个匹配的文件")
         except Exception as e:
             print(f"错误：文件搜索失败: {str(e)}")
-            return ([], [])
+            return ([], [], None, None)
 
-        # Load binary data for each file
+        # Load binary data and process images
         binary_data_list = []
         relative_paths = []
+        image_list = []
+        image_relative_paths = []
         successful_loads = 0
+        successful_images = 0
 
         for file_path in matching_files:
             try:
@@ -84,6 +91,14 @@ class DirectoryLoader(BaseNode):
                     relative_paths.append(relative_path)
                     successful_loads += 1
                     print(f"  ✓ 加载成功: {relative_path} ({len(binary_data)} 字节)")
+
+                    # Try to decode as image
+                    image_tensor = self._try_decode_image(binary_data, relative_path)
+                    if image_tensor is not None:
+                        image_list.append(image_tensor)
+                        image_relative_paths.append(relative_path)
+                        successful_images += 1
+                        print(f"    ✓ 图像解码成功: {relative_path}")
                 else:
                     print(f"  ❌ 加载失败: {relative_path}")
 
@@ -91,9 +106,16 @@ class DirectoryLoader(BaseNode):
                 print(f"  ❌ 加载异常: {relative_path} - {str(e)}")
 
         print(f"成功加载 {successful_loads}/{len(matching_files)} 个文件")
+        print(f"成功解码 {successful_images} 个图像文件")
         print(f"总数据量: {sum(len(data) for data in binary_data_list)} 字节")
 
-        return (binary_data_list, relative_paths)
+        # Convert image list to ComfyUI format or None
+        if image_list:
+            # Stack all images into a batch tensor
+            images_tensor = torch.stack(image_list, dim=0)
+            return (binary_data_list, relative_paths, images_tensor, image_relative_paths)
+        else:
+            return (binary_data_list, relative_paths, None, None)
 
     def _find_matching_files(self, directory_path, file_filter, include_subdirectories):
         """Find files matching the filter pattern using breadth-first search"""
@@ -164,3 +186,39 @@ class DirectoryLoader(BaseNode):
         except Exception as e:
             print(f"警告：过滤器模式匹配失败: {file_filter} - {str(e)}")
             return False
+
+    def _is_image_file(self, filename):
+        """Check if file is a supported image format"""
+        image_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff', '.tif', '.webp', '.ico'}
+        _, ext = os.path.splitext(filename.lower())
+        return ext in image_extensions
+
+    def _try_decode_image(self, binary_data, relative_path):
+        """Try to decode binary data as an image and convert to ComfyUI format"""
+        try:
+            # Check if file extension suggests it's an image
+            if not self._is_image_file(relative_path):
+                return None
+
+            # Try to open image with PIL
+            image_stream = io.BytesIO(binary_data)
+            pil_image = Image.open(image_stream)
+
+            # Convert to RGB if necessary (handle RGBA, grayscale, etc.)
+            if pil_image.mode != 'RGB':
+                pil_image = pil_image.convert('RGB')
+
+            # Convert PIL image to numpy array
+            image_array = np.array(pil_image)
+
+            # Convert to ComfyUI format: (H, W, C) with values in [0, 1]
+            image_array = image_array.astype(np.float32) / 255.0
+
+            # Convert to PyTorch tensor
+            image_tensor = torch.from_numpy(image_array)
+
+            return image_tensor
+
+        except Exception as e:
+            # Not an image or failed to decode, silently ignore
+            return None

@@ -115,6 +115,8 @@
   "filename_suffix": "Filename Suffix",
   "binary_data_list": "Binary Data List",
   "relative_paths": "Relative Paths",
+  "image_list": "Image List",
+  "image_relative_paths": "Image Relative Paths",
   "deb_binary_data": "Deb Binary Data",
   "file_list": "File List",
   "preview_images": "Preview Images",

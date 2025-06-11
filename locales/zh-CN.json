@@ -119,6 +119,8 @@
   "filename_suffix": "文件名后缀",
   "binary_data_list": "二进制数据列表",
   "relative_paths": "相对路径列表",
+  "image_list": "图像列表",
+  "image_relative_paths": "图像相对路径列表",
   "deb_binary_data": "Deb 二进制数据",
   "file_list": "文件列表",
   "preview_images": "预览图像",

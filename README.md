@@ -354,7 +354,7 @@ Supports 20 preset colors including:
 
 #### 6.1. Directory Loader
 **Node Category**: `DCI/Files`
-**Function Description**: Batch load multiple binary files from a directory with filtering and recursive search capabilities. Uses breadth-first traversal for consistent file ordering.
+**Function Description**: Batch load multiple binary files from a directory with filtering and recursive search capabilities. Uses breadth-first traversal for consistent file ordering. **NEW**: Automatically detects and decodes image files, providing separate image outputs for direct use in ComfyUI workflows.
 
 **Required Input Parameters:**
 - **`directory_path`** (STRING): Directory path to scan, default empty string
@@ -364,6 +364,8 @@ Supports 20 preset colors including:
 **Output:**
 - **`binary_data_list`** (BINARY_DATA_LIST): List of binary data from loaded files
 - **`relative_paths`** (STRING_LIST): List of relative file paths (relative to the specified directory)
+- **`image_list`** (IMAGE): **NEW** - Batch tensor of decoded images (None if no images found)
+- **`image_relative_paths`** (STRING_LIST): **NEW** - List of relative paths for decoded images
 
 **Features:**
 - **Wildcard Filtering**: Support for multiple patterns separated by commas (e.g., "*.dci,*.png")
@@ -372,15 +374,20 @@ Supports 20 preset colors including:
 - **Data Consistency**: Binary data list and path list maintain perfect order matching
 - **Error Resilience**: Continues processing even if individual files fail to load
 - **Cross-Platform**: Works on Windows, Linux, and macOS with proper path handling
+- **🆕 Automatic Image Detection**: Recognizes image files by extension (.png, .jpg, .jpeg, .bmp, .gif, .tiff, .webp, .ico)
+- **🆕 Image Decoding**: Automatically decodes detected images to ComfyUI IMAGE format (RGB, 0-1 range)
+- **🆕 Dual Output System**: Provides both binary data (for all files) and decoded images (for image files only)
+- **🆕 Format Conversion**: Handles various image formats and color modes (RGBA→RGB, grayscale→RGB)
 
 **Example Usage:**
 - Load all DCI files: `directory_path="/path/to/icons", file_filter="*.dci", include_subdirectories=True`
 - Load images only: `directory_path="/path/to/images", file_filter="*.png,*.jpg,*.webp", include_subdirectories=False`
 - Load all files: `directory_path="/path/to/data", file_filter="*", include_subdirectories=True`
+- **🆕 Image workflow**: Connect `image_list` output directly to image processing nodes for automatic image handling
 
 #### 6.2. Deb Loader
 **Node Category**: `DCI/Files`
-**Function Description**: Extract and load files from Debian packages (.deb files) with filtering capabilities. Parses both control.tar.* and data.tar.* archives within the deb package to extract matching files.
+**Function Description**: Extract and load files from Debian packages (.deb files) with filtering capabilities. Parses both control.tar.* and data.tar.* archives within the deb package to extract matching files. **NEW**: Automatically detects and decodes image files from deb packages, providing separate image outputs for direct use in ComfyUI workflows.
 
 **Required Input Parameters:**
 - **`deb_file_path`** (STRING): Path to the .deb file to parse, default empty string
@@ -389,6 +396,8 @@ Supports 20 preset colors including:
 **Output:**
 - **`binary_data_list`** (BINARY_DATA_LIST): List of binary data from extracted files
 - **`relative_paths`** (STRING_LIST): List of relative file paths within the deb package
+- **`image_list`** (IMAGE): **NEW** - Batch tensor of decoded images (None if no images found)
+- **`image_relative_paths`** (STRING_LIST): **NEW** - List of relative paths for decoded images
 
 **Features:**
 - **Deb Package Parsing**: Uses `ar` command to extract deb package components
@@ -398,6 +407,10 @@ Supports 20 preset colors including:
 - **Path Cleaning**: Automatically removes leading "./" from extracted paths
 - **Error Resilience**: Continues processing even if individual files fail to extract
 - **Cross-Platform**: Works on systems with `ar` command available
+- **🆕 Automatic Image Detection**: Recognizes image files by extension (.png, .jpg, .jpeg, .bmp, .gif, .tiff, .webp, .ico)
+- **🆕 Image Decoding**: Automatically decodes detected images to ComfyUI IMAGE format (RGB, 0-1 range)
+- **🆕 Dual Output System**: Provides both binary data (for all files) and decoded images (for image files only)
+- **🆕 Format Conversion**: Handles various image formats and color modes (RGBA→RGB, grayscale→RGB)
 
 **Technical Details:**
 - **Extraction Process**: Uses temporary directories for safe extraction
@@ -409,6 +422,7 @@ Supports 20 preset colors including:
 - Extract DCI files from deb: `deb_file_path="/path/to/package.deb", file_filter="*.dci"`
 - Extract images from deb: `deb_file_path="/path/to/icons.deb", file_filter="*.png,*.svg"`
 - Extract all files from deb: `deb_file_path="/path/to/data.deb", file_filter="*"`
+- **🆕 Image workflow**: Connect `image_list` output directly to image processing nodes for automatic image handling
 
 **Dependencies:**
 - **System Requirement**: `ar` command must be available (usually part of binutils package)
@@ -999,7 +1013,7 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 
 #### 6.1. Directory Loader（目录加载器）
 **节点类别**：`DCI/Files`
-**功能描述**：批量加载目录中的多个二进制文件，支持过滤条件和递归搜索功能。使用广度优先遍历确保文件顺序的一致性。
+**功能描述**：批量加载目录中的多个二进制文件，支持过滤条件和递归搜索功能。使用广度优先遍历确保文件顺序的一致性。**新功能**：自动识别和解码图像文件，提供独立的图像输出，可直接用于ComfyUI工作流。
 
 **必需输入参数：**
 - **`directory_path`** (STRING)：要扫描的目录路径，默认空字符串
@@ -1009,6 +1023,8 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 **输出：**
 - **`binary_data_list`** (BINARY_DATA_LIST)：加载文件的二进制数据列表
 - **`relative_paths`** (STRING_LIST)：相对文件路径列表（相对于指定目录）
+- **`image_list`** (IMAGE)：**新增** - 解码后的图像批次张量（未找到图像时为None）
+- **`image_relative_paths`** (STRING_LIST)：**新增** - 解码图像的相对路径列表
 
 **功能特性：**
 - **通配符过滤**：支持多种模式，用逗号分隔（如"*.dci,*.png"）
@@ -1017,11 +1033,16 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **数据一致性**：二进制数据列表和路径列表保持完美的顺序匹配
 - **错误容错**：即使个别文件加载失败也会继续处理
 - **跨平台支持**：在Windows、Linux和macOS上正确处理路径
+- **🆕 自动图像识别**：根据扩展名识别图像文件（.png、.jpg、.jpeg、.bmp、.gif、.tiff、.webp、.ico）
+- **🆕 图像解码**：自动将识别的图像解码为ComfyUI IMAGE格式（RGB，0-1范围）
+- **🆕 双输出系统**：同时提供二进制数据（所有文件）和解码图像（仅图像文件）
+- **🆕 格式转换**：处理各种图像格式和颜色模式（RGBA→RGB，灰度→RGB）
 
 **使用示例：**
 - 加载所有DCI文件：`directory_path="/path/to/icons", file_filter="*.dci", include_subdirectories=True`
 - 仅加载图像文件：`directory_path="/path/to/images", file_filter="*.png,*.jpg,*.webp", include_subdirectories=False`
 - 加载所有文件：`directory_path="/path/to/data", file_filter="*", include_subdirectories=True`
+- **🆕 图像工作流**：将`image_list`输出直接连接到图像处理节点，实现自动图像处理
 
 **使用场景：**
 - **批量DCI文件处理**：一次性加载目录中的所有DCI文件进行批量分析
@@ -1090,7 +1111,7 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 
 #### 6.3. Deb Loader（Deb 加载器）
 **节点类别**：`DCI/Files`
-**功能描述**：从Debian软件包（.deb文件）中提取和加载文件，支持文件过滤功能。解析deb包内的control.tar.*和data.tar.*归档文件，提取符合条件的文件。
+**功能描述**：从Debian软件包（.deb文件）中提取和加载文件，支持文件过滤功能。解析deb包内的control.tar.*和data.tar.*归档文件，提取符合条件的文件。**新功能**：自动识别和解码deb包中的图像文件，提供独立的图像输出，可直接用于ComfyUI工作流。
 
 **必需输入参数：**
 - **`deb_file_path`** (STRING)：要解析的.deb文件路径，默认空字符串
@@ -1099,6 +1120,8 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 **输出：**
 - **`binary_data_list`** (BINARY_DATA_LIST)：提取文件的二进制数据列表
 - **`relative_paths`** (STRING_LIST)：deb包内文件的相对路径列表
+- **`image_list`** (IMAGE)：**新增** - 解码后的图像批次张量（未找到图像时为None）
+- **`image_relative_paths`** (STRING_LIST)：**新增** - 解码图像的相对路径列表
 
 **功能特性：**
 
@@ -1110,6 +1133,10 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **路径清理**：自动移除提取路径中的前导"./"
 - **错误恢复**：即使个别文件提取失败也继续处理
 - **跨平台支持**：在有`ar`命令的系统上工作
+- **🆕 自动图像识别**：根据扩展名识别图像文件（.png、.jpg、.jpeg、.bmp、.gif、.tiff、.webp、.ico）
+- **🆕 图像解码**：自动将识别的图像解码为ComfyUI IMAGE格式（RGB，0-1范围）
+- **🆕 双输出系统**：同时提供二进制数据（所有文件）和解码图像（仅图像文件）
+- **🆕 格式转换**：处理各种图像格式和颜色模式（RGBA→RGB，灰度→RGB）
 
 *技术细节：*
 - **提取过程**：使用临时目录进行安全提取
@@ -1121,6 +1148,7 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - 从deb包提取DCI文件：`deb_file_path="/path/to/package.deb", file_filter="*.dci"`
 - 从deb包提取图像文件：`deb_file_path="/path/to/icons.deb", file_filter="*.png,*.svg"`
 - 从deb包提取所有文件：`deb_file_path="/path/to/data.deb", file_filter="*"`
+- **🆕 图像工作流**：将`image_list`输出直接连接到图像处理节点，实现自动图像处理
 
 **使用场景：**
 - **DCI图标包分析**：从已安装或下载的deb包中提取DCI图标文件
