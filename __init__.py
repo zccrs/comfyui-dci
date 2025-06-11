@@ -25,7 +25,8 @@ try:
         Base64Encoder,
         DCIFileSaver,
         DCIAnalysis,
-        DirectoryLoader
+        DirectoryLoader,
+        DebPackager
     )
     from .py.utils.i18n import t
 except ImportError:
@@ -46,7 +47,8 @@ except ImportError:
         Base64Encoder,
         DCIFileSaver,
         DCIAnalysis,
-        DirectoryLoader
+        DirectoryLoader,
+        DebPackager
     )
     from py.utils.i18n import t
 
@@ -65,6 +67,7 @@ NODE_CLASS_MAPPINGS = {
     "DCI_FileSaver": DCIFileSaver,
     "DCI_Analysis": DCIAnalysis,
     "DCI_DirectoryLoader": DirectoryLoader,
+    "DCI_DebPackager": DebPackager,
 }
 
 # Display names for ComfyUI interface
@@ -81,6 +84,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "DCI_FileSaver": t("DCI File Saver"),
     "DCI_Analysis": t("DCI Analysis"),
     "DCI_DirectoryLoader": t("Directory Loader"),
+    "DCI_DebPackager": t("Deb Packager"),
 }
 
 # Extension metadata

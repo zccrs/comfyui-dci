@@ -960,6 +960,64 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **目录内容分析**：分析目录结构和文件分布情况
 - **工作流自动化**：在自动化工作流中批量处理文件
 
+#### 6.2. Deb Packager（Deb 打包器）
+**节点类别**：`DCI/Files`
+**功能描述**：创建Debian软件包，支持基于现有deb包扩展或从头创建，具有文件过滤、目录扫描和智能包信息管理功能。
+
+**必需输入参数：**
+- **`local_directory`** (STRING)：本地目录路径，要扫描和打包的文件所在目录
+- **`file_filter`** (STRING)：文件过滤模式，支持通配符（如"*.dci"、"*.png,*.jpg"），默认"*.dci"
+- **`include_subdirectories`** (BOOLEAN)：是否包含子目录搜索，默认True
+- **`install_target_path`** (STRING)：安装目标路径，deb包内的目标安装路径，默认"/usr/share/dsg/icons"
+
+**可选输入参数：**
+- **`base_deb_path`** (STRING)：基础deb包路径，用作模板的现有deb包文件路径
+- **`preserve_base_files`** (BOOLEAN)：保留基础文件，是否保留基础deb包中的原有文件，默认True
+- **`package_name`** (STRING)：包名，如果未指定且有基础包则复用基础包信息
+- **`package_version`** (STRING)：包版本，如果未指定且有基础包则复用基础包信息
+- **`maintainer_name`** (STRING)：打包人姓名
+- **`maintainer_email`** (STRING)：打包人邮箱
+- **`package_description`** (STRING)：软件包描述信息，支持多行输入
+
+**输出：**
+- **`deb_binary_data`** (BINARY_DATA)：生成的deb包二进制数据
+- **`file_list`** (STRING_LIST)：deb包内所有文件的路径列表（包括control.tar.*和data.tar.*中的所有文件）
+
+**功能特性：**
+
+*基础包支持：*
+- **智能继承**：基于现有deb包创建新包，自动继承包信息和依赖关系
+- **文件保留模式**：可选择保留基础包中的原有文件，实现增量打包
+- **覆盖模式**：可选择只使用基础包的控制信息，完全替换数据文件
+
+*文件处理：*
+- **通配符过滤**：支持多种模式，用逗号分隔（如"*.dci,*.png"）
+- **递归搜索**：广度优先目录遍历，确保顺序一致性
+- **目录结构保持**：自动保持子目录的目录结构关系
+- **路径规范化**：自动处理跨平台路径分隔符
+
+*包信息管理：*
+- **智能默认值**：未提供的包信息自动使用合理默认值
+- **基础包复用**：优先使用基础包中的现有信息
+- **维护者信息**：支持姓名和邮箱的标准格式组合
+
+*deb格式支持：*
+- **标准格式**：完全符合Debian包格式规范
+- **压缩支持**：支持gzip、xz、bz2等多种压缩格式
+- **控制文件**：自动生成标准的control文件和包结构
+
+**使用示例：**
+- 从头创建DCI图标包：`local_directory="/path/to/icons", file_filter="*.dci", package_name="my-icons", package_version="1.0.0"`
+- 基于现有包扩展：`base_deb_path="/path/to/base.deb", preserve_base_files=True, local_directory="/path/to/new/icons"`
+- 替换现有包内容：`base_deb_path="/path/to/base.deb", preserve_base_files=False, local_directory="/path/to/replacement/icons"`
+
+**使用场景：**
+- **DCI图标包分发**：将DCI图标文件打包成标准的Debian软件包
+- **系统集成**：创建可通过apt安装的图标包
+- **版本管理**：基于现有包创建新版本，支持增量更新
+- **批量部署**：在多个系统间标准化部署图标资源
+- **依赖管理**：利用deb包的依赖系统管理图标包关系
+
 #### 7. Binary File Saver（二进制文件保存器）
 **节点类别**：`DCI/Files`
 **功能描述**：将二进制数据保存到文件系统，支持自定义输出路径和目录。
