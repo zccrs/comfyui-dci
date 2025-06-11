@@ -70,6 +70,7 @@
   "maintainer_email": "Maintainer Email",
   "package_description": "Package Description",
   "symlink_csv_path": "Symlink CSV Path",
+  "file_permissions": "File Permissions",
 
   "normal": "Normal",
   "disabled": "Disabled",

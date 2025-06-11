@@ -74,6 +74,7 @@
   "maintainer_email": "打包人邮箱",
   "package_description": "软件包描述",
   "symlink_csv_path": "软链接表格",
+  "file_permissions": "文件权限",
 
   "normal": "正常",
   "disabled": "禁用",

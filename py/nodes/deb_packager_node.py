@@ -34,6 +34,7 @@ class DebPackager(BaseNode):
                 t("maintainer_email"): ("STRING", {"default": "", "multiline": False}),
                 t("package_description"): ("STRING", {"default": "", "multiline": True}),
                 t("symlink_csv_path"): ("STRING", {"default": "", "multiline": False}),
+                t("file_permissions"): ("STRING", {"default": "644", "multiline": False}),
             }
         }
 
@@ -59,17 +60,18 @@ class DebPackager(BaseNode):
         maintainer_email = kwargs.get(t("maintainer_email")) if t("maintainer_email") in kwargs else kwargs.get("maintainer_email", "")
         package_description = kwargs.get(t("package_description")) if t("package_description") in kwargs else kwargs.get("package_description", "")
         symlink_csv_path = kwargs.get(t("symlink_csv_path")) if t("symlink_csv_path") in kwargs else kwargs.get("symlink_csv_path", "")
+        file_permissions = kwargs.get(t("file_permissions")) if t("file_permissions") in kwargs else kwargs.get("file_permissions", "644")
 
         return self._execute_impl(
             local_directory, file_filter, include_subdirectories, install_target_path, output_directory,
             base_deb_path, package_name, package_version,
-            maintainer_name, maintainer_email, package_description, symlink_csv_path
+            maintainer_name, maintainer_email, package_description, symlink_csv_path, file_permissions
         )
 
     def _execute_impl(self, local_directory="", file_filter="*.dci", include_subdirectories=True,
                      install_target_path="/usr/share/dsg/icons", output_directory="",
                      base_deb_path="", package_name="", package_version="",
-                     maintainer_name="", maintainer_email="", package_description="", symlink_csv_path=""):
+                     maintainer_name="", maintainer_email="", package_description="", symlink_csv_path="", file_permissions="644"):
         """Create Debian package with file filtering and directory scanning"""
 
         try:
@@ -141,7 +143,7 @@ class DebPackager(BaseNode):
                 # Create deb package
                 success, file_list = self._create_deb_package(
                     temp_dir, matching_files, normalized_path, install_target_path,
-                    pkg_info, deb_output_path, symlink_mappings
+                    pkg_info, deb_output_path, symlink_mappings, file_permissions
                 )
 
                 if success:
@@ -222,8 +224,6 @@ class DebPackager(BaseNode):
         except Exception as e:
             print(f"警告：过滤器模式匹配失败: {file_filter} - {str(e)}")
             return False
-
-
 
     def _create_ar_archive_python(self, archive_path, files, working_dir):
         """Create ar archive using pure Python implementation"""
@@ -458,7 +458,7 @@ class DebPackager(BaseNode):
         return pkg_info
 
     def _create_deb_package(self, temp_dir, matching_files, source_dir, install_target_path,
-                          pkg_info, output_deb_path, symlink_mappings=None):
+                          pkg_info, output_deb_path, symlink_mappings=None, file_permissions="644"):
         """Create the actual deb package and save to specified path"""
         try:
             # Create package structure
@@ -473,7 +473,7 @@ class DebPackager(BaseNode):
             control_file_path = os.path.join(control_dir, "control")
             self._create_control_file(control_file_path, pkg_info)
 
-                        # Copy matching files to target location
+            # Copy matching files to target location
             target_base = os.path.join(data_dir, install_target_path.lstrip('/'))
             os.makedirs(target_base, exist_ok=True)
 
@@ -506,9 +506,17 @@ class DebPackager(BaseNode):
             control_tar_path = os.path.join(temp_dir, "control.tar.gz")
             self._create_control_tar(control_tar_path, control_dir)
 
+            # Parse file permissions
+            try:
+                file_mode = int(file_permissions, 8) if file_permissions else 0o644
+                print(f"设置文件权限: {oct(file_mode)} ({file_permissions})")
+            except ValueError:
+                print(f"警告：无效的权限值 '{file_permissions}'，使用默认值 644")
+                file_mode = 0o644
+
             # Create data.tar.gz with symlinks
             data_tar_path = os.path.join(temp_dir, "data.tar.gz")
-            self._create_data_tar_with_symlinks(data_tar_path, data_dir, symlink_info)
+            self._create_data_tar_with_symlinks(data_tar_path, data_dir, symlink_info, file_mode)
 
             # Create debian-binary
             debian_binary_path = os.path.join(temp_dir, "debian-binary")
@@ -572,15 +580,24 @@ class DebPackager(BaseNode):
                     arcname = os.path.relpath(file_path, data_dir)
                     tar.add(file_path, arcname=f"./{arcname}")
 
-    def _create_data_tar_with_symlinks(self, tar_path, data_dir, symlink_info):
+    def _create_data_tar_with_symlinks(self, tar_path, data_dir, symlink_info, file_mode=0o644):
         """Create data.tar.gz from data directory with symlinks"""
         with tarfile.open(tar_path, 'w:gz') as tar:
-            # Add regular files
+            # Add regular files with custom permissions
             for root, dirs, files in os.walk(data_dir):
                 for file in files:
                     file_path = os.path.join(root, file)
                     arcname = os.path.relpath(file_path, data_dir)
-                    tar.add(file_path, arcname=f"./{arcname}")
+
+                    # Create TarInfo with custom permissions
+                    tarinfo = tar.gettarinfo(file_path, arcname=f"./{arcname}")
+                    tarinfo.mode = file_mode
+                    tarinfo.uid = 0
+                    tarinfo.gid = 0
+
+                    # Add file with custom tarinfo
+                    with open(file_path, 'rb') as f:
+                        tar.addfile(tarinfo, f)
 
             # Add symlinks using tarfile API
             for symlink in symlink_info:
@@ -590,7 +607,7 @@ class DebPackager(BaseNode):
                     tarinfo.type = tarfile.SYMTYPE  # Symbolic link
                     tarinfo.linkname = symlink['target']  # Target of the symlink
                     tarinfo.size = 0
-                    tarinfo.mode = 0o777  # Standard symlink permissions
+                    tarinfo.mode = file_mode  # Standard symlink permissions
                     tarinfo.uid = 0
                     tarinfo.gid = 0
                     tarinfo.mtime = int(time.time())
@@ -653,7 +670,7 @@ class DebPackager(BaseNode):
         filename = os.path.basename(original_file_path)
         name_without_ext, ext = os.path.splitext(filename)
 
-                # 检查是否有完全匹配的映射
+        # 检查是否有完全匹配的映射
         if name_without_ext in symlink_mappings:
             target_names = symlink_mappings[name_without_ext]
             print(f"  为文件 {filename} 准备软链接 (完全匹配: {name_without_ext})")

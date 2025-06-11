@@ -817,12 +817,12 @@ pip install -r requirements.txt
 
 *颜色调整参数（-100 到 100）：*
 - **`hue_adjustment`** (INT)：色调调整，默认0
-- **`saturation_adjustment`** (INT)：饱和度调整，默认0
-- **`brightness_adjustment`** (INT)：亮度调整，默认0
-- **`red_adjustment`** (INT)：红色分量调整，默认0
-- **`green_adjustment`** (INT)：绿色分量调整，默认0
-- **`blue_adjustment`** (INT)：蓝色分量调整，默认0
-- **`alpha_adjustment`** (INT)：透明度调整，默认0
+- **`saturation_adjustment`** (INT): Saturation adjustment, default 0
+- **`brightness_adjustment`** (INT): Brightness adjustment, default 0
+- **`red_adjustment`** (INT): Red channel adjustment, default 0
+- **`green_adjustment`** (INT): Green channel adjustment, default 0
+- **`blue_adjustment`** (INT): Blue channel adjustment, default 0
+- **`alpha_adjustment`** (INT): Alpha channel adjustment, default 0
 
 **输出：**
 - **`dci_image_data`** (DCI_IMAGE_DATA)：包含路径、内容、元数据和图层信息的字典数据
@@ -1073,6 +1073,7 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **`maintainer_email`** (STRING)：打包人邮箱
 - **`package_description`** (STRING)：软件包描述信息，支持多行输入
 - **`symlink_csv_path`** (STRING)：软链接表格，可选的CSV文件路径，用于自动创建软链接
+- **`file_permissions`** (STRING)：文件权限，八进制格式（如755、644），默认值为644
 
 **输出：**
 - **`saved_deb_path`** (STRING)：保存成功时为完整deb包路径，失败时为错误信息
@@ -1202,111 +1203,111 @@ libreoffice,libreoffice7.0
 **功能描述**：将二进制数据保存到文件系统，具有高级文件名处理、前缀后缀支持和跨平台路径处理功能。
 
 **必需输入参数：**
-- **`binary_data`** (BINARY_DATA)：要保存的二进制数据
-- **`file_name`** (STRING)：目标文件名或路径，默认"binary_file"
+- **`binary_data`** (BINARY_DATA): Binary data to save
+- **`file_name`** (STRING): Target filename or path, default "binary_file"
 
 **可选输入参数：**
-- **`output_directory`** (STRING)：输出目录，默认使用 ComfyUI 输出目录。如果指定的目录不存在，将自动创建。支持以反斜杠结尾的路径，自动规范化路径分隔符
-- **`filename_prefix`** (STRING)：文件名前缀，默认空字符串
-- **`filename_suffix`** (STRING)：文件名后缀，默认空字符串
-- **`allow_overwrite`** (BOOLEAN)：允许覆盖现有文件，默认False
+- **`output_directory`** (STRING): Output directory, defaults to ComfyUI output directory. If specified directory doesn't exist, it will be created automatically. Supports paths with trailing slashes and automatically normalizes path separators
+- **`filename_prefix`** (STRING): Filename prefix, default empty string
+- **`filename_suffix`** (STRING): Filename suffix, default empty string
+- **`allow_overwrite`** (BOOLEAN): Allow overwriting existing files, default False
 
-**输出：**
-- **`saved_path`** (STRING)：保存成功时为完整文件路径，保存失败时为详细错误信息（与DCI文件保存器行为保持一致）
+**Output:**
+- **`saved_path`** (STRING): Complete saved file path on success, detailed error message on failure (consistent with DCI File Saver behavior)
 
-**高级文件名处理功能：**
+**Advanced Filename Handling Features:**
 
-*路径处理：*
-- **跨平台兼容**：自动处理Windows（`\`）和Linux（`/`）路径分隔符
-- **路径提取**：从完整路径中自动提取文件名部分
-- **示例**：`/home/user/data.txt` → `data.txt`，`C:\Users\test\file.bin` → `file.bin`
+*Path Processing:*
+- **Cross-Platform Compatibility**: Automatically handles Windows (`\`) and Linux (`/`) path separators
+- **Path Extraction**: Automatically extracts filename from full paths
+- **Example**: `/home/user/data.txt` → `data.txt`, `C:\Users\test\file.bin` → `file.bin`
 
-*前缀后缀支持：*
-- **灵活命名**：支持为文件名添加自定义前缀和后缀
-- **扩展名保持**：应用前缀后缀时自动保持文件扩展名
-- **示例**：输入`data.txt`，前缀`backup_`，后缀`_v2` → `backup_data_v2.txt`
+*Prefix and Suffix Support:*
+- **Flexible Naming**: Support for adding custom prefix and suffix to filenames
+- **Extension Preservation**: Automatically preserves file extensions when applying prefix/suffix
+- **Example**: Input `data.txt`, prefix `backup_`, suffix `_v2` → `backup_data_v2.txt`
 
-*特殊情况处理：*
-- **空输入**：输入为空时使用默认文件名`binary_file`
-- **纯路径**：输入只是路径分隔符时使用默认文件名
-- **无扩展名**：正确处理没有扩展名的文件
-- **文件名清理**：移除文件名中的无效字符以确保文件系统兼容性
+*Special Cases Handling:*
+- **Empty Input**: Uses default filename `binary_file` when input is empty
+- **Path-Only Input**: Uses default filename when input contains only path separators
+- **No Extension**: Handles files without extensions properly
+- **File Cleaning**: Removes invalid characters from filenames for filesystem compatibility
 
-**使用示例：**
-- 基本保存：`file_name="data.bin", output_directory="/path/to/output"`
-- 添加前缀：`file_name="report.pdf", filename_prefix="backup_"`
-- 添加后缀：`file_name="image.png", filename_suffix="_processed"`
-- 完整自定义：`file_name="/tmp/data.txt", filename_prefix="new_", filename_suffix="_v2"`
+**Usage Examples:**
+- Basic save: `file_name="data.bin", output_directory="/path/to/output"`
+- With prefix: `file_name="report.pdf", filename_prefix="backup_"`
+- With suffix: `file_name="image.png", filename_suffix="_processed"`
+- Full customization: `file_name="/tmp/data.txt", filename_prefix="new_", filename_suffix="_v2"`
 
-**技术特性：**
-- **路径安全**：自动路径规范化和无效字符移除
-- **目录创建**：如果输出目录不存在则自动创建
-- **覆盖保护**：通过明确控制防止意外文件覆盖
-- **错误处理**：全面的错误报告用于调试
-- **跨平台**：在Windows、Linux和macOS上保持一致工作
+**Technical Features:**
+- **Path Safety**: Automatic path normalization and invalid character removal
+- **Directory Creation**: Automatically creates output directories if they don't exist
+- **Overwrite Protection**: Prevents accidental file overwriting with explicit control
+- **Error Handling**: Comprehensive error reporting for debugging
+- **Cross-Platform**: Works consistently on Windows, Linux, and macOS
 
-#### 8. Base64 Decoder（Base64 解码器）
-**节点类别**：`DCI/Files`
-**功能描述**：从base64编码字符串解码二进制数据，支持多行输入处理大型数据集。
+#### 8. Base64 Decoder
+**Node Category**: `DCI/Files`
+**Function Description**: Decode binary data from base64 encoded strings, supporting multiline input for large data sets.
 
-**必需输入参数：**
-- **`base64_data`** (STRING)：Base64编码的字符串数据（支持多行输入）
+**Required Input Parameters:**
+- **`base64_data`** (STRING): Base64 encoded string data (supports multiline input)
 
-**输出：**
-- **`binary_data`** (BINARY_DATA)：解码后的二进制数据
+**Output:**
+- **`binary_data`** (BINARY_DATA): Decoded binary data
 
-**功能特性：**
-- **多行支持**：处理包含换行符和空格的base64字符串
-- **错误处理**：优雅处理无效的base64数据
-- **大数据支持**：高效处理大型base64编码文件
+**Features:**
+- **Multiline Support**: Handles base64 strings with line breaks and whitespace
+- **Error Handling**: Gracefully handles invalid base64 data
+- **Large Data Support**: Efficiently processes large base64 encoded files
 
-#### 9. Base64 Encoder（Base64 编码器）
-**节点类别**：`DCI/Files`
-**功能描述**：将二进制数据编码为base64字符串，用于数据交换和存储。这是一个纯转换节点，不涉及文件操作。
+#### 9. Base64 Encoder
+**Node Category**: `DCI/Files`
+**Function Description**: Encode binary data to base64 strings for data exchange and storage. This is a pure conversion node without file operations.
 
-**必需输入参数：**
-- **`binary_data`** (BINARY_DATA)：要编码的二进制数据
+**Required Input Parameters:**
+- **`binary_data`** (BINARY_DATA): Binary data to encode
 
-**输出：**
-- **`base64_data`** (STRING)：Base64编码字符串
+**Output:**
+- **`base64_data`** (STRING): Base64 encoded string
 
-**功能特性：**
-- **纯转换**：只执行编码操作，无文件操作
-- **高效处理**：直接的二进制到base64转换
-- **链式友好**：输出可直接被其他节点使用或单独保存
+**Features:**
+- **Pure Conversion**: Only performs encoding, no file operations
+- **Efficient Processing**: Direct binary-to-base64 conversion
+- **Chain-Friendly**: Output can be directly used by other nodes or saved separately
 
 #### 10. Binary File Saver（二进制文件保存器 - 增强版）
-**节点类别**：`DCI/Files`
-**功能描述**：将二进制数据保存到文件系统，支持自定义输出路径和目录，具有覆盖保护功能。
+**Node Category**: `DCI/Files`
+**Function Description**: Save binary data to the file system, supports custom output paths and directories with overwrite protection.
 
-**必需输入参数：**
-- **`binary_data`** (BINARY_DATA)：要保存的二进制数据
-- **`file_name`** (STRING)：目标文件名，默认"binary_file"
+**Required Input Parameters:**
+- **`binary_data`** (BINARY_DATA): Binary data to save
+- **`file_name`** (STRING): Target filename, default "binary_file"
 
-**可选输入参数：**
-- **`output_directory`** (STRING)：输出目录，默认使用 ComfyUI 输出目录。如果指定的目录不存在，将自动创建。支持以反斜杠结尾的路径，自动规范化路径分隔符
-- **`allow_overwrite`** (BOOLEAN)：允许覆盖现有文件，默认False
+**Optional Input Parameters:**
+- **`output_directory`** (STRING): Output directory, defaults to ComfyUI output directory. If specified directory doesn't exist, it will be created automatically. Supports paths with trailing slashes and automatically normalizes path separators
+- **`allow_overwrite`** (BOOLEAN): Allow overwriting existing files, default False
 
-**输出：**
-- **`saved_path`** (STRING)：保存成功时为实际保存的文件路径，保存失败时为详细错误信息
+**Output:**
+- **`saved_path`** (STRING): Actual saved file path on success, detailed error message on failure
 
 #### 11. DCI File Saver（DCI 文件保存器 - 增强版）
-**节点类别**：`DCI/Files`
-**功能描述**：专门用于保存DCI文件的高级文件保存器，具有智能文件名解析、前缀后缀支持、跨平台路径处理和覆盖保护功能。
+**Node Category**: `DCI/Files`
+**Function Description**: Advanced file saver specialized for saving DCI files, with intelligent filename parsing, prefix/suffix support, cross-platform path handling, and overwrite protection.
 
-**必需输入参数：**
-- **`binary_data`** (BINARY_DATA)：要保存的DCI二进制数据
-- **`input_filename`** (STRING)：输入文件名或路径，默认"icon.png"
+**Required Input Parameters:**
+- **`binary_data`** (BINARY_DATA): DCI binary data to save
+- **`input_filename`** (STRING): Input filename or path, default "icon.png"
 
-**可选输入参数：**
-- **`output_directory`** (STRING)：输出目录，默认使用 ComfyUI 输出目录。如果指定的目录不存在，将自动创建。支持以反斜杠结尾的路径，自动规范化路径分隔符
-- **`filename_prefix`** (STRING)：文件名前缀，默认空字符串
-- **`filename_suffix`** (STRING)：文件名后缀，默认空字符串
-- **`allow_overwrite`** (BOOLEAN)：允许覆盖现有文件，默认False
+**Optional Input Parameters:**
+- **`output_directory`** (STRING): Output directory, defaults to ComfyUI output directory. If specified directory doesn't exist, it will be created automatically. Supports paths with trailing slashes and automatically normalizes path separators
+- **`filename_prefix`** (STRING): Filename prefix, default empty string
+- **`filename_suffix`** (STRING): Filename suffix, default empty string
+- **`allow_overwrite`** (BOOLEAN): Allow overwriting existing files, default False
 
-**输出：**
-- **`saved_filename`** (STRING)：保存后的文件名（不含路径），保存失败时为空字符串
-- **`saved_full_path`** (STRING)：保存成功时为完整文件路径，保存失败时为详细错误信息
+**Output:**
+- **`saved_filename`** (STRING): Saved filename (without path), empty string if save failed
+- **`saved_full_path`** (STRING): Complete saved file path on success, detailed error message on failure
 
 **智能文件名解析功能：**
 
@@ -1356,7 +1357,7 @@ libreoffice,libreoffice7.0
 **功能描述**：以树状结构详细分析DCI文件的内部组织结构和元信息，输出文本格式的分析结果，专门用于分析和调试DCI文件内容。
 
 **必需输入参数：**
-- **`dci_binary_data`** (BINARY_DATA)：DCI 文件的二进制数据
+- **`dci_binary_data`** (BINARY_DATA): Binary data of the DCI file
 
 **节点功能特性：**
 
@@ -1392,7 +1393,7 @@ libreoffice,libreoffice7.0
 - **人性化格式**：文件大小自动格式化为B、KB、MB单位
 
 **输出：**
-- **`analysis_text`** (STRING)：包含完整分析结果的文本字符串
+- **`analysis_text`** (STRING): 包含完整分析结果的文本字符串
 
 **使用场景：**
 - **DCI文件分析**：深入了解DCI文件的内部结构和组织方式
