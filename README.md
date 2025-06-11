@@ -297,15 +297,18 @@ Result: Blue image replaces red image, other existing images preserved
 
 #### 4. DCI Preview
 **Node Category**: `DCI/Preview`
-**Function Description**: Display visual preview and detailed metadata information of DCI file content directly within the node. Specialized for previewing DCI binary data, now supports separate display of Light and Dark related content.
+**Function Description**: Display visual preview and detailed metadata information of DCI file content directly within the node. Specialized for previewing DCI binary data, now supports separate display of Light and Dark related content. **Enhanced to support multiple DCI binary data inputs and IMAGE output**.
 
 **Required Input Parameters:**
-- **`dci_binary_data`** (BINARY_DATA): Binary data of the DCI file
+- **`dci_binary_data`** (BINARY_DATA,BINARY_DATA_LIST): Single DCI binary data or list of multiple DCI binary data
 
 **Optional Input Parameters:**
 - **`light_background_color`** (COMBO): Light theme preview background color, default light_gray
 - **`dark_background_color`** (COMBO): Dark theme preview background color, default dark_gray
 - **`text_font_size`** (INT): Text font size (8-50 pixels), default 18, controls both font size in preview images and text summary format
+
+**Output:**
+- **`preview_images`** (IMAGE): ComfyUI IMAGE tensor containing preview images. When processing multiple DCI files, outputs multiple preview images in batch format
 
 **Background Color Options:**
 Supports 20 preset colors including:
@@ -313,15 +316,30 @@ Supports 20 preset colors including:
 - **Special Backgrounds**: transparent, checkerboard
 - **Color Options**: blue, green, red, yellow, cyan, magenta, orange, purple, pink, brown, navy, teal, olive, maroon
 
+**Multi-Data Processing:**
+- **Single Input**: Processes one DCI file and generates one preview image
+- **Multiple Input**: Processes multiple DCI files and generates corresponding preview images
+- **Independent Processing**: Each DCI file is processed independently, generating separate preview images
+- **Batch Output**: All preview images are combined into a single IMAGE tensor for downstream processing
+
 #### 5. DCI Image Preview
 **Node Category**: `DCI/Preview`
-**Function Description**: Specialized for previewing single DCI image data, providing clean image preview functionality.
+**Function Description**: Specialized for previewing DCI image data, providing clean image preview functionality. **Enhanced to support multiple DCI image data inputs and IMAGE output**.
 
 **Required Input Parameters:**
-- **`dci_image_data`** (DCI_IMAGE_DATA): DCI image data
+- **`dci_image_data`** (DCI_IMAGE_DATA,DCI_IMAGE_DATA_LIST): Single DCI image data or list of multiple DCI image data
 
 **Optional Input Parameters:**
 - **`preview_background`** (COMBO): Preview background type (transparent/white/black/checkerboard), default checkerboard
+
+**Output:**
+- **`preview_images`** (IMAGE): ComfyUI IMAGE tensor containing preview images. When processing multiple DCI images, outputs multiple preview images in batch format
+
+**Multi-Data Processing:**
+- **Single Input**: Processes one DCI image and generates one preview image
+- **Multiple Input**: Processes multiple DCI images and generates corresponding preview images
+- **Independent Processing**: Each DCI image is processed independently, generating separate preview images
+- **Batch Output**: All preview images are combined into a single IMAGE tensor for downstream processing
 
 #### 6. Binary File Loader
 **Node Category**: `DCI/Files`
@@ -817,15 +835,18 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 
 #### 4. DCI Preview（DCI 预览）
 **节点类别**：`DCI/Preview`
-**功能描述**：直接在节点内显示 DCI 文件内容的可视化预览和详细元数据信息。专门用于预览 DCI 二进制数据，现支持将Light和Dark相关内容分开显示。
+**功能描述**：直接在节点内显示 DCI 文件内容的可视化预览和详细元数据信息。专门用于预览 DCI 二进制数据，现支持将Light和Dark相关内容分开显示。**增强支持多个DCI二进制数据输入和IMAGE输出**。
 
 **必需输入参数：**
-- **`dci_binary_data`** (BINARY_DATA)：DCI 文件的二进制数据
+- **`dci_binary_data`** (BINARY_DATA,BINARY_DATA_LIST)：单个DCI二进制数据或多个DCI二进制数据列表
 
 **可选输入参数：**
 - **`light_background_color`** (COMBO)：Light主题预览背景色，默认light_gray
 - **`dark_background_color`** (COMBO)：Dark主题预览背景色，默认dark_gray
 - **`text_font_size`** (INT)：文本字号大小（8-50像素），默认18，同时控制预览图像中的字体大小和文本摘要的格式
+
+**输出：**
+- **`preview_images`** (IMAGE)：包含预览图像的ComfyUI IMAGE张量。处理多个DCI文件时，以批次格式输出多个预览图像
 
 **背景颜色选项：**
 支持20种预设颜色，包括：
@@ -857,28 +878,37 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
   - 每个图像的优先级和详细属性
   - 统计汇总信息和文件路径列表
 
-**输出：**
-- 无输出（所有预览内容直接在节点内显示）
+**多数据处理：**
+- **单个输入**：处理一个DCI文件，生成一个预览图像
+- **多个输入**：处理多个DCI文件，生成对应的预览图像
+- **独立处理**：每个DCI文件独立处理，生成单独的预览图像
+- **批次输出**：所有预览图像合并为单个IMAGE张量，供下游处理
 
 **注意**：此节点专门用于处理二进制数据输入。不需要手动设置列数，默认将Light和Dark内容分开显示在两列，Light主题图标固定在左侧列，Dark主题图标固定在右侧列。文本格式会根据字体大小自动调整，提供最佳阅读体验。背景颜色选择简化为预设选项，移除了自定义RGB设置以提供更好的用户体验。
 
 #### 5. DCI Image Preview（DCI 图像预览）
 **节点类别**：`DCI/Preview`
-**功能描述**：专门用于预览单个 DCI 图像数据，提供简洁的图像预览功能。
+**功能描述**：专门用于预览DCI图像数据，提供简洁的图像预览功能。**增强支持多个DCI图像数据输入和IMAGE输出**。
 
 **必需输入参数：**
-- **`dci_image_data`** (DCI_IMAGE_DATA)：DCI 图像数据
+- **`dci_image_data`** (DCI_IMAGE_DATA,DCI_IMAGE_DATA_LIST)：单个DCI图像数据或多个DCI图像数据列表
 
 **可选输入参数：**
 - **`preview_background`** (COMBO)：预览背景类型（transparent/white/black/checkerboard），默认checkerboard
+
+**输出：**
+- **`preview_images`** (IMAGE)：包含预览图像的ComfyUI IMAGE张量。处理多个DCI图像时，以批次格式输出多个预览图像
 
 **节点功能特性：**
 - **图像预览**：直接在节点界面中显示处理后的图像
 - **智能背景显示**：支持透明、白色、黑色和棋盘格背景，便于查看透明图像
 - **简洁界面**：专注于图像显示，不显示复杂的调试信息
 
-**输出：**
-- 无输出（图像预览直接在节点内显示）
+**多数据处理：**
+- **单个输入**：处理一个DCI图像，生成一个预览图像
+- **多个输入**：处理多个DCI图像，生成对应的预览图像
+- **独立处理**：每个DCI图像独立处理，生成单独的预览图像
+- **批次输出**：所有预览图像合并为单个IMAGE张量，供下游处理
 
 **使用场景：**
 - 快速预览DCI图像的最终效果

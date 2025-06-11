@@ -263,6 +263,77 @@ def _parse_layer_filename(self, filename: str) -> Dict:
 **图层数据结构**:
 解析后的图像数据包含完整的图层信息，便于后续处理和显示。
 
+### 1.3 图像工具模块 (image_utils.py)
+
+#### 1.3.1 图像转换函数
+
+##### tensor_to_pil() 函数
+**职责**: 将ComfyUI图像张量转换为PIL图像
+
+**转换流程**:
+1. 处理PyTorch张量和NumPy数组
+2. 处理批次维度（4D张量取第一个）
+3. 从0-1范围转换到0-255范围
+4. 根据通道数创建对应的PIL图像模式
+
+##### pil_to_tensor() 函数
+**职责**: 将PIL图像转换为ComfyUI图像张量，**新增功能支持预览节点IMAGE输出**
+
+**设计理念**:
+- 为预览节点提供标准的ComfyUI IMAGE输出格式
+- 处理各种PIL图像模式，确保兼容性
+- 自动处理透明度，避免显示问题
+
+**转换流程**:
+1. **透明度处理**: RGBA图像自动合成到白色背景
+2. **模式标准化**: 非RGB模式自动转换为RGB
+3. **数值范围转换**: 从0-255范围转换到0-1范围
+4. **张量格式化**: 转换为[1, H, W, C]格式的PyTorch张量
+
+**技术实现**:
+```python
+def pil_to_tensor(pil_image):
+    # 处理RGBA透明度
+    if pil_image.mode == 'RGBA':
+        rgb_image = Image.new('RGB', pil_image.size, (255, 255, 255))
+        rgb_image.paste(pil_image, mask=pil_image.split()[-1])
+        pil_image = rgb_image
+
+    # 标准化为RGB模式
+    elif pil_image.mode != 'RGB':
+        pil_image = pil_image.convert('RGB')
+
+    # 转换为张量
+    img_array = np.array(pil_image).astype(np.float32) / 255.0
+    tensor = torch.from_numpy(img_array).unsqueeze(0)  # 添加批次维度
+
+    return tensor
+```
+
+**应用场景**:
+- DCI预览节点的IMAGE输出
+- DCI图像预览节点的IMAGE输出
+- 批量图像处理的张量合并
+
+#### 1.3.2 背景处理函数
+
+##### create_checkerboard_background() 函数
+**职责**: 创建棋盘格背景图案
+
+##### apply_background() 函数
+**职责**: 为透明图像应用背景色
+
+#### 1.3.3 ComfyUI集成函数
+
+##### pil_to_comfyui_format() 函数
+**职责**: 将PIL图像转换为ComfyUI UI显示格式
+
+**功能特性**:
+- 自动处理透明度检测
+- 生成唯一文件名
+- 保存到临时目录
+- 返回ComfyUI UI格式
+
 #### 1.2.2 DCIPreviewGenerator 类
 **职责**: 生成 DCI 文件的可视化预览
 
@@ -278,351 +349,6 @@ def _parse_layer_filename(self, filename: str) -> Dict:
 - 缩放因子 (scale)
 - 图像格式 (format)
 - 文件大小
-
-### 1.3 ComfyUI 节点模块 (nodes.py)
-
-#### 1.3.1 传统节点（向后兼容）
-
-##### DCIImageExporter 类
-**职责**: 基础 DCI 导出功能
-
-**输入参数**:
-- `image`: ComfyUI 图像张量
-- `filename`: 输出文件名
-- `icon_size`: 图标尺寸 (16-1024)
-- `icon_state`: 图标状态
-- `tone_type`: 色调类型
-- `image_format`: 图像格式
-- `scale_factors`: 缩放因子列表
-- `output_directory`: 输出目录
-
-**处理流程**:
-1. 张量转换为 PIL 图像
-2. 解析缩放因子
-3. 确定输出路径
-4. 创建 DCIIconBuilder
-5. 添加图像到构建器
-6. 生成 DCI 文件
-
-##### DCIImageExporterAdvanced 类
-**职责**: 高级多状态 DCI 导出
-
-**扩展功能**:
-- 支持多个状态图像输入
-- 支持多色调组合
-- 批量处理多种状态
-
-**状态处理逻辑**:
-```python
-state_images = {
-    'normal': normal_image or base_image,
-    'disabled': disabled_image,
-    'hover': hover_image,
-    'pressed': pressed_image
-}
-```
-
-##### DCIPreviewNode 类
-**职责**: DCI 文件内容的节点内预览功能
-
-**设计理念**:
-- 直接在节点界面内显示预览内容，无需外部输出
-- 专门用于预览 DCI 二进制数据，简化输入参数
-- 提供即时的可视化反馈，便于用户验证DCI文件内容
-- 总是显示详细元数据信息，提供完整的文件信息
-
-**预览参数**:
-- `dci_binary_data`: DCI 二进制数据 (必需)
-- `grid_columns`: 网格列数 (1-10，可选，默认1，单列显示)
-- `background_color`: 预览背景色 (可选，默认light_gray)
-- `custom_bg_r/g/b`: 自定义背景色RGB分量 (0-255，可选)
-- `text_font_size`: 文本字号大小 (8-24像素，可选，默认12)
-
-**节点内显示内容**:
-- **图像网格预览**: 自动生成的网格布局，图像居左对齐显示
-- **图标边框系统**: 为每个图标自动绘制边框，清晰显示图标范围
-  - **智能边框颜色算法**: 基于相对亮度计算对比色边框
-  - **精确像素边界**: 边框紧贴图标边缘，准确显示实际尺寸
-  - **多背景适配**: 在所有背景颜色下保持边框可见性
-- **透明背景支持**: 完整支持Alpha通道透明度，智能处理透明区域显示
-- **自适应文本格式**: 根据字体大小调整文本显示格式，较大字体使用更紧凑的布局
-- **文件路径始终显示**: 始终显示完整的DCI文件路径列表（如 /235/normal.light/1/1.0.0.0.0.0.0.0.0.0.webp）
-- **详细元数据显示**: 总是显示，包含全面的文件信息和每个图像的详细属性
-  - 📁 DCI 数据源信息
-  - 🖼️ 图像总数和文件总大小（含KB显示）
-  - 📏 支持的图标尺寸列表
-  - 🎭 包含的状态类型
-  - 🎨 支持的色调类型
-  - 🔍 缩放因子列表
-  - 🗂️ 图像格式列表
-  - 📂 完整的DCI内部路径列表（始终显示）
-  - 📋 每个图像的详细信息：
-    - 完整的DCI内部路径和文件名
-    - 尺寸、状态、色调、缩放
-    - 格式、文件大小、实际尺寸
-    - 优先级等属性
-
-**UI输出机制**:
-- 使用ComfyUI的UI输出系统 (`{"ui": {"images": [...], "text": [...]}}`)
-- 图像保存到临时目录并通过UI显示
-- 文本信息直接在节点内展示，支持中文显示
-- 文本格式会根据字体大小自动调整，提供最佳阅读体验
-
-**输出内容**:
-- 无外部输出（所有内容在节点内显示）
-
-**优化特性**:
-- 默认单列布局，便于查看详细信息
-- 图像居左对齐，提供更好的视觉体验
-- 详细的中文元数据显示，包含所有DCI图标属性
-- 智能背景色设置，支持多种预设和自定义RGB颜色
-- 自适应文本格式，根据字体大小调整显示布局
-- 文件路径始终显示，提供完整的DCI内部路径信息
-- 移除了 `dci_file_path` 和 `show_file_paths` 参数，简化节点接口
-- 保留了 `text_font_size` 参数，支持用户自定义文本大小
-
-**图标边框技术实现**:
-- **边框绘制算法**: 在 `DCIPreviewGenerator._draw_image_cell()` 方法中实现
-- **边框颜色计算**: 使用 sRGB 相对亮度公式计算背景亮度
-  ```python
-  luminance = 0.2126 * r_linear + 0.7152 * g_linear + 0.0722 * b_linear
-  ```
-- **对比色选择**: 亮度 > 0.5 使用深色边框 (128,128,128)，否则使用浅色边框 (192,192,192)
-- **边框定位**: 边框坐标为图像位置减1像素，确保完全包围图标
-- **绘制参数**: 使用1像素宽度的矩形边框，保持简洁美观
-- **多背景兼容**: 在所有20种预设背景色下都能提供清晰的边框显示
-
-##### DCIFileLoader 类
-**职责**: DCI 文件加载器
-
-**功能**:
-- 自动搜索 DCI 文件
-- 路径验证和规范化
-
-##### DCIMetadataExtractor 类
-**职责**: 元数据提取和分析
-
-**过滤功能**:
-- 按状态过滤 (all/normal/disabled/hover/pressed)
-- 按色调过滤 (all/light/dark)
-- 按缩放因子过滤
-
-**输出报告**:
-- `detailed_metadata`: 详细元数据
-- `directory_structure`: 目录结构
-- `file_list`: 文件列表
-
-#### 1.3.2 重构节点（推荐使用）
-
-##### DCIImage 类
-**职责**: 创建单个 DCI 图像数据，输出元数据而不是直接创建文件，完全支持 DCI 规范中的图层系统
-
-**设计理念**:
-- 模块化设计，提供更灵活的工作流程
-- 输出结构化数据而非文件，支持节点间数据传递
-- 支持复杂的多图像组合场景
-- 完整实现 DCI 规范的图层功能，包括优先级、外边框、调色板和颜色调整
-
-**输入参数**:
-
-*基础参数*:
-- `image`: ComfyUI 图像张量
-- `icon_size`: 图标尺寸 (16-1024)
-- `icon_state`: 图标状态 (normal/disabled/hover/pressed)
-- `tone_type`: 色调类型 (light/dark)
-- `scale`: 缩放因子 (0.1-10.0，支持小数)
-- `image_format`: 图像格式 (webp/png/jpg)
-- `image_quality`: 图片质量 (1-100)，仅对webp和jpg格式有效
-
-*WebP高级参数*:
-- `webp_lossless`: 无损压缩 (boolean)，优先级最高
-- `webp_alpha_quality`: Alpha通道质量 (0-100)，控制Alpha通道压缩
-
-*PNG高级参数*:
-- `png_compress_level`: 压缩等级 (0-9)，0=无压缩，9=最高压缩
-
-*背景色设置*:
-- `background_color`: 背景色处理 (transparent/white/black/custom)
-- `custom_bg_r/g/b`: 自定义背景色RGB分量 (0-255)
-
-*图层系统参数（符合 DCI 规范）*:
-- `layer_priority`: 图层优先级 (1-100)，控制绘制顺序
-- `layer_padding`: 外边框值 (0-100)，用于阴影效果
-- `palette_type`: 调色板类型 (none/foreground/background/highlight_foreground/highlight)
-- `hue_adjustment`: 色调调整 (-100 到 100)
-- `saturation_adjustment`: 饱和度调整 (-100 到 100)
-- `brightness_adjustment`: 亮度调整 (-100 到 100)
-- `red_adjustment`: 红色分量调整 (-100 到 100)
-- `green_adjustment`: 绿色分量调整 (-100 到 100)
-- `blue_adjustment`: 蓝色分量调整 (-100 到 100)
-- `alpha_adjustment`: 透明度调整 (-100 到 100)
-
-**输出**:
-- `dci_image_data` (DCI_IMAGE_DATA): 包含路径、内容、元数据和图层信息的字典数据
-- `path` (STRING): DCI图像的内部路径字符串
-- `binary_data` (BINARY_DATA): 图像的二进制数据内容
-
-**输出数据结构**:
-```python
-DCI_IMAGE_DATA = {
-    'path': str,           # DCI内部路径 (如: "256/normal.light/1.0/1.0.-1.0.0.0.0.0.0.0.webp")
-    'content': bytes,      # 图像二进制数据
-    'size': int,           # 图标尺寸
-    'state': str,          # 图标状态
-    'tone': str,           # 色调类型
-    'scale': float,        # 缩放因子
-    'format': str,         # 图像格式
-    'actual_size': int,    # 实际图像尺寸
-    'file_size': int,      # 文件大小
-    'background_color': str, # 背景色处理方式
-    'pil_image': PIL.Image,  # PIL图像对象（调试用）
-
-    # 图层系统元数据
-    'layer_priority': int,        # 图层优先级
-    'layer_padding': int,         # 外边框值
-    'palette_type': str,          # 调色板类型名称
-    'palette_value': int,         # 调色板数值
-    'hue_adjustment': int,        # 色调调整
-    'saturation_adjustment': int, # 饱和度调整
-    'brightness_adjustment': int, # 亮度调整
-    'red_adjustment': int,        # 红色调整
-    'green_adjustment': int,      # 绿色调整
-    'blue_adjustment': int,       # 蓝色调整
-    'alpha_adjustment': int,      # 透明度调整
-}
-```
-
-**处理流程**:
-1. 张量转换为 PIL 图像
-2. 处理背景色（如需要）
-3. 图像缩放和格式转换（应用质量设置）
-4. 转换调色板类型为数值
-5. 生成包含图层参数的 DCI 路径
-6. 创建包含图层信息的元数据结构
-7. 返回完整的结构化数据
-
-**图片质量控制**:
-- WebP格式：支持多种压缩模式
-  - 无损压缩：完全保持图像质量，文件较大
-  - 近无损压缩：在视觉无损的前提下减小文件大小
-  - 有损压缩：支持质量设置(1-100)和透明度质量控制
-- JPEG格式：支持1-100质量设置，影响压缩率和文件大小
-- PNG格式：无损压缩，支持0-9压缩等级控制文件大小
-
-**高级压缩设置详解**:
-
-*WebP压缩模式优先级*:
-1. 如果 `webp_lossless=True`：使用无损压缩，忽略其他参数
-2. 否则：使用标准有损压缩，应用alpha_quality控制Alpha通道
-
-*PNG压缩等级说明*:
-- 等级0：无压缩，文件最大，速度最快
-- 等级1-3：快速压缩，文件较大
-- 等级4-6：平衡压缩，推荐使用（默认6）
-- 等级7-9：最高压缩，文件最小，速度较慢
-
-*透明度处理*:
-- WebP：支持透明度质量独立控制，可在保持主图质量的同时压缩透明通道
-- PNG：始终保持透明度无损，压缩等级仅影响文件大小
-- JPEG：不支持透明度，自动转换为RGB并应用白色背景
-
-**图层文件名生成**:
-根据 DCI 规范，自动生成格式为 `优先级.外边框p.调色板.色调_饱和度_亮度_红_绿_蓝_透明度.格式` 的文件名。
-
-##### DCIFileNode 类
-**职责**: 接收多个 DCI Image 输出并组合成完整的 DCI 文件
-
-**设计理念**:
-- 支持最多12个图像输入的灵活组合
-- 专注于生成二进制数据，遵循单一职责原则
-- 文件保存功能由专门的 Binary File Saver 节点处理
-
-**输入参数**:
-- `dci_image_1` 到 `dci_image_12`: DCI图像数据 (可选)
-
-**输出**:
-- `dci_binary_data` (BINARY_DATA): DCI文件的二进制数据
-
-**处理流程**:
-1. 收集所有输入的 DCI 图像数据
-2. 按目录结构组织文件
-3. 创建 DCI 文件对象
-4. 生成二进制数据
-5. 返回二进制数据
-
-##### DCIPreviewFromBinary 类
-**职责**: 从二进制 DCI 数据创建可视化预览
-
-**设计理念**:
-- 与 DCIFileNode 配合使用
-- 支持内存中的 DCI 数据预览
-- 无需文件系统操作
-
-**输入参数**:
-- `dci_binary_data`: DCI文件的二进制数据 (BINARY_DATA)
-- `grid_columns`: 网格列数 (1-10)
-- `show_metadata`: 显示元数据
-
-**处理流程**:
-1. 从二进制数据解析 DCI 结构
-2. 提取图像和元数据
-3. 生成网格预览
-4. 创建元数据摘要
-5. 返回预览图像和摘要
-
-#### 3. DCI Preview（DCI 预览）
-**节点类别**：`DCI/Preview`
-**功能描述**：直接在节点内显示 DCI 文件内容的可视化预览和详细元数据信息。专门用于预览 DCI 二进制数据，现支持将Light和Dark相关内容分开显示。
-
-**必需输入参数：**
-- **`dci_binary_data`** (BINARY_DATA)：DCI 文件的二进制数据
-
-**可选输入参数：**
-- **`light_background_color`** (COMBO)：Light主题预览背景色，默认light_gray
-- **`dark_background_color`** (COMBO)：Dark主题预览背景色，默认dark_gray
-- **`text_font_size`** (INT)：文本字号大小（8-24像素），默认12
-
-**背景颜色选项：**
-支持20种预设颜色，包括：
-- **基础色**：light_gray、dark_gray、white、black
-- **特殊背景**：transparent、checkerboard
-- **彩色选项**：blue、green、red、yellow、cyan、magenta、orange、purple、pink、brown、navy、teal、olive、maroon
-
-**节点内预览功能：**
-- **双列布局**：Light主题图标在左列，Dark主题图标在右列
-- **独立背景设置**：Light和Dark主题可设置不同的背景颜色
-- **丰富背景色选项**：每种主题支持20种预设背景色，包括特殊的透明和棋盘格背景
-- **智能边框颜色**：图片边框颜色自动跟随文字颜色，保持视觉一致性
-- **自适应文本格式**：根据字体大小调整文本显示格式，较大字体使用更紧凑的布局
-- **文件路径分组显示**：Light、Dark和其他色调图标的路径分别显示
-- **详细元数据显示**：在节点内显示全面的文件信息，包括：
-  - 图标尺寸、状态、色调、缩放因子
-  - 图像格式、文件大小、实际尺寸
-  - 完整的DCI内部路径和文件名
-  - 每个图像的优先级和详细属性
-  - 统计汇总信息和文件路径列表
-
-**输出：**
-- 无输出（所有预览内容直接在节点内显示）
-
-**边框颜色算法设计**：
-为了保持界面的视觉一致性，边框颜色采用跟随文字颜色的智能算法：
-
-*颜色计算逻辑*：
-1. 获取当前文字颜色RGB值
-2. 计算文字颜色的总亮度（R+G+B）
-3. 根据文字颜色亮度调整边框颜色：
-   - 浅色文字（总亮度>384）：边框颜色 = 文字颜色 - 64（变暗）
-   - 深色文字（总亮度≤384）：边框颜色 = 文字颜色 + 64（变亮）
-4. 确保RGB值在0-255范围内
-
-*设计优势*：
-- **视觉协调**：边框与文字颜色保持一致的色调，避免突兀的对比
-- **可见性保证**：通过亮度差异确保边框在任何背景下都清晰可见
-- **自动适配**：无需手动配置，自动适应所有背景颜色
-- **一致性体验**：在不同主题和背景下保持统一的视觉风格
-
-**注意**：此节点专门用于处理二进制数据输入，不再需要手动设置列数，默认将Light和Dark内容分开显示在两列。Light主题图标固定在左侧列，Dark主题图标固定在右侧列。文本格式会根据字体大小自动调整，提供最佳阅读体验。背景颜色选择简化为预设选项，移除了自定义RGB设置以提供更好的用户体验。
 
 ## 2. 数据结构设计
 

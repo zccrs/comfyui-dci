@@ -1,6 +1,6 @@
 try:
     from PIL import Image
-    from ..utils.image_utils import create_checkerboard_background, pil_to_comfyui_format
+    from ..utils.image_utils import create_checkerboard_background, pil_to_comfyui_format, pil_to_tensor
     _image_support = True
 except ImportError as e:
     print(f"Warning: Image support not available in preview_node: {e}")
@@ -29,7 +29,7 @@ class DCIPreviewNode(BaseNode):
     def INPUT_TYPES(cls):
         return {
             "required": {
-                t("dci_binary_data"): ("BINARY_DATA",),
+                t("dci_binary_data"): ("BINARY_DATA,BINARY_DATA_LIST",),
             },
             "optional": {
                 t("light_background_color"): (get_enum_ui_options(PreviewBackground, t), {"default": get_enum_default_ui_value(PreviewBackground.LIGHT_GRAY, t)}),
@@ -38,14 +38,14 @@ class DCIPreviewNode(BaseNode):
             }
         }
 
-    RETURN_TYPES = ()
-    RETURN_NAMES = ()
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = (t("preview_images"),)
     FUNCTION = "execute"
     CATEGORY = f"DCI/{t('Preview')}"
     OUTPUT_NODE = True
 
     def _execute(self, **kwargs):
-        """Preview DCI file contents with in-node display"""
+        """Preview DCI file contents with in-node display and IMAGE output"""
         # Extract parameters with translation support and convert to enums
         # Try both translated and original parameter names for compatibility
         dci_binary_data = kwargs.get(t("dci_binary_data")) if t("dci_binary_data") in kwargs else kwargs.get("dci_binary_data")
@@ -89,55 +89,147 @@ class DCIPreviewNode(BaseNode):
         return color_mapping.get(translated_color, translated_color)
 
     def _execute_impl(self, dci_binary_data, light_background_color: PreviewBackground = PreviewBackground.LIGHT_GRAY, dark_background_color: PreviewBackground = PreviewBackground.DARK_GRAY, text_font_size=18):
-        """Preview DCI file contents with in-node display"""
+        """Preview DCI file contents with in-node display and IMAGE output"""
         try:
             if not _image_support:
                 error_msg = "❌ 错误：图像支持不可用\n缺少 PIL/torch 依赖库"
-                return {"ui": {"text": [error_msg]}}
+                return {"ui": {"text": [error_msg]}, "result": (None,)}
 
             # Check if binary data is provided
             if dci_binary_data is None:
                 error_msg = "❌ 错误：未提供 DCI 二进制数据\n"
                 error_msg += "请确保连接了有效的 DCI 二进制数据输入。\n"
                 error_msg += "数据来源可以是：DCI File 节点或 Binary File Loader 节点"
-                return {"ui": {"text": [error_msg]}}
+                return {"ui": {"text": [error_msg]}, "result": (None,)}
 
-            if not isinstance(dci_binary_data, bytes):
-                error_msg = f"❌ 错误：DCI 数据类型不正确\n"
-                error_msg += f"期望类型：bytes，实际类型：{type(dci_binary_data)}\n"
-                error_msg += f"数据内容：{str(dci_binary_data)[:100]}..."
-                return {"ui": {"text": [error_msg]}}
+            # Handle both single binary data and list of binary data
+            binary_data_list = []
+            if isinstance(dci_binary_data, list):
+                # Multiple binary data
+                binary_data_list = dci_binary_data
+                print(f"处理 {len(binary_data_list)} 个DCI二进制数据")
+            else:
+                # Single binary data
+                binary_data_list = [dci_binary_data]
+                print(f"处理单个DCI二进制数据")
 
-            if len(dci_binary_data) == 0:
-                error_msg = "❌ 错误：DCI 二进制数据为空\n"
-                error_msg += "请检查数据源是否正确生成了 DCI 文件内容"
-                return {"ui": {"text": [error_msg]}}
+            # Process each binary data and generate previews
+            preview_images = []
+            ui_images = []
+            ui_texts = []
 
+            for i, binary_data in enumerate(binary_data_list):
+                print(f"正在处理第 {i+1}/{len(binary_data_list)} 个DCI文件...")
+
+                # Validate individual binary data
+                if not isinstance(binary_data, bytes):
+                    error_msg = f"❌ 错误：第{i+1}个DCI数据类型不正确\n"
+                    error_msg += f"期望类型：bytes，实际类型：{type(binary_data)}\n"
+                    ui_texts.append(error_msg)
+
+                    # Create error preview image
+                    error_preview = self._create_error_preview_image(error_msg, text_font_size)
+                    preview_images.append(error_preview)
+                    ui_images.append(pil_to_comfyui_format(error_preview, f"dci_error_preview_{i}"))
+                    continue
+
+                if len(binary_data) == 0:
+                    error_msg = f"❌ 错误：第{i+1}个DCI二进制数据为空\n"
+                    error_msg += "请检查数据源是否正确生成了 DCI 文件内容"
+                    ui_texts.append(error_msg)
+
+                    # Create error preview image
+                    error_preview = self._create_error_preview_image(error_msg, text_font_size)
+                    preview_images.append(error_preview)
+                    ui_images.append(pil_to_comfyui_format(error_preview, f"dci_error_preview_{i}"))
+                    continue
+
+                # Process individual DCI file
+                result = self._process_single_dci(binary_data, light_background_color, dark_background_color, text_font_size, i)
+
+                if result['preview_image']:
+                    preview_images.append(result['preview_image'])
+                    ui_images.append(result['ui_image'])
+                    ui_texts.append(result['summary_text'])
+                else:
+                    # Error case
+                    error_preview = self._create_error_preview_image(result['error_msg'], text_font_size)
+                    preview_images.append(error_preview)
+                    ui_images.append(pil_to_comfyui_format(error_preview, f"dci_error_preview_{i}"))
+                    ui_texts.append(result['error_msg'])
+
+            # Convert PIL images to ComfyUI tensor format for IMAGE output
+            if preview_images:
+                # Convert all preview images to tensors and stack them
+                image_tensors = []
+                for pil_img in preview_images:
+                    tensor = pil_to_tensor(pil_img)
+                    image_tensors.append(tensor)
+
+                # Stack tensors into batch
+                import torch
+                if len(image_tensors) == 1:
+                    output_tensor = image_tensors[0]
+                else:
+                    output_tensor = torch.cat(image_tensors, dim=0)
+
+                print(f"生成了 {len(preview_images)} 个预览图像，输出张量形状: {output_tensor.shape}")
+            else:
+                output_tensor = None
+
+            # Create UI output
+            ui_output = {
+                "ui": {
+                    "images": ui_images,
+                    "text": ui_texts
+                }
+            }
+
+            return {**ui_output, "result": (output_tensor,)}
+
+        except Exception as e:
+            error_msg = f"❌ 预览生成异常: {str(e)}"
+            print(error_msg)
+            import traceback
+            traceback.print_exc()
+
+            error_preview = self._create_error_preview_image(error_msg, text_font_size)
+            error_base64 = pil_to_comfyui_format(error_preview, "dci_error_preview")
+
+            return {
+                "ui": {"images": [error_base64], "text": [error_msg]},
+                "result": (pil_to_tensor(error_preview) if _image_support else None,)
+            }
+
+    def _process_single_dci(self, binary_data, light_background_color, dark_background_color, text_font_size, index):
+        """Process a single DCI binary data and return preview result"""
+        try:
             # Use binary data
-            reader = DCIReader(binary_data=dci_binary_data)
-            source_name = "binary_data"
+            reader = DCIReader(binary_data=binary_data)
+            source_name = f"binary_data_{index}"
 
             # Read DCI data with detailed error reporting
             if not reader.read():
-                error_msg = "❌ 错误：无法读取 DCI 数据\n"
-                error_msg += f"数据大小：{len(dci_binary_data)} 字节\n"
-                error_msg += f"数据开头：{dci_binary_data[:32].hex() if len(dci_binary_data) >= 32 else dci_binary_data.hex()}\n"
+                error_msg = f"❌ 错误：无法读取第{index+1}个DCI数据\n"
+                error_msg += f"数据大小：{len(binary_data)} 字节\n"
+                error_msg += f"数据开头：{binary_data[:32].hex() if len(binary_data) >= 32 else binary_data.hex()}\n"
                 error_msg += "可能原因：\n"
                 error_msg += "1. 数据不是有效的 DCI 格式\n"
                 error_msg += "2. 文件头损坏或格式不正确\n"
                 error_msg += "3. 数据在传输过程中被截断"
 
-                # Create error preview image
-                error_preview = self._create_error_preview_image(error_msg, text_font_size)
-                error_base64 = pil_to_comfyui_format(error_preview, "dci_error_preview")
-
-                return {"ui": {"images": [error_base64], "text": [error_msg]}}
+                return {
+                    'preview_image': None,
+                    'ui_image': None,
+                    'summary_text': error_msg,
+                    'error_msg': error_msg
+                }
 
             # Extract images with detailed error reporting
             images = reader.get_icon_images()
             if not images:
-                error_msg = "❌ 错误：DCI 文件中未找到图像\n"
-                error_msg += f"DCI 文件读取成功，数据大小：{len(dci_binary_data)} 字节\n"
+                error_msg = f"❌ 错误：第{index+1}个DCI文件中未找到图像\n"
+                error_msg += f"DCI 文件读取成功，数据大小：{len(binary_data)} 字节\n"
 
                 # Try to get more info from reader
                 try:
@@ -153,11 +245,12 @@ class DCIPreviewNode(BaseNode):
                 error_msg += "2. 图像数据解析失败\n"
                 error_msg += "3. 文件格式版本不兼容"
 
-                # Create error preview image
-                error_preview = self._create_error_preview_image(error_msg, text_font_size)
-                error_base64 = pil_to_comfyui_format(error_preview, "dci_error_preview")
-
-                return {"ui": {"images": [error_base64], "text": [error_msg]}}
+                return {
+                    'preview_image': None,
+                    'ui_image': None,
+                    'summary_text': error_msg,
+                    'error_msg': error_msg
+                }
 
             # 根据色调将图像分成Light和Dark两组
             light_images = [img for img in images if img['tone'].lower() == 'light']
@@ -197,37 +290,26 @@ class DCIPreviewNode(BaseNode):
                 preview_image = self._create_preview_with_special_background(generator, [], 1, str(light_background_color), light_bg_color)
 
             # Convert PIL image to base64 for UI display
-            preview_base64 = pil_to_comfyui_format(preview_image, "dci_preview")
+            preview_base64 = pil_to_comfyui_format(preview_image, f"dci_preview_{index}")
 
-            # Generate detailed metadata summary
+            # Generate summary text
             summary_text = self._format_detailed_summary(images, source_name, text_font_size)
 
-            # Create UI output with image and text
-            ui_output = {
-                "ui": {
-                    "images": [preview_base64],
-                    "text": [summary_text]
-                }
+            return {
+                'preview_image': preview_image,
+                'ui_image': preview_base64,
+                'summary_text': summary_text,
+                'error_msg': None
             }
 
-            print(f"DCI preview generated: {len(images)} images found, Light: {len(light_images)}, Dark: {len(dark_images)}, Other: {len(other_images)}")
-            return ui_output
-
         except Exception as e:
-            # Comprehensive error reporting with preview image
-            import traceback
-            error_msg = f"❌ 严重错误：DCI 预览过程中发生异常\n"
-            error_msg += f"错误类型：{type(e).__name__}\n"
-            error_msg += f"错误信息：{str(e)}\n"
-            error_msg += f"数据状态：{type(dci_binary_data)} ({len(dci_binary_data) if isinstance(dci_binary_data, bytes) else 'N/A'} 字节)\n"
-            error_msg += "\n详细错误堆栈：\n"
-            error_msg += traceback.format_exc()
-
-            # Create error preview image
-            error_preview = self._create_error_preview_image(error_msg, text_font_size)
-            error_base64 = pil_to_comfyui_format(error_preview, "dci_error_preview")
-
-            return {"ui": {"images": [error_base64], "text": [error_msg]}}
+            error_msg = f"❌ 处理第{index+1}个DCI文件时发生异常: {str(e)}"
+            return {
+                'preview_image': None,
+                'ui_image': None,
+                'summary_text': error_msg,
+                'error_msg': error_msg
+            }
 
     def _get_background_color(self, color_name):
         """Get RGB color tuple based on color name"""

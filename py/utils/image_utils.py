@@ -36,6 +36,29 @@ def tensor_to_pil(image):
 
     return pil_image
 
+def pil_to_tensor(pil_image):
+    """Convert PIL Image to ComfyUI image tensor"""
+    # Convert PIL image to numpy array
+    if pil_image.mode == 'RGBA':
+        # Convert RGBA to RGB by compositing on white background
+        rgb_image = Image.new('RGB', pil_image.size, (255, 255, 255))
+        rgb_image.paste(pil_image, mask=pil_image.split()[-1])
+        pil_image = rgb_image
+    elif pil_image.mode != 'RGB':
+        # Convert other modes to RGB
+        pil_image = pil_image.convert('RGB')
+
+    # Convert to numpy array
+    img_array = np.array(pil_image).astype(np.float32)
+
+    # Normalize to 0-1 range
+    img_array = img_array / 255.0
+
+    # Convert to torch tensor with shape [1, H, W, C] (batch dimension)
+    tensor = torch.from_numpy(img_array).unsqueeze(0)
+
+    return tensor
+
 def create_checkerboard_background(size, square_size=16):
     """Create a checkerboard pattern background"""
     width, height = size
