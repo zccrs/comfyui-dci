@@ -80,13 +80,32 @@ def apply_background(pil_image, background_type, bg_color=None):
 
 def pil_to_comfyui_format(pil_image, prefix="dci"):
     """Convert PIL image to ComfyUI format with temp file"""
-    # Convert to RGB if necessary
-    if pil_image.mode not in ('RGB', 'RGBA'):
+    # Handle different image modes for ComfyUI compatibility
+    if pil_image.mode == 'RGBA':
+        # For RGBA images, check if transparency is actually used
+        # If no transparency, convert to RGB for better compatibility
+        alpha_channel = pil_image.split()[-1]
+        alpha_values = alpha_channel.getdata()
+        has_transparency = any(alpha < 255 for alpha in alpha_values)
+
+        if not has_transparency:
+            # No transparency used, convert to RGB
+            rgb_image = Image.new('RGB', pil_image.size, (255, 255, 255))
+            rgb_image.paste(pil_image, mask=alpha_channel)
+            pil_image = rgb_image
+        # If has transparency, keep as RGBA and save as PNG
+    elif pil_image.mode not in ('RGB', 'RGBA'):
+        # Convert other modes to RGB
         pil_image = pil_image.convert('RGB')
 
     # Save to bytes buffer
     buffer = BytesIO()
-    pil_image.save(buffer, format='PNG')
+    if pil_image.mode == 'RGBA':
+        # Save RGBA as PNG to preserve transparency
+        pil_image.save(buffer, format='PNG')
+    else:
+        # Save RGB as PNG (ComfyUI handles PNG well)
+        pil_image.save(buffer, format='PNG')
     img_bytes = buffer.getvalue()
 
     # Generate unique filename
