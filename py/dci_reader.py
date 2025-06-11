@@ -587,32 +587,27 @@ class DCIPreviewGenerator:
                 break
 
     def _get_border_color(self):
-        """Get appropriate border color based on background color"""
-        # Calculate relative luminance of background color
-        r, g, b = self.background_color
+        """Get border color that follows text color for better visual consistency"""
+        # Use the same color as text for border, but with reduced opacity effect
+        # This creates a cohesive visual appearance where border and text match
 
-        # Convert to linear RGB
-        def to_linear(c):
-            c = c / 255.0
-            if c <= 0.03928:
-                return c / 12.92
-            else:
-                return pow((c + 0.055) / 1.055, 2.4)
+        # Get the current text color
+        text_r, text_g, text_b = self.text_color
 
-        r_linear = to_linear(r)
-        g_linear = to_linear(g)
-        b_linear = to_linear(b)
+        # Create a slightly lighter/darker version of text color for border
+        # This maintains color consistency while ensuring the border is visible
+        if text_r + text_g + text_b > 384:  # Light text (white-ish)
+            # For light text, make border slightly darker
+            border_r = max(0, text_r - 64)
+            border_g = max(0, text_g - 64)
+            border_b = max(0, text_b - 64)
+        else:  # Dark text (black-ish)
+            # For dark text, make border slightly lighter
+            border_r = min(255, text_r + 64)
+            border_g = min(255, text_g + 64)
+            border_b = min(255, text_b + 64)
 
-        # Calculate relative luminance
-        luminance = 0.2126 * r_linear + 0.7152 * g_linear + 0.0722 * b_linear
-
-        # Return contrasting border color
-        if luminance > 0.5:
-            # Light background - use dark border
-            return (128, 128, 128)  # Medium gray
-        else:
-            # Dark background - use light border
-            return (192, 192, 192)  # Light gray
+        return (border_r, border_g, border_b)
 
     def _wrap_text(self, text: str, max_width: int, font, draw) -> List[str]:
         """Wrap text to fit within the specified width"""
