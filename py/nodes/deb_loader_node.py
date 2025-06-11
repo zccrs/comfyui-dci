@@ -3,6 +3,8 @@ import tempfile
 import tarfile
 import subprocess
 import fnmatch
+import platform
+import shutil
 from PIL import Image
 import io
 import torch
@@ -28,15 +30,16 @@ class DebLoader(BaseNode):
     CATEGORY = f"DCI/{t('Files')}"
 
     def _execute(self, **kwargs):
-        """Load files from Debian package with file filtering"""
+        """Load files from deb package with filtering"""
         # Extract parameters with translation support
+        # Try both translated and original parameter names for compatibility
         deb_file_path = kwargs.get(t("deb_file_path")) if t("deb_file_path") in kwargs else kwargs.get("deb_file_path", "")
         file_filter = kwargs.get(t("file_filter")) if t("file_filter") in kwargs else kwargs.get("file_filter", "*.dci")
 
         return self._execute_impl(deb_file_path, file_filter)
 
     def _execute_impl(self, deb_file_path="", file_filter="*.dci"):
-        """Load files from Debian package with file filtering"""
+        """Load files from deb package with filtering"""
 
         try:
             # Validate deb file path
@@ -44,9 +47,13 @@ class DebLoader(BaseNode):
                 print("错误：未提供deb文件路径")
                 return ([], [], [], [])
 
-            normalized_path = os.path.normpath(deb_file_path.strip())
+            # Enhanced path normalization for cross-platform support
+            normalized_path = self._normalize_cross_platform_path(deb_file_path.strip())
+            print(f"规范化路径: {deb_file_path} -> {normalized_path}")
+
             if not os.path.exists(normalized_path):
                 print(f"错误：deb文件不存在: {normalized_path}")
+                print(f"原始路径: {deb_file_path}")
                 return ([], [], [], [])
 
             if not os.path.isfile(normalized_path):
@@ -118,6 +125,49 @@ class DebLoader(BaseNode):
             traceback.print_exc()
             return ([], [], [], [])
 
+    def _normalize_cross_platform_path(self, path):
+        """Normalize path for cross-platform compatibility"""
+        try:
+            # Handle Windows paths on Linux/Unix systems
+            if platform.system() != "Windows" and ":" in path and "\\" in path:
+                # This looks like a Windows path on a non-Windows system
+                print(f"检测到Windows路径格式在非Windows系统上: {path}")
+
+                # Try to convert Windows path to Unix path
+                # Remove drive letter and convert backslashes to forward slashes
+                if len(path) > 2 and path[1] == ":":
+                    # Remove drive letter (e.g., "D:" -> "")
+                    path_without_drive = path[2:]
+                    # Convert backslashes to forward slashes
+                    unix_path = path_without_drive.replace("\\", "/")
+                    # Remove leading slash if present
+                    unix_path = unix_path.lstrip("/")
+
+                    print(f"尝试转换为Unix路径: {unix_path}")
+
+                    # Try to find the file in common locations
+                    possible_paths = [
+                        unix_path,  # Direct conversion
+                        os.path.join("/tmp", os.path.basename(unix_path)),  # /tmp directory
+                        os.path.join("/home", os.getenv("USER", "user"), os.path.basename(unix_path)),  # User home
+                        os.path.join(os.getcwd(), os.path.basename(unix_path)),  # Current directory
+                        os.path.basename(unix_path),  # Just filename in current directory
+                    ]
+
+                    for possible_path in possible_paths:
+                        if os.path.exists(possible_path):
+                            print(f"找到文件: {possible_path}")
+                            return os.path.normpath(possible_path)
+
+                    print(f"警告：无法找到文件，尝试的路径: {possible_paths}")
+
+            # Standard path normalization
+            return os.path.normpath(path)
+
+        except Exception as e:
+            print(f"路径规范化失败: {str(e)}")
+            return os.path.normpath(path)
+
     def _parse_deb_file(self, deb_file_path):
         """Parse deb file to extract all files from control.tar.* and data.tar.*"""
         all_files = {}
@@ -128,16 +178,13 @@ class DebLoader(BaseNode):
                 extract_dir = os.path.join(temp_dir, "extract")
                 os.makedirs(extract_dir)
 
-                # Use ar to extract deb components
-                result = subprocess.run(
-                    ["ar", "x", deb_file_path],
-                    cwd=extract_dir,
-                    capture_output=True,
-                    text=True
-                )
-
-                if result.returncode != 0:
-                    print(f"错误：无法解压deb包: {result.stderr}")
+                # Try to use ar command first, fallback to Python implementation
+                if self._extract_with_ar(deb_file_path, extract_dir):
+                    print("使用ar命令成功解压deb包")
+                elif self._extract_with_python(deb_file_path, extract_dir):
+                    print("使用Python实现成功解压deb包")
+                else:
+                    print("错误：无法解压deb包")
                     return all_files
 
                 # Parse control.tar.*
@@ -160,6 +207,86 @@ class DebLoader(BaseNode):
             print(f"错误：解析deb文件失败: {str(e)}")
 
         return all_files
+
+    def _extract_with_ar(self, deb_file_path, extract_dir):
+        """Try to extract deb file using ar command"""
+        try:
+            # Check if ar command is available
+            result = subprocess.run(
+                ["ar", "--version"],
+                capture_output=True,
+                text=True
+            )
+
+            if result.returncode != 0:
+                print("ar命令不可用")
+                return False
+
+            # Use ar to extract deb components
+            result = subprocess.run(
+                ["ar", "x", deb_file_path],
+                cwd=extract_dir,
+                capture_output=True,
+                text=True
+            )
+
+            if result.returncode != 0:
+                print(f"ar命令执行失败: {result.stderr}")
+                return False
+
+            return True
+
+        except FileNotFoundError:
+            print("ar命令未找到")
+            return False
+        except Exception as e:
+            print(f"ar命令执行异常: {str(e)}")
+            return False
+
+    def _extract_with_python(self, deb_file_path, extract_dir):
+        """Extract deb file using pure Python implementation"""
+        try:
+            # Deb files are ar archives, we can parse them manually
+            with open(deb_file_path, 'rb') as f:
+                # Read ar header
+                magic = f.read(8)
+                if magic != b'!<arch>\n':
+                    print("错误：不是有效的ar归档文件")
+                    return False
+
+                while True:
+                    # Read file header (60 bytes)
+                    header = f.read(60)
+                    if len(header) < 60:
+                        break
+
+                    # Parse header
+                    filename = header[0:16].decode('ascii').strip()
+                    size_str = header[48:58].decode('ascii').strip()
+
+                    if not size_str:
+                        break
+
+                    size = int(size_str)
+
+                    # Read file content
+                    content = f.read(size)
+
+                    # Pad to even boundary
+                    if size % 2 == 1:
+                        f.read(1)
+
+                    # Save file
+                    if filename and not filename.startswith('/'):
+                        output_path = os.path.join(extract_dir, filename)
+                        with open(output_path, 'wb') as out_f:
+                            out_f.write(content)
+
+            return True
+
+        except Exception as e:
+            print(f"Python解压实现失败: {str(e)}")
+            return False
 
     def _extract_tar_files(self, tar_path, tar_type):
         """Extract all files from a tar archive"""

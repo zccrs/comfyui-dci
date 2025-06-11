@@ -1,0 +1,55 @@
+Fix Deb Loader cross-platform path handling and ar command dependency
+
+1. Enhanced cross-platform path normalization
+   - Added intelligent Windows path detection on Linux/Unix systems
+   - Implemented automatic path conversion from Windows format (D:\path) to Unix format
+   - Added fallback search in common locations (/tmp, user home, current directory)
+   - Improved error reporting with original and normalized path information
+
+2. Implemented ar command fallback mechanism
+   - Added ar command availability detection before usage
+   - Implemented pure Python ar archive parser as fallback
+   - Enhanced error handling for missing ar command scenarios
+   - Maintained compatibility with existing ar-based extraction
+
+3. Improved error handling and debugging
+   - Added detailed path conversion logging for troubleshooting
+   - Enhanced error messages with both original and processed paths
+   - Implemented graceful degradation when system tools are unavailable
+   - Added comprehensive exception handling throughout the extraction process
+
+4. Updated documentation and dependencies
+   - Updated English and Chinese documentation to reflect optional ar dependency
+   - Added cross-platform support information in README
+   - Clarified that ar command is preferred but not required
+   - Documented automatic fallback behavior and path handling improvements
+
+This fix resolves the issue where Windows paths (D:\file.deb) could not be processed on Linux systems, and eliminates the hard dependency on the ar command by providing a pure Python implementation fallback.
+
+修复Deb加载器跨平台路径处理和ar命令依赖问题
+
+1. 增强跨平台路径规范化
+   - 添加在Linux/Unix系统上智能检测Windows路径的功能
+   - 实现从Windows格式(D:\path)到Unix格式的自动路径转换
+   - 在常见位置(/tmp、用户主目录、当前目录)添加回退搜索
+   - 改进错误报告，显示原始路径和规范化路径信息
+
+2. 实现ar命令回退机制
+   - 在使用前添加ar命令可用性检测
+   - 实现纯Python ar归档解析器作为回退方案
+   - 增强缺少ar命令场景的错误处理
+   - 保持与现有基于ar的提取方式的兼容性
+
+3. 改进错误处理和调试功能
+   - 添加详细的路径转换日志用于故障排除
+   - 增强错误消息，同时显示原始路径和处理后路径
+   - 在系统工具不可用时实现优雅降级
+   - 在整个提取过程中添加全面的异常处理
+
+4. 更新文档和依赖说明
+   - 更新中英文文档以反映ar依赖的可选性
+   - 在README中添加跨平台支持信息
+   - 明确ar命令是推荐但非必需的
+   - 记录自动回退行为和路径处理改进
+
+此修复解决了在Linux系统上无法处理Windows路径(D:\file.deb)的问题，并通过提供纯Python实现回退方案消除了对ar命令的硬依赖。

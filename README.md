@@ -425,8 +425,10 @@ Supports 20 preset colors including:
 - **🆕 Image workflow**: Connect `image_list` output directly to image processing nodes for automatic image handling
 
 **Dependencies:**
-- **System Requirement**: `ar` command must be available (usually part of binutils package)
+- **System Requirement**: `ar` command preferred but not required (usually part of binutils package)
+- **Cross-Platform Support**: Automatic fallback to pure Python implementation when `ar` command is unavailable
 - **Python Modules**: Uses standard library modules (tarfile, subprocess, tempfile)
+- **Path Handling**: Enhanced cross-platform path normalization for Windows paths on Linux/Unix systems
 
 #### 7. Binary File Saver
 **Node Category**: `DCI/Files`
@@ -1159,8 +1161,10 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **批量处理**：从多个deb包中批量提取文件进行分析
 
 **依赖要求：**
-- **系统要求**：必须有`ar`命令可用（通常是binutils包的一部分）
+- **系统要求**：推荐使用`ar`命令但非必需（通常是binutils包的一部分）
+- **跨平台支持**：当`ar`命令不可用时自动回退到纯Python实现
 - **Python模块**：使用标准库模块（tarfile、subprocess、tempfile）
+- **路径处理**：增强的跨平台路径规范化，支持在Linux/Unix系统上处理Windows路径
 
 #### 7. Binary File Saver（二进制文件保存器）
 **节点类别**：`DCI/Files`
