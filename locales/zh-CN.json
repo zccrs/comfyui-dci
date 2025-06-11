@@ -67,7 +67,7 @@
   "local_directory": "本地目录",
   "install_target_path": "安装目标路径",
   "base_deb_path": "基础deb包路径",
-  "preserve_base_files": "保留基础文件",
+  "saved_deb_path": "保存的deb包路径",
   "package_name": "包名",
   "package_version": "包版本",
   "maintainer_name": "打包人",
@@ -121,7 +121,7 @@
   "relative_paths": "相对路径列表",
   "image_list": "图像列表",
   "image_relative_paths": "图像相对路径列表",
-  "deb_binary_data": "Deb 二进制数据",
+
   "file_list": "文件列表",
   "preview_images": "预览图像",
   "dci_image_1": "DCI 图像 1",

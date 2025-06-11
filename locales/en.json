@@ -63,7 +63,7 @@
   "local_directory": "Local Directory",
   "install_target_path": "Install Target Path",
   "base_deb_path": "Base Deb Path",
-  "preserve_base_files": "Preserve Base Files",
+  "saved_deb_path": "Saved Deb Path",
   "package_name": "Package Name",
   "package_version": "Package Version",
   "maintainer_name": "Maintainer Name",
@@ -117,7 +117,7 @@
   "relative_paths": "Relative Paths",
   "image_list": "Image List",
   "image_relative_paths": "Image Relative Paths",
-  "deb_binary_data": "Deb Binary Data",
+
   "file_list": "File List",
   "preview_images": "Preview Images",
   "dci_image_1": "DCI Image 1",

@@ -5,6 +5,7 @@ import tarfile
 import gzip
 import subprocess
 import fnmatch
+import re
 from collections import deque
 from datetime import datetime
 from ..utils.file_utils import load_binary_data, ensure_directory
@@ -22,10 +23,10 @@ class DebPackager(BaseNode):
                 t("file_filter"): ("STRING", {"default": "*.dci", "multiline": False}),
                 t("include_subdirectories"): ("BOOLEAN", {"default": True}),
                 t("install_target_path"): ("STRING", {"default": "/usr/share/dsg/icons", "multiline": False}),
+                t("output_directory"): ("STRING", {"default": "", "multiline": False}),
             },
             "optional": {
                 t("base_deb_path"): ("STRING", {"default": "", "multiline": False}),
-                t("preserve_base_files"): ("BOOLEAN", {"default": True}),
                 t("package_name"): ("STRING", {"default": "", "multiline": False}),
                 t("package_version"): ("STRING", {"default": "", "multiline": False}),
                 t("maintainer_name"): ("STRING", {"default": "", "multiline": False}),
@@ -34,8 +35,8 @@ class DebPackager(BaseNode):
             }
         }
 
-    RETURN_TYPES = ("BINARY_DATA", "STRING_LIST")
-    RETURN_NAMES = (t("deb_binary_data"), t("file_list"))
+    RETURN_TYPES = ("STRING", "STRING_LIST")
+    RETURN_NAMES = (t("saved_deb_path"), t("file_list"))
     FUNCTION = "execute"
     CATEGORY = f"DCI/{t('Files')}"
     OUTPUT_NODE = True
@@ -47,9 +48,9 @@ class DebPackager(BaseNode):
         file_filter = kwargs.get(t("file_filter")) if t("file_filter") in kwargs else kwargs.get("file_filter", "*.dci")
         include_subdirectories = kwargs.get(t("include_subdirectories")) if t("include_subdirectories") in kwargs else kwargs.get("include_subdirectories", True)
         install_target_path = kwargs.get(t("install_target_path")) if t("install_target_path") in kwargs else kwargs.get("install_target_path", "/usr/share/dsg/icons")
+        output_directory = kwargs.get(t("output_directory")) if t("output_directory") in kwargs else kwargs.get("output_directory", "")
 
         base_deb_path = kwargs.get(t("base_deb_path")) if t("base_deb_path") in kwargs else kwargs.get("base_deb_path", "")
-        preserve_base_files = kwargs.get(t("preserve_base_files")) if t("preserve_base_files") in kwargs else kwargs.get("preserve_base_files", True)
         package_name = kwargs.get(t("package_name")) if t("package_name") in kwargs else kwargs.get("package_name", "")
         package_version = kwargs.get(t("package_version")) if t("package_version") in kwargs else kwargs.get("package_version", "")
         maintainer_name = kwargs.get(t("maintainer_name")) if t("maintainer_name") in kwargs else kwargs.get("maintainer_name", "")
@@ -57,31 +58,46 @@ class DebPackager(BaseNode):
         package_description = kwargs.get(t("package_description")) if t("package_description") in kwargs else kwargs.get("package_description", "")
 
         return self._execute_impl(
-            local_directory, file_filter, include_subdirectories, install_target_path,
-            base_deb_path, preserve_base_files, package_name, package_version,
+            local_directory, file_filter, include_subdirectories, install_target_path, output_directory,
+            base_deb_path, package_name, package_version,
             maintainer_name, maintainer_email, package_description
         )
 
     def _execute_impl(self, local_directory="", file_filter="*.dci", include_subdirectories=True,
-                     install_target_path="/usr/share/dsg/icons", base_deb_path="", preserve_base_files=True,
-                     package_name="", package_version="", maintainer_name="", maintainer_email="",
-                     package_description=""):
+                     install_target_path="/usr/share/dsg/icons", output_directory="",
+                     base_deb_path="", package_name="", package_version="",
+                     maintainer_name="", maintainer_email="", package_description=""):
         """Create Debian package with file filtering and directory scanning"""
 
         try:
             # Validate local directory
             if not local_directory:
                 print("错误：未提供本地目录路径")
-                return (None, [])
+                return ("错误：未提供本地目录路径", [])
 
             normalized_path = os.path.normpath(local_directory.strip())
             if not os.path.exists(normalized_path):
                 print(f"错误：本地目录不存在: {normalized_path}")
-                return (None, [])
+                return (f"错误：本地目录不存在: {normalized_path}", [])
 
             if not os.path.isdir(normalized_path):
                 print(f"错误：路径不是目录: {normalized_path}")
-                return (None, [])
+                return (f"错误：路径不是目录: {normalized_path}", [])
+
+            # Validate and prepare output directory
+            if not output_directory:
+                # Default to ComfyUI output directory
+                output_directory = os.path.join(os.getcwd(), "output")
+
+            output_directory = os.path.normpath(output_directory.strip())
+            if not os.path.exists(output_directory):
+                try:
+                    os.makedirs(output_directory, exist_ok=True)
+                    print(f"创建输出目录: {output_directory}")
+                except Exception as e:
+                    error_msg = f"错误：无法创建输出目录 {output_directory}: {str(e)}"
+                    print(error_msg)
+                    return (error_msg, [])
 
             # Find matching files
             matching_files = self._find_matching_files(normalized_path, file_filter, include_subdirectories)
@@ -89,47 +105,50 @@ class DebPackager(BaseNode):
 
             if not matching_files:
                 print("警告：未找到匹配的文件")
-                return (None, [])
+                return ("警告：未找到匹配的文件", [])
 
-            # Parse base deb if provided
+            # Parse base deb if provided to get control info
             base_control_info = {}
-            base_data_files = {}
-
             if base_deb_path and os.path.exists(base_deb_path):
                 print(f"解析基础deb包: {base_deb_path}")
-                base_control_info, base_data_files = self._parse_base_deb(base_deb_path)
+                base_control_info, _ = self._parse_base_deb(base_deb_path)
                 print(f"基础包控制信息: {len(base_control_info)} 项")
-                print(f"基础包数据文件: {len(base_data_files)} 个")
 
-            # Prepare package metadata
+            # Prepare package metadata with version auto-increment
             pkg_info = self._prepare_package_info(
                 base_control_info, package_name, package_version,
                 maintainer_name, maintainer_email, package_description
             )
 
+            # Generate deb filename
+            deb_filename = f"{pkg_info['Package']}_{pkg_info['Version']}_all.deb"
+            deb_output_path = os.path.join(output_directory, deb_filename)
+
             # Create temporary working directory
             with tempfile.TemporaryDirectory() as temp_dir:
                 print(f"创建临时工作目录: {temp_dir}")
 
-                # Create deb package structure
-                deb_binary_data, file_list = self._create_deb_package(
+                # Create deb package
+                success, file_list = self._create_deb_package(
                     temp_dir, matching_files, normalized_path, install_target_path,
-                    base_data_files if preserve_base_files else {}, pkg_info
+                    pkg_info, deb_output_path
                 )
 
-                if deb_binary_data:
-                    print(f"成功创建deb包，大小: {len(deb_binary_data)} 字节")
+                if success:
+                    print(f"成功创建deb包: {deb_output_path}")
                     print(f"包含文件: {len(file_list)} 个")
-                    return (deb_binary_data, file_list)
+                    return (deb_output_path, file_list)
                 else:
-                    print("错误：deb包创建失败")
-                    return (None, [])
+                    error_msg = "错误：deb包创建失败"
+                    print(error_msg)
+                    return (error_msg, [])
 
         except Exception as e:
-            print(f"错误：deb打包过程中发生异常: {str(e)}")
+            error_msg = f"错误：deb打包过程中发生异常: {str(e)}"
+            print(error_msg)
             import traceback
             traceback.print_exc()
-            return (None, [])
+            return (error_msg, [])
 
     def _find_matching_files(self, directory_path, file_filter, include_subdirectories):
         """Find files matching the filter pattern using breadth-first search"""
@@ -195,9 +214,9 @@ class DebPackager(BaseNode):
             return False
 
     def _parse_base_deb(self, deb_path):
-        """Parse base deb package to extract control info and data files"""
+        """Parse base deb package to extract control info"""
         control_info = {}
-        data_files = {}
+        data_files = {}  # Not used anymore, but kept for compatibility
 
         try:
             with tempfile.TemporaryDirectory() as temp_dir:
@@ -214,7 +233,7 @@ class DebPackager(BaseNode):
                 )
 
                 if result.returncode != 0:
-                    print(f"警告：无法解压deb包: {result.stderr}")
+                    print(f"错误：无法解压基础deb包: {result.stderr}")
                     return control_info, data_files
 
                 # Parse control.tar.*
@@ -223,19 +242,13 @@ class DebPackager(BaseNode):
                     control_tar = os.path.join(extract_dir, control_files[0])
                     control_info = self._parse_control_tar(control_tar)
 
-                # Parse data.tar.*
-                data_files_list = [f for f in os.listdir(extract_dir) if f.startswith("data.tar")]
-                if data_files_list:
-                    data_tar = os.path.join(extract_dir, data_files_list[0])
-                    data_files = self._parse_data_tar(data_tar)
-
         except Exception as e:
-            print(f"警告：解析基础deb包失败: {str(e)}")
+            print(f"错误：解析基础deb包失败: {str(e)}")
 
         return control_info, data_files
 
     def _parse_control_tar(self, control_tar_path):
-        """Parse control.tar.* to extract package metadata"""
+        """Parse control.tar.* to extract control file content"""
         control_info = {}
 
         try:
@@ -250,7 +263,6 @@ class DebPackager(BaseNode):
                 tar_file = tarfile.open(control_tar_path, 'r')
 
             with tar_file:
-                # Extract control file
                 try:
                     control_member = tar_file.getmember('./control')
                     control_content = tar_file.extractfile(control_member).read().decode('utf-8')
@@ -275,34 +287,31 @@ class DebPackager(BaseNode):
 
         return control_info
 
-    def _parse_data_tar(self, data_tar_path):
-        """Parse data.tar.* to extract file list and contents"""
-        data_files = {}
+    def _increment_version(self, version):
+        """Increment the last number in a version string"""
+        if not version:
+            return "1.0.0"
 
-        try:
-            # Determine compression type and open accordingly
-            if data_tar_path.endswith('.gz'):
-                tar_file = tarfile.open(data_tar_path, 'r:gz')
-            elif data_tar_path.endswith('.xz'):
-                tar_file = tarfile.open(data_tar_path, 'r:xz')
-            elif data_tar_path.endswith('.bz2'):
-                tar_file = tarfile.open(data_tar_path, 'r:bz2')
-            else:
-                tar_file = tarfile.open(data_tar_path, 'r')
+        # Match version pattern like 1.2.3, 1.2.3-4, 1.2.3+build1, etc.
+        # We want to increment the last numeric part
+        version_pattern = r'^(.*)(\d+)(.*)$'
+        match = re.search(version_pattern, version)
 
-            with tar_file:
-                for member in tar_file.getmembers():
-                    if member.isfile():
-                        try:
-                            file_content = tar_file.extractfile(member).read()
-                            data_files[member.name] = file_content
-                        except Exception as e:
-                            print(f"警告：无法提取文件 {member.name}: {str(e)}")
+        if match:
+            prefix = match.group(1)
+            number = int(match.group(2))
+            suffix = match.group(3)
 
-        except Exception as e:
-            print(f"警告：解析data.tar失败: {str(e)}")
-
-        return data_files
+            # Increment the number
+            new_number = number + 1
+            new_version = f"{prefix}{new_number}{suffix}"
+            print(f"版本号递增: {version} -> {new_version}")
+            return new_version
+        else:
+            # If no number found, append .1
+            new_version = f"{version}.1"
+            print(f"版本号递增: {version} -> {new_version}")
+            return new_version
 
     def _prepare_package_info(self, base_control_info, package_name, package_version,
                             maintainer_name, maintainer_email, package_description):
@@ -311,7 +320,15 @@ class DebPackager(BaseNode):
 
         # Use provided values or fallback to base info or defaults
         pkg_info['Package'] = package_name or base_control_info.get('Package', 'dci-icons')
-        pkg_info['Version'] = package_version or base_control_info.get('Version', '1.0.0')
+
+        # Handle version with auto-increment
+        if package_version:
+            pkg_info['Version'] = package_version
+        elif base_control_info.get('Version'):
+            # Auto-increment base version
+            pkg_info['Version'] = self._increment_version(base_control_info.get('Version'))
+        else:
+            pkg_info['Version'] = '1.0.0'
 
         # Handle maintainer field
         if maintainer_name and maintainer_email:
@@ -339,8 +356,8 @@ class DebPackager(BaseNode):
         return pkg_info
 
     def _create_deb_package(self, temp_dir, matching_files, source_dir, install_target_path,
-                          base_data_files, pkg_info):
-        """Create the actual deb package"""
+                          pkg_info, output_deb_path):
+        """Create the actual deb package and save to specified path"""
         try:
             # Create package structure
             pkg_dir = os.path.join(temp_dir, "package")
@@ -354,22 +371,11 @@ class DebPackager(BaseNode):
             control_file_path = os.path.join(control_dir, "control")
             self._create_control_file(control_file_path, pkg_info)
 
-            # Copy base data files if preserving
-            file_list = []
-            for file_path, file_content in base_data_files.items():
-                target_path = os.path.join(data_dir, file_path.lstrip('./'))
-                target_dir = os.path.dirname(target_path)
-                if target_dir:
-                    os.makedirs(target_dir, exist_ok=True)
-
-                with open(target_path, 'wb') as f:
-                    f.write(file_content)
-                file_list.append(file_path)
-
             # Copy matching files to target location
             target_base = os.path.join(data_dir, install_target_path.lstrip('/'))
             os.makedirs(target_base, exist_ok=True)
 
+            file_list = []
             for file_path in matching_files:
                 relative_path = os.path.relpath(file_path, source_dir)
                 target_file_path = os.path.join(target_base, relative_path)
@@ -398,19 +404,18 @@ class DebPackager(BaseNode):
                 f.write("2.0\n")
 
             # Create final deb package using ar
-            deb_path = os.path.join(temp_dir, "package.deb")
+            temp_deb_path = os.path.join(temp_dir, "package.deb")
             result = subprocess.run([
-                "ar", "r", deb_path,
+                "ar", "r", temp_deb_path,
                 "debian-binary", "control.tar.gz", "data.tar.gz"
             ], cwd=temp_dir, capture_output=True, text=True)
 
             if result.returncode != 0:
                 print(f"错误：创建deb包失败: {result.stderr}")
-                return None, []
+                return False, []
 
-            # Read the created deb file
-            with open(deb_path, 'rb') as f:
-                deb_binary_data = f.read()
+            # Copy the created deb file to output location
+            shutil.copy2(temp_deb_path, output_deb_path)
 
             # Add control files to file list
             control_files = ["./control"]
@@ -424,13 +429,13 @@ class DebPackager(BaseNode):
             # Combine control and data file lists
             all_files = control_files + file_list
 
-            return deb_binary_data, all_files
+            return True, all_files
 
         except Exception as e:
             print(f"错误：创建deb包失败: {str(e)}")
             import traceback
             traceback.print_exc()
-            return None, []
+            return False, []
 
     def _create_control_file(self, control_file_path, pkg_info):
         """Create the control file with package metadata"""
