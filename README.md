@@ -382,11 +382,11 @@ Supports 20 preset colors including:
 - **`file_name`** (STRING): Target filename, default "binary_file"
 
 **Optional Input Parameters:**
-- **`output_directory`** (STRING): Output directory, defaults to ComfyUI output directory
+- **`output_directory`** (STRING): Output directory, defaults to ComfyUI output directory. If specified directory doesn't exist, it will be created automatically
 - **`allow_overwrite`** (BOOLEAN): Allow overwriting existing files, default False
 
 **Output:**
-- **`saved_path`** (STRING): Actual saved file path
+- **`saved_path`** (STRING): Actual saved file path on success, detailed error message on failure
 
 #### 11. DCI File Saver (Enhanced)
 **Node Category**: `DCI/Files`
@@ -403,8 +403,8 @@ Supports 20 preset colors including:
 - **`allow_overwrite`** (BOOLEAN): Allow overwriting existing files, default False
 
 **Output:**
-- **`saved_filename`** (STRING): Saved filename (without path)
-- **`saved_full_path`** (STRING): Complete saved file path
+- **`saved_filename`** (STRING): Saved filename (without path), empty string if save failed
+- **`saved_full_path`** (STRING): Complete saved file path on success, detailed error message on failure
 
 #### 9. DCI Analysis
 **Node Category**: `DCI/Analysis`
@@ -915,11 +915,11 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **`file_name`** (STRING)：目标文件名，默认"binary_file"
 
 **可选输入参数：**
-- **`output_directory`** (STRING)：输出目录，默认使用 ComfyUI 输出目录
+- **`output_directory`** (STRING)：输出目录，默认使用 ComfyUI 输出目录。如果指定的目录不存在，将自动创建
 - **`allow_overwrite`** (BOOLEAN)：允许覆盖现有文件，默认False
 
 **输出：**
-- **`saved_path`** (STRING)：实际保存的文件路径
+- **`saved_path`** (STRING)：保存成功时为实际保存的文件路径，保存失败时为详细错误信息
 
 #### 11. DCI File Saver（DCI 文件保存器 - 增强版）
 **节点类别**：`DCI/Files`
@@ -936,8 +936,8 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **`allow_overwrite`** (BOOLEAN)：允许覆盖现有文件，默认False
 
 **输出：**
-- **`saved_filename`** (STRING)：保存后的文件名（不含路径）
-- **`saved_full_path`** (STRING)：保存后的完整文件路径
+- **`saved_filename`** (STRING)：保存后的文件名（不含路径），保存失败时为空字符串
+- **`saved_full_path`** (STRING)：保存成功时为完整文件路径，保存失败时为详细错误信息
 
 **智能文件名解析功能：**
 

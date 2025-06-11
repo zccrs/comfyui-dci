@@ -45,58 +45,98 @@ class DCIFileSaver(BaseNode):
 
         # Check if binary_data is valid
         if binary_data is None:
-            print("No binary data provided (None)")
-            return ("", "")
+            error_msg = "错误：未提供二进制数据 (None)"
+            print(error_msg)
+            return ("", error_msg)
 
         if isinstance(binary_data, bytes) and len(binary_data) == 0:
-            print("Empty binary data provided")
-            return ("", "")
+            error_msg = "错误：提供的二进制数据为空"
+            print(error_msg)
+            return ("", error_msg)
 
         if not isinstance(binary_data, bytes):
-            print(f"Invalid binary data type: {type(binary_data)}")
-            return ("", "")
+            error_msg = f"错误：无效的二进制数据类型: {type(binary_data)}"
+            print(error_msg)
+            return ("", error_msg)
 
         print(f"Processing DCI binary data: {len(binary_data)} bytes")
 
         # Parse filename from input_filename
-        parsed_filename = self._parse_filename(input_filename)
+        try:
+            parsed_filename = self._parse_filename(input_filename)
+        except Exception as e:
+            error_msg = f"错误：文件名解析失败: {str(e)}"
+            print(error_msg)
+            return ("", error_msg)
 
         # Apply prefix and suffix
-        final_filename = self._apply_prefix_suffix(parsed_filename, filename_prefix, filename_suffix)
+        try:
+            final_filename = self._apply_prefix_suffix(parsed_filename, filename_prefix, filename_suffix)
+        except Exception as e:
+            error_msg = f"错误：文件名前缀后缀处理失败: {str(e)}"
+            print(error_msg)
+            return ("", error_msg)
 
         # Determine output directory
-        if output_directory:
-            # Use specified output directory, create if it doesn't exist
-            output_dir = output_directory
-            # Ensure the directory exists
-            ensure_directory(output_dir)
-        else:
-            # Use ComfyUI default output directory
-            output_dir = get_output_directory()
+        try:
+            if output_directory:
+                # Use specified output directory, create if it doesn't exist
+                output_dir = output_directory
+                # Ensure the directory exists
+                if not ensure_directory(output_dir):
+                    error_msg = f"错误：无法创建输出目录: {output_dir}"
+                    print(error_msg)
+                    return ("", error_msg)
+            else:
+                # Use ComfyUI default output directory
+                output_dir = get_output_directory()
+        except Exception as e:
+            error_msg = f"错误：输出目录处理失败: {str(e)}"
+            print(error_msg)
+            return ("", error_msg)
 
         # Create full path
-        full_path = os.path.join(output_dir, final_filename)
-        print(f"Target DCI file path: {full_path}")
+        try:
+            full_path = os.path.join(output_dir, final_filename)
+            print(f"Target DCI file path: {full_path}")
+        except Exception as e:
+            error_msg = f"错误：文件路径构建失败: {str(e)}"
+            print(error_msg)
+            return ("", error_msg)
 
         # Check if file exists and overwrite is not allowed
         if os.path.exists(full_path) and not allow_overwrite:
-            print(f"DCI file already exists and overwrite is not allowed: {full_path}")
-            return ("", "")
+            error_msg = f"错误：文件已存在且不允许覆盖: {full_path}"
+            print(error_msg)
+            return ("", error_msg)
 
         # Ensure directory exists
-        dir_path = os.path.dirname(full_path)
-        if dir_path:
-            ensure_directory(dir_path)
+        try:
+            dir_path = os.path.dirname(full_path)
+            if dir_path and not ensure_directory(dir_path):
+                error_msg = f"错误：无法创建文件目录: {dir_path}"
+                print(error_msg)
+                return ("", error_msg)
+        except Exception as e:
+            error_msg = f"错误：目录创建失败: {str(e)}"
+            print(error_msg)
+            return ("", error_msg)
 
         # Write binary data
-        bytes_written = save_binary_data(binary_data, full_path)
-        if bytes_written > 0:
-            print(f"DCI file saved successfully: {final_filename} ({bytes_written} bytes)")
-            print(f"Full path: {full_path}")
-            return (final_filename, full_path)
-        else:
-            print(f"Failed to save DCI file: {full_path}")
-            return ("", "")
+        try:
+            bytes_written = save_binary_data(binary_data, full_path)
+            if bytes_written > 0:
+                print(f"DCI file saved successfully: {final_filename} ({bytes_written} bytes)")
+                print(f"Full path: {full_path}")
+                return (final_filename, full_path)
+            else:
+                error_msg = f"错误：文件保存失败，写入0字节: {full_path}"
+                print(error_msg)
+                return ("", error_msg)
+        except Exception as e:
+            error_msg = f"错误：文件写入失败: {str(e)} (路径: {full_path})"
+            print(error_msg)
+            return ("", error_msg)
 
     def _parse_filename(self, input_filename):
         """Parse filename from input string, handling both filenames and full paths"""
