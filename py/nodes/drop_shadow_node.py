@@ -19,8 +19,6 @@ class DropShadowNode(BaseNode):
         return {
             "required": {
                 t("image"): ("IMAGE",),
-            },
-            "optional": {
                 # Drop shadow parameters (similar to CSS drop-shadow)
                 t("offset_x"): ("INT", {"default": 4, "min": -100, "max": 100, "step": 1}),
                 t("offset_y"): ("INT", {"default": 4, "min": -100, "max": 100, "step": 1}),

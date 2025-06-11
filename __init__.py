@@ -27,7 +27,8 @@ try:
         DCIAnalysis,
         DirectoryLoader,
         DebPackager,
-        DebLoader
+        DebLoader,
+        DropShadowNode
     )
     from .py.utils.i18n import t
 except ImportError:
@@ -50,7 +51,8 @@ except ImportError:
         DCIAnalysis,
         DirectoryLoader,
         DebPackager,
-        DebLoader
+        DebLoader,
+        DropShadowNode
     )
     from py.utils.i18n import t
 
@@ -71,6 +73,7 @@ NODE_CLASS_MAPPINGS = {
     "DCI_DirectoryLoader": DirectoryLoader,
     "DCI_DebPackager": DebPackager,
     "DCI_DebLoader": DebLoader,
+    "DCI_DropShadow": DropShadowNode,
 }
 
 # Display names for ComfyUI interface
@@ -89,6 +92,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "DCI_DirectoryLoader": t("Directory Loader"),
     "DCI_DebPackager": t("Deb Packager"),
     "DCI_DebLoader": t("Deb Loader"),
+    "DCI_DropShadow": t("Drop Shadow"),
 }
 
 # Extension metadata
