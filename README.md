@@ -661,6 +661,14 @@ pip install -r requirements.txt
 - **`image_format`** (COMBO)：图像格式（webp/png/jpg），默认webp
 - **`image_quality`** (INT)：图片质量（1-100），默认90，仅对webp和jpg格式有效
 
+*WebP高级设置：*
+- **`webp_lossless`** (BOOLEAN)：WebP无损压缩，默认False
+- **`webp_near_lossless`** (INT)：WebP近无损质量（60-100），默认100
+- **`webp_alpha_quality`** (INT)：WebP透明度质量（0-100），默认100
+
+*PNG高级设置：*
+- **`png_compress_level`** (INT)：PNG压缩等级（0-9），默认6
+
 *背景色设置：*
 - **`background_color`** (COMBO)：背景色处理（transparent/white/black/custom），默认transparent
 - **`custom_bg_r`** (INT)：自定义背景色红色分量（0-255），默认255
@@ -712,14 +720,23 @@ pip install -r requirements.txt
 - **`image_format`** (COMBO)：图像格式（webp/png/jpg），默认webp
 - **`image_quality`** (INT)：图片质量（1-100），默认90，仅对webp和jpg格式有效
 
+*WebP高级设置：*
+- **`webp_lossless`** (BOOLEAN)：WebP无损压缩，默认False
+- **`webp_near_lossless`** (INT)：WebP近无损质量（60-100），默认100
+- **`webp_alpha_quality`** (INT)：WebP透明度质量（0-100），默认100
+
+*PNG高级设置：*
+- **`png_compress_level`** (INT)：PNG压缩等级（0-9），默认6
+
 **输出：**
 - **`dci_image_data`** (DCI_IMAGE_DATA)：包含路径、内容、元数据的字典数据
 
 **节点特点：**
-- **简化界面**：只显示最常用的6个基本参数，界面简洁易用
+- **简化界面**：显示最常用的基本参数和高级压缩设置，界面清晰易用
 - **默认设置**：所有高级参数使用合理的默认值（优先级1、无外边框、无调色板、无颜色调整）
 - **透明背景**：默认保持图像原始透明度，适合大多数图标制作场景
-- **质量控制**：支持图片质量设置，在文件大小和图像质量之间找到平衡
+- **高级压缩**：支持WebP无损/近无损压缩、透明度质量控制和PNG压缩等级设置
+- **质量控制**：在文件大小和图像质量之间提供精细平衡控制
 - **快速创建**：适合快速创建标准DCI图像，无需复杂配置
 
 **使用场景：**

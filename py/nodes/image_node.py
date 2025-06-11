@@ -33,6 +33,14 @@ class DCIImage(BaseNode):
                 t("image_format"): ([fmt.value for fmt in ImageFormat], {"default": ImageFormat.WEBP.value}),
                 t("image_quality"): ("INT", {"default": 90, "min": 1, "max": 100, "step": 1}),
 
+                # WebP advanced settings
+                t("webp_lossless"): ("BOOLEAN", {"default": False}),
+                t("webp_near_lossless"): ("INT", {"default": 100, "min": 60, "max": 100, "step": 1}),
+                t("webp_alpha_quality"): ("INT", {"default": 100, "min": 0, "max": 100, "step": 1}),
+
+                # PNG advanced settings
+                t("png_compress_level"): ("INT", {"default": 6, "min": 0, "max": 9, "step": 1}),
+
                 # Background color settings
                 t("background_color"): (get_enum_ui_options(BackgroundColor, t), {"default": get_enum_default_ui_value(BackgroundColor.TRANSPARENT, t)}),
                 t("custom_bg_r"): ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
@@ -81,6 +89,14 @@ class DCIImage(BaseNode):
 
         image_quality = kwargs.get(t("image_quality")) if t("image_quality") in kwargs else kwargs.get("image_quality", 90)
 
+        # WebP advanced settings
+        webp_lossless = kwargs.get(t("webp_lossless")) if t("webp_lossless") in kwargs else kwargs.get("webp_lossless", False)
+        webp_near_lossless = kwargs.get(t("webp_near_lossless")) if t("webp_near_lossless") in kwargs else kwargs.get("webp_near_lossless", 100)
+        webp_alpha_quality = kwargs.get(t("webp_alpha_quality")) if t("webp_alpha_quality") in kwargs else kwargs.get("webp_alpha_quality", 100)
+
+        # PNG advanced settings
+        png_compress_level = kwargs.get(t("png_compress_level")) if t("png_compress_level") in kwargs else kwargs.get("png_compress_level", 6)
+
         background_color_ui = kwargs.get(t("background_color")) if t("background_color") in kwargs else kwargs.get("background_color")
         background_color = translate_ui_to_enum(background_color_ui, BackgroundColor, t) if background_color_ui else BackgroundColor.TRANSPARENT
 
@@ -102,13 +118,15 @@ class DCIImage(BaseNode):
         alpha_adjustment = kwargs.get(t("alpha_adjustment")) if t("alpha_adjustment") in kwargs else kwargs.get("alpha_adjustment", 0)
 
         return self._execute_impl(image, icon_size, icon_state, scale, tone_type,
-                                 image_format, image_quality, background_color, custom_bg_r, custom_bg_g, custom_bg_b,
+                                 image_format, image_quality, webp_lossless, webp_near_lossless, webp_alpha_quality, png_compress_level,
+                                 background_color, custom_bg_r, custom_bg_g, custom_bg_b,
                                  layer_priority, layer_padding, palette_type,
                                  hue_adjustment, saturation_adjustment, brightness_adjustment,
                                  red_adjustment, green_adjustment, blue_adjustment, alpha_adjustment)
 
     def _execute_impl(self, image, icon_size, icon_state: IconState, scale, tone_type: ToneType = ToneType.LIGHT,
                      image_format: ImageFormat = ImageFormat.WEBP, image_quality=90,
+                     webp_lossless=False, webp_near_lossless=100, webp_alpha_quality=100, png_compress_level=6,
                      background_color: BackgroundColor = BackgroundColor.TRANSPARENT, custom_bg_r=255, custom_bg_g=255, custom_bg_b=255,
                      layer_priority=1, layer_padding=0, palette_type: PaletteType = PaletteType.NONE,
                      hue_adjustment=0, saturation_adjustment=0, brightness_adjustment=0,
@@ -137,19 +155,28 @@ class DCIImage(BaseNode):
         # Convert to bytes
         img_bytes = BytesIO()
         if image_format == ImageFormat.WEBP:
-            # For WebP, preserve transparency if available
-            if resized_image.mode == 'RGBA' and background_color == BackgroundColor.TRANSPARENT:
-                resized_image.save(img_bytes, format='WEBP', quality=image_quality, lossless=True)
+            # WebP advanced settings
+            if webp_lossless:
+                # Lossless WebP
+                resized_image.save(img_bytes, format='WEBP', lossless=True)
+            elif webp_near_lossless < 100:
+                # Near-lossless WebP
+                resized_image.save(img_bytes, format='WEBP', quality=image_quality, method=6, near_lossless=webp_near_lossless)
             else:
-                # Convert to RGB for lossy WebP
-                if resized_image.mode == 'RGBA':
-                    rgb_image = Image.new('RGB', resized_image.size, (255, 255, 255))
-                    rgb_image.paste(resized_image, mask=resized_image.split()[-1] if resized_image.mode == 'RGBA' else None)
-                    resized_image = rgb_image
-                resized_image.save(img_bytes, format='WEBP', quality=image_quality)
+                # Standard lossy WebP with alpha quality control
+                if resized_image.mode == 'RGBA' and background_color == BackgroundColor.TRANSPARENT:
+                    # Preserve transparency with alpha quality control
+                    resized_image.save(img_bytes, format='WEBP', quality=image_quality, alpha_quality=webp_alpha_quality)
+                else:
+                    # Convert to RGB for lossy WebP
+                    if resized_image.mode == 'RGBA':
+                        rgb_image = Image.new('RGB', resized_image.size, (255, 255, 255))
+                        rgb_image.paste(resized_image, mask=resized_image.split()[-1] if resized_image.mode == 'RGBA' else None)
+                        resized_image = rgb_image
+                    resized_image.save(img_bytes, format='WEBP', quality=image_quality)
         elif image_format == ImageFormat.PNG:
-            # PNG supports transparency
-            resized_image.save(img_bytes, format='PNG')
+            # PNG with compression level control
+            resized_image.save(img_bytes, format='PNG', compress_level=png_compress_level)
         elif image_format == ImageFormat.JPG:
             # Convert to RGB if necessary for JPEG (JPEG doesn't support transparency)
             if resized_image.mode in ('RGBA', 'LA', 'P'):

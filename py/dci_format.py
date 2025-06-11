@@ -125,7 +125,8 @@ class DCIIconBuilder:
         self.directory_structure = {}  # Track directory structure
 
     def add_icon_image(self, image: Image.Image, size: int, state: str = 'normal',
-                      tone: str = 'dark', scale: float = 1.0, format: str = 'webp', quality: int = 90):
+                      tone: str = 'dark', scale: float = 1.0, format: str = 'webp', quality: int = 90,
+                      webp_lossless: bool = False, webp_near_lossless: int = 100, webp_alpha_quality: int = 100, png_compress_level: int = 6):
         """Add an icon image for specific state, tone, and scale"""
 
         if state not in self.ICON_STATES:
@@ -146,9 +147,22 @@ class DCIIconBuilder:
         # Convert to bytes
         img_bytes = BytesIO()
         if format == 'webp':
-            resized_image.save(img_bytes, format='WEBP', quality=quality)
+            # WebP advanced settings
+            if webp_lossless:
+                # Lossless WebP
+                resized_image.save(img_bytes, format='WEBP', lossless=True)
+            elif webp_near_lossless < 100:
+                # Near-lossless WebP
+                resized_image.save(img_bytes, format='WEBP', quality=quality, method=6, near_lossless=webp_near_lossless)
+            else:
+                # Standard lossy WebP with alpha quality control
+                if resized_image.mode == 'RGBA':
+                    resized_image.save(img_bytes, format='WEBP', quality=quality, alpha_quality=webp_alpha_quality)
+                else:
+                    resized_image.save(img_bytes, format='WEBP', quality=quality)
         elif format == 'png':
-            resized_image.save(img_bytes, format='PNG')
+            # PNG with compression level control
+            resized_image.save(img_bytes, format='PNG', compress_level=png_compress_level)
         elif format == 'jpg':
             # Convert to RGB if necessary for JPEG
             if resized_image.mode in ('RGBA', 'LA', 'P'):
@@ -265,7 +279,8 @@ class DCIIconBuilder:
 
 def create_dci_icon(image: Image.Image, output_path: str, size: int = 256,
                    states: List[str] = None, tones: List[str] = None,
-                   scales: List[float] = None, format: str = 'webp', quality: int = 90):
+                   scales: List[float] = None, format: str = 'webp', quality: int = 90,
+                   webp_lossless: bool = False, webp_near_lossless: int = 100, webp_alpha_quality: int = 100, png_compress_level: int = 6):
     """Create a DCI icon file from an image"""
 
     if states is None:
@@ -281,6 +296,7 @@ def create_dci_icon(image: Image.Image, output_path: str, size: int = 256,
     for state in states:
         for tone in tones:
             for scale in scales:
-                builder.add_icon_image(image, size, state, tone, scale, format, quality)
+                builder.add_icon_image(image, size, state, tone, scale, format, quality,
+                                     webp_lossless, webp_near_lossless, webp_alpha_quality, png_compress_level)
 
     builder.build(output_path)

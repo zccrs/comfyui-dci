@@ -49,6 +49,10 @@
   "dark_background_color": "Dark Background Color",
   "text_font_size": "Text Font Size",
   "image_quality": "Image Quality",
+  "webp_lossless": "WebP Lossless",
+  "webp_near_lossless": "WebP Near Lossless",
+  "webp_alpha_quality": "WebP Alpha Quality",
+  "png_compress_level": "PNG Compress Level",
 
   "normal": "Normal",
   "disabled": "Disabled",

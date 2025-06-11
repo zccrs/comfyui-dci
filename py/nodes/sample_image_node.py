@@ -29,6 +29,14 @@ class DCISampleImage(BaseNode):
                 t("tone_type"): (get_enum_ui_options(ToneType, t), {"default": get_enum_default_ui_value(ToneType.LIGHT, t)}),
                 t("image_format"): ([fmt.value for fmt in ImageFormat], {"default": ImageFormat.WEBP.value}),
                 t("image_quality"): ("INT", {"default": 90, "min": 1, "max": 100, "step": 1}),
+
+                # WebP advanced settings
+                t("webp_lossless"): ("BOOLEAN", {"default": False}),
+                t("webp_near_lossless"): ("INT", {"default": 100, "min": 60, "max": 100, "step": 1}),
+                t("webp_alpha_quality"): ("INT", {"default": 100, "min": 0, "max": 100, "step": 1}),
+
+                # PNG advanced settings
+                t("png_compress_level"): ("INT", {"default": 6, "min": 0, "max": 9, "step": 1}),
             }
         }
 
@@ -58,9 +66,19 @@ class DCISampleImage(BaseNode):
 
         image_quality = kwargs.get(t("image_quality")) if t("image_quality") in kwargs else kwargs.get("image_quality", 90)
 
-        return self._execute_impl(image, icon_size, icon_state, scale, tone_type, image_format, image_quality)
+        # WebP advanced settings
+        webp_lossless = kwargs.get(t("webp_lossless")) if t("webp_lossless") in kwargs else kwargs.get("webp_lossless", False)
+        webp_near_lossless = kwargs.get(t("webp_near_lossless")) if t("webp_near_lossless") in kwargs else kwargs.get("webp_near_lossless", 100)
+        webp_alpha_quality = kwargs.get(t("webp_alpha_quality")) if t("webp_alpha_quality") in kwargs else kwargs.get("webp_alpha_quality", 100)
 
-    def _execute_impl(self, image, icon_size, icon_state: IconState, scale, tone_type: ToneType = ToneType.LIGHT, image_format: ImageFormat = ImageFormat.WEBP, image_quality: int = 90):
+        # PNG advanced settings
+        png_compress_level = kwargs.get(t("png_compress_level")) if t("png_compress_level") in kwargs else kwargs.get("png_compress_level", 6)
+
+        return self._execute_impl(image, icon_size, icon_state, scale, tone_type, image_format, image_quality,
+                                 webp_lossless, webp_near_lossless, webp_alpha_quality, png_compress_level)
+
+    def _execute_impl(self, image, icon_size, icon_state: IconState, scale, tone_type: ToneType = ToneType.LIGHT, image_format: ImageFormat = ImageFormat.WEBP, image_quality: int = 90,
+                     webp_lossless: bool = False, webp_near_lossless: int = 100, webp_alpha_quality: int = 100, png_compress_level: int = 6):
         """Create simple DCI image data with basic settings only"""
         if not _image_support:
             return ({},)
@@ -77,14 +95,22 @@ class DCISampleImage(BaseNode):
         # Convert to bytes
         img_bytes = BytesIO()
         if image_format == ImageFormat.WEBP:
-            # For WebP, preserve transparency if available
-            if resized_image.mode == 'RGBA':
-                resized_image.save(img_bytes, format='WEBP', quality=image_quality, lossless=True)
+            # WebP advanced settings
+            if webp_lossless:
+                # Lossless WebP
+                resized_image.save(img_bytes, format='WEBP', lossless=True)
+            elif webp_near_lossless < 100:
+                # Near-lossless WebP
+                resized_image.save(img_bytes, format='WEBP', quality=image_quality, method=6, near_lossless=webp_near_lossless)
             else:
-                resized_image.save(img_bytes, format='WEBP', quality=image_quality)
+                # Standard lossy WebP with alpha quality control
+                if resized_image.mode == 'RGBA':
+                    resized_image.save(img_bytes, format='WEBP', quality=image_quality, alpha_quality=webp_alpha_quality)
+                else:
+                    resized_image.save(img_bytes, format='WEBP', quality=image_quality)
         elif image_format == ImageFormat.PNG:
-            # PNG supports transparency
-            resized_image.save(img_bytes, format='PNG')
+            # PNG with compression level control
+            resized_image.save(img_bytes, format='PNG', compress_level=png_compress_level)
         elif image_format == ImageFormat.JPG:
             # Convert to RGB if necessary for JPEG (JPEG doesn't support transparency)
             if resized_image.mode in ('RGBA', 'LA', 'P'):
