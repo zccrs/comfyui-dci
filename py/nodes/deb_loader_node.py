@@ -19,11 +19,12 @@ class DebLoader(BaseNode):
             "required": {
                 t("deb_file_path"): ("STRING", {"default": "", "multiline": False}),
                 t("file_filter"): ("STRING", {"default": "*.dci", "multiline": False}),
+                t("skip_symlinks"): ("BOOLEAN", {"default": True}),
             }
         }
 
-    RETURN_TYPES = ("BINARY_DATA_LIST", "STRING_LIST", "IMAGE", "STRING_LIST")
-    RETURN_NAMES = (t("binary_data_list"), t("relative_paths"), t("image_list"), t("image_relative_paths"))
+    RETURN_TYPES = ("BINARY_DATA_LIST", "STRING_LIST", "IMAGE", "STRING_LIST", "STRING_LIST")
+    RETURN_NAMES = (t("binary_data_list"), t("relative_paths"), t("image_list"), t("image_relative_paths"), t("skipped_files"))
     FUNCTION = "execute"
     CATEGORY = f"DCI/{t('Files')}"
 
@@ -33,16 +34,17 @@ class DebLoader(BaseNode):
         # Try both translated and original parameter names for compatibility
         deb_file_path = kwargs.get(t("deb_file_path")) if t("deb_file_path") in kwargs else kwargs.get("deb_file_path", "")
         file_filter = kwargs.get(t("file_filter")) if t("file_filter") in kwargs else kwargs.get("file_filter", "*.dci")
+        skip_symlinks = kwargs.get(t("skip_symlinks")) if t("skip_symlinks") in kwargs else kwargs.get("skip_symlinks", True)
 
-        return self._execute_impl(deb_file_path, file_filter)
+        return self._execute_impl(deb_file_path, file_filter, skip_symlinks)
 
-    def _execute_impl(self, deb_file_path="", file_filter="*.dci"):
+    def _execute_impl(self, deb_file_path="", file_filter="*.dci", skip_symlinks=True):
         """Load files from deb package with filtering"""
 
         # Validate deb file path
         if not deb_file_path:
             print("错误：未提供deb文件路径")
-            return ([], [], [], [])
+            return ([], [], [], [], [])
 
         # Normalize cross-platform path
         normalized_path = self._normalize_cross_platform_path(deb_file_path)
@@ -50,17 +52,23 @@ class DebLoader(BaseNode):
         # Check if file exists
         if not os.path.exists(normalized_path):
             print(f"错误：deb文件不存在: {normalized_path}")
-            return ([], [], [], [])
+            return ([], [], [], [], [])
 
         print(f"正在解析deb文件: {normalized_path}")
+        if skip_symlinks:
+            print("跳过软链接: 启用")
+        else:
+            print("跳过软链接: 禁用")
 
         # Parse deb file and extract all files
         try:
-            all_files = self._parse_deb_file(normalized_path)
+            all_files, skipped_symlinks = self._parse_deb_file(normalized_path, skip_symlinks)
             print(f"从deb包中提取 {len(all_files)} 个文件")
+            if skipped_symlinks:
+                print(f"跳过 {len(skipped_symlinks)} 个软链接文件")
         except Exception as e:
             print(f"错误：解析deb文件失败: {str(e)}")
-            return ([], [], [], [])
+            return ([], [], [], [], [])
 
         # Filter files based on pattern
         try:
@@ -68,7 +76,7 @@ class DebLoader(BaseNode):
             print(f"过滤后匹配 {len(matching_files)} 个文件")
         except Exception as e:
             print(f"错误：文件过滤失败: {str(e)}")
-            return ([], [], [], [])
+            return ([], [], [], [], [])
 
         # Process results
         binary_data_list = []
@@ -107,9 +115,9 @@ class DebLoader(BaseNode):
         if image_list:
             # Stack all images into a batch tensor
             images_tensor = torch.stack(image_list, dim=0)
-            return (binary_data_list, relative_paths, images_tensor, image_relative_paths)
+            return (binary_data_list, relative_paths, images_tensor, image_relative_paths, skipped_symlinks)
         else:
-            return (binary_data_list, relative_paths, [], [])
+            return (binary_data_list, relative_paths, [], [], skipped_symlinks)
 
     def _normalize_cross_platform_path(self, path):
         """Normalize path for cross-platform compatibility"""
@@ -155,9 +163,10 @@ class DebLoader(BaseNode):
             print(f"路径规范化失败: {str(e)}")
             return path
 
-    def _parse_deb_file(self, deb_file_path):
+    def _parse_deb_file(self, deb_file_path, skip_symlinks=True):
         """Parse deb file and extract all files using pure Python implementation"""
         all_files = {}
+        skipped_symlinks = []
 
         try:
             with tempfile.TemporaryDirectory() as temp_dir:
@@ -168,28 +177,30 @@ class DebLoader(BaseNode):
                 # Extract ar archive using pure Python
                 if not self._extract_ar_archive_python(deb_file_path, extract_dir):
                     print("错误：无法解压deb包")
-                    return all_files
+                    return all_files, skipped_symlinks
 
                 # Parse control.tar.*
                 control_files = [f for f in os.listdir(extract_dir) if f.startswith("control.tar")]
                 if control_files:
                     control_tar = os.path.join(extract_dir, control_files[0])
-                    control_file_dict = self._extract_tar_files(control_tar, "control")
+                    control_file_dict, control_symlinks = self._extract_tar_files(control_tar, "control", skip_symlinks)
                     all_files.update(control_file_dict)
+                    skipped_symlinks.extend(control_symlinks)
                     print(f"从control.tar中提取 {len(control_file_dict)} 个文件")
 
                 # Parse data.tar.*
                 data_files_list = [f for f in os.listdir(extract_dir) if f.startswith("data.tar")]
                 if data_files_list:
                     data_tar = os.path.join(extract_dir, data_files_list[0])
-                    data_file_dict = self._extract_tar_files(data_tar, "data")
+                    data_file_dict, data_symlinks = self._extract_tar_files(data_tar, "data", skip_symlinks)
                     all_files.update(data_file_dict)
+                    skipped_symlinks.extend(data_symlinks)
                     print(f"从data.tar中提取 {len(data_file_dict)} 个文件")
 
         except Exception as e:
             print(f"错误：解析deb文件失败: {str(e)}")
 
-        return all_files
+        return all_files, skipped_symlinks
 
     def _extract_ar_archive_python(self, deb_file_path, extract_dir):
         """Extract ar archive using pure Python implementation"""
@@ -238,9 +249,10 @@ class DebLoader(BaseNode):
             print(f"Python ar解析失败: {str(e)}")
             return False
 
-    def _extract_tar_files(self, tar_path, tar_type):
+    def _extract_tar_files(self, tar_path, tar_type, skip_symlinks=True):
         """Extract all files from a tar archive"""
         files_dict = {}
+        skipped_symlinks = []
 
         try:
             # Determine compression type and open accordingly
@@ -255,6 +267,16 @@ class DebLoader(BaseNode):
 
             with tar_file:
                 for member in tar_file.getmembers():
+                    # Check if it's a symlink and should be skipped
+                    if skip_symlinks and (member.islnk() or member.issym()):
+                        clean_path = member.name.lstrip('./')
+                        skipped_symlinks.append(clean_path)
+                        if member.islnk():
+                            print(f"  ⏭️ 跳过软链接: {clean_path} -> {member.linkname}")
+                        else:
+                            print(f"  ⏭️ 跳过硬链接: {clean_path} -> {member.linkname}")
+                        continue
+
                     if member.isfile():
                         try:
                             file_content = tar_file.extractfile(member).read()
@@ -268,7 +290,7 @@ class DebLoader(BaseNode):
         except Exception as e:
             print(f"错误：解析{tar_type}.tar失败: {str(e)}")
 
-        return files_dict
+        return files_dict, skipped_symlinks
 
     def _filter_files(self, all_files, file_filter):
         """Filter files based on the filter pattern"""

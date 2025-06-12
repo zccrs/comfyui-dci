@@ -360,12 +360,14 @@ Supports 20 preset colors including:
 - **`directory_path`** (STRING): Directory path to scan, default empty string
 - **`file_filter`** (STRING): File filter pattern using wildcards (e.g., "*.dci", "*.png,*.jpg"), default "*.dci"
 - **`include_subdirectories`** (BOOLEAN): Whether to include subdirectories in search, default True
+- **`skip_symlinks`** (BOOLEAN): **NEW** - Skip symbolic links during scanning, default True
 
 **Output:**
 - **`binary_data_list`** (BINARY_DATA_LIST): List of binary data from loaded files
 - **`relative_paths`** (STRING_LIST): List of relative file paths (relative to the specified directory)
 - **`image_list`** (IMAGE): **NEW** - Batch tensor of decoded images (None if no images found)
 - **`image_relative_paths`** (STRING_LIST): **NEW** - List of relative paths for decoded images
+- **`skipped_files`** (STRING_LIST): **NEW** - List of skipped symbolic link files
 
 **Features:**
 - **Wildcard Filtering**: Support for multiple patterns separated by commas (e.g., "*.dci,*.png")
@@ -378,6 +380,7 @@ Supports 20 preset colors including:
 - **🆕 Image Decoding**: Automatically decodes detected images to ComfyUI IMAGE format (RGB, 0-1 range)
 - **🆕 Dual Output System**: Provides both binary data (for all files) and decoded images (for image files only)
 - **🆕 Format Conversion**: Handles various image formats and color modes (RGBA→RGB, grayscale→RGB)
+- **🆕 Symlink Handling**: Optional skipping of symbolic links during scanning with detailed reporting
 
 **Example Usage:**
 - Load all DCI files: `directory_path="/path/to/icons", file_filter="*.dci", include_subdirectories=True`
@@ -392,12 +395,14 @@ Supports 20 preset colors including:
 **Required Input Parameters:**
 - **`deb_file_path`** (STRING): Path to the .deb file to parse, default empty string
 - **`file_filter`** (STRING): File filter pattern using wildcards (e.g., "*.dci", "*.png,*.jpg"), default "*.dci"
+- **`skip_symlinks`** (BOOLEAN): **NEW** - Skip symbolic links during extraction, default True
 
 **Output:**
 - **`binary_data_list`** (BINARY_DATA_LIST): List of binary data from extracted files
 - **`relative_paths`** (STRING_LIST): List of relative file paths within the deb package
 - **`image_list`** (IMAGE): **NEW** - Batch tensor of decoded images (None if no images found)
 - **`image_relative_paths`** (STRING_LIST): **NEW** - List of relative paths for decoded images
+- **`skipped_files`** (STRING_LIST): **NEW** - List of skipped symbolic link files
 
 **Features:**
 - **Deb Package Parsing**: Uses `ar` command to extract deb package components
@@ -411,6 +416,7 @@ Supports 20 preset colors including:
 - **🆕 Image Decoding**: Automatically decodes detected images to ComfyUI IMAGE format (RGB, 0-1 range)
 - **🆕 Dual Output System**: Provides both binary data (for all files) and decoded images (for image files only)
 - **🆕 Format Conversion**: Handles various image formats and color modes (RGBA→RGB, grayscale→RGB)
+- **🆕 Symlink Handling**: Optional skipping of symbolic links during extraction with detailed reporting
 
 **Technical Details:**
 - **Extraction Process**: Uses temporary directories for safe extraction
@@ -1022,12 +1028,14 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **`directory_path`** (STRING)：要扫描的目录路径，默认空字符串
 - **`file_filter`** (STRING)：文件过滤模式，支持通配符（如"*.dci"、"*.png,*.jpg"），默认"*.dci"
 - **`include_subdirectories`** (BOOLEAN)：是否包含子目录搜索，默认True
+- **`skip_symlinks`** (BOOLEAN)：**新增** - 扫描时跳过软链接，默认True
 
 **输出：**
 - **`binary_data_list`** (BINARY_DATA_LIST)：加载文件的二进制数据列表
 - **`relative_paths`** (STRING_LIST)：相对文件路径列表（相对于指定目录）
 - **`image_list`** (IMAGE)：**新增** - 解码后的图像批次张量（未找到图像时为None）
 - **`image_relative_paths`** (STRING_LIST)：**新增** - 解码图像的相对路径列表
+- **`skipped_files`** (STRING_LIST)：**新增** - 跳过的软链接文件列表
 
 **功能特性：**
 - **通配符过滤**：支持多种模式，用逗号分隔（如"*.dci,*.png"）
@@ -1040,6 +1048,7 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **🆕 图像解码**：自动将识别的图像解码为ComfyUI IMAGE格式（RGB，0-1范围）
 - **🆕 双输出系统**：同时提供二进制数据（所有文件）和解码图像（仅图像文件）
 - **🆕 格式转换**：处理各种图像格式和颜色模式（RGBA→RGB，灰度→RGB）
+- **🆕 软链接处理**：可选择跳过扫描过程中的软链接，并提供详细报告
 
 **使用示例：**
 - 加载所有DCI文件：`directory_path="/path/to/icons", file_filter="*.dci", include_subdirectories=True`
@@ -1151,12 +1160,14 @@ libreoffice,libreoffice7.0
 **必需输入参数：**
 - **`deb_file_path`** (STRING)：要解析的.deb文件路径，默认空字符串
 - **`file_filter`** (STRING)：文件过滤模式，支持通配符（如"*.dci"、"*.png,*.jpg"），默认"*.dci"
+- **`skip_symlinks`** (BOOLEAN)：**新增** - 提取时跳过软链接，默认True
 
 **输出：**
 - **`binary_data_list`** (BINARY_DATA_LIST)：提取文件的二进制数据列表
 - **`relative_paths`** (STRING_LIST)：deb包内文件的相对路径列表
 - **`image_list`** (IMAGE)：**新增** - 解码后的图像批次张量（未找到图像时为None）
 - **`image_relative_paths`** (STRING_LIST)：**新增** - 解码图像的相对路径列表
+- **`skipped_files`** (STRING_LIST)：**新增** - 跳过的软链接文件列表
 
 **功能特性：**
 
@@ -1172,6 +1183,7 @@ libreoffice,libreoffice7.0
 - **🆕 图像解码**：自动将识别的图像解码为ComfyUI IMAGE格式（RGB，0-1范围）
 - **🆕 双输出系统**：同时提供二进制数据（所有文件）和解码图像（仅图像文件）
 - **🆕 格式转换**：处理各种图像格式和颜色模式（RGBA→RGB，灰度→RGB）
+- **🆕 软链接处理**：可选择跳过提取过程中的软链接，并提供详细报告
 
 *技术细节：*
 - **提取过程**：使用临时目录进行安全提取

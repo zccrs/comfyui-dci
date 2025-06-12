@@ -71,6 +71,8 @@
   "package_description": "Package Description",
   "symlink_csv_path": "Symlink CSV Path",
   "file_permissions": "File Permissions",
+  "skip_symlinks": "Skip Symlinks",
+  "skipped_files": "Skipped Files",
 
   "normal": "Normal",
   "disabled": "Disabled",

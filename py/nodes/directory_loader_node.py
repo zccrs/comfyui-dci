@@ -19,11 +19,12 @@ class DirectoryLoader(BaseNode):
                 t("directory_path"): ("STRING", {"default": "", "multiline": False}),
                 t("file_filter"): ("STRING", {"default": "*.dci", "multiline": False}),
                 t("include_subdirectories"): ("BOOLEAN", {"default": True}),
+                t("skip_symlinks"): ("BOOLEAN", {"default": True}),
             }
         }
 
-    RETURN_TYPES = ("BINARY_DATA_LIST", "STRING_LIST", "IMAGE", "STRING_LIST")
-    RETURN_NAMES = (t("binary_data_list"), t("relative_paths"), t("image_list"), t("image_relative_paths"))
+    RETURN_TYPES = ("BINARY_DATA_LIST", "STRING_LIST", "IMAGE", "STRING_LIST", "STRING_LIST")
+    RETURN_NAMES = (t("binary_data_list"), t("relative_paths"), t("image_list"), t("image_relative_paths"), t("skipped_files"))
     FUNCTION = "execute"
     CATEGORY = f"DCI/{t('Files')}"
 
@@ -34,41 +35,48 @@ class DirectoryLoader(BaseNode):
         directory_path = kwargs.get(t("directory_path")) if t("directory_path") in kwargs else kwargs.get("directory_path", "")
         file_filter = kwargs.get(t("file_filter")) if t("file_filter") in kwargs else kwargs.get("file_filter", "*.dci")
         include_subdirectories = kwargs.get(t("include_subdirectories")) if t("include_subdirectories") in kwargs else kwargs.get("include_subdirectories", True)
+        skip_symlinks = kwargs.get(t("skip_symlinks")) if t("skip_symlinks") in kwargs else kwargs.get("skip_symlinks", True)
 
-        return self._execute_impl(directory_path, file_filter, include_subdirectories)
+        return self._execute_impl(directory_path, file_filter, include_subdirectories, skip_symlinks)
 
-    def _execute_impl(self, directory_path="", file_filter="*.dci", include_subdirectories=True):
+    def _execute_impl(self, directory_path="", file_filter="*.dci", include_subdirectories=True, skip_symlinks=True):
         """Load multiple binary files from directory with filtering and recursive search"""
 
         # Validate directory path
         if not directory_path:
             print("错误：未提供目录路径")
-            return ([], [], [], [])
+            return ([], [], [], [], [])
 
         # Normalize the directory path
         try:
             normalized_path = os.path.normpath(directory_path.strip())
             print(f"正在扫描目录: {normalized_path}")
+            if skip_symlinks:
+                print("跳过软链接: 启用")
+            else:
+                print("跳过软链接: 禁用")
         except Exception as e:
             print(f"错误：目录路径规范化失败: {str(e)}")
-            return ([], [], [], [])
+            return ([], [], [], [], [])
 
         # Check if directory exists
         if not os.path.exists(normalized_path):
             print(f"错误：目录不存在: {normalized_path}")
-            return ([], [], [], [])
+            return ([], [], [], [], [])
 
         if not os.path.isdir(normalized_path):
             print(f"错误：路径不是目录: {normalized_path}")
-            return ([], [], [], [])
+            return ([], [], [], [], [])
 
         # Find matching files
         try:
-            matching_files = self._find_matching_files(normalized_path, file_filter, include_subdirectories)
+            matching_files, skipped_files = self._find_matching_files(normalized_path, file_filter, include_subdirectories, skip_symlinks)
             print(f"找到 {len(matching_files)} 个匹配的文件")
+            if skipped_files:
+                print(f"跳过 {len(skipped_files)} 个软链接文件")
         except Exception as e:
             print(f"错误：文件搜索失败: {str(e)}")
-            return ([], [], [], [])
+            return ([], [], [], [], [])
 
         # Load binary data and process images
         binary_data_list = []
@@ -109,17 +117,28 @@ class DirectoryLoader(BaseNode):
         print(f"成功解码 {successful_images} 个图像文件")
         print(f"总数据量: {sum(len(data) for data in binary_data_list)} 字节")
 
+        # Convert skipped files to relative paths
+        skipped_relative_paths = []
+        for skipped_file in skipped_files:
+            try:
+                skipped_relative_path = os.path.relpath(skipped_file, normalized_path)
+                skipped_relative_paths.append(skipped_relative_path)
+            except Exception as e:
+                print(f"警告：无法计算跳过文件的相对路径: {skipped_file} - {str(e)}")
+                skipped_relative_paths.append(skipped_file)
+
         # Convert image list to ComfyUI format or empty list
         if image_list:
             # Stack all images into a batch tensor
             images_tensor = torch.stack(image_list, dim=0)
-            return (binary_data_list, relative_paths, images_tensor, image_relative_paths)
+            return (binary_data_list, relative_paths, images_tensor, image_relative_paths, skipped_relative_paths)
         else:
-            return (binary_data_list, relative_paths, [], [])
+            return (binary_data_list, relative_paths, [], [], skipped_relative_paths)
 
-    def _find_matching_files(self, directory_path, file_filter, include_subdirectories):
+    def _find_matching_files(self, directory_path, file_filter, include_subdirectories, skip_symlinks):
         """Find files matching the filter pattern using breadth-first search"""
         matching_files = []
+        skipped_files = []
 
         if include_subdirectories:
             # Use breadth-first search for recursive directory traversal
@@ -137,6 +156,12 @@ class DirectoryLoader(BaseNode):
 
                     for item in items:
                         item_path = os.path.join(current_dir, item)
+
+                        # Check if it's a symlink and should be skipped
+                        if skip_symlinks and os.path.islink(item_path):
+                            skipped_files.append(item_path)
+                            print(f"  ⏭️ 跳过软链接: {os.path.relpath(item_path, directory_path)}")
+                            continue
 
                         if os.path.isfile(item_path):
                             # Check if file matches filter
@@ -159,6 +184,12 @@ class DirectoryLoader(BaseNode):
                 for item in items:
                     item_path = os.path.join(directory_path, item)
 
+                    # Check if it's a symlink and should be skipped
+                    if skip_symlinks and os.path.islink(item_path):
+                        skipped_files.append(item_path)
+                        print(f"  ⏭️ 跳过软链接: {item}")
+                        continue
+
                     if os.path.isfile(item_path):
                         if self._matches_filter(item, file_filter):
                             matching_files.append(item_path)
@@ -170,7 +201,8 @@ class DirectoryLoader(BaseNode):
 
         # Sort final results for consistent ordering
         matching_files.sort()
-        return matching_files
+        skipped_files.sort()
+        return matching_files, skipped_files
 
     def _matches_filter(self, filename, file_filter):
         """Check if filename matches the filter pattern"""
