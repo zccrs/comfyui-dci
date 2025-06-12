@@ -536,6 +536,24 @@ class DCIPreviewGenerator:
         draw.rectangle([border_x1, border_y1, border_x2, border_y2],
                       outline=border_color, width=1)
 
+        # Draw padding indicator if padding exists
+        padding = img_info.get('layer_padding', 0)
+        if padding > 0:
+            # Calculate padding area in pixels
+            # Padding is typically a percentage or ratio, convert to pixels
+            padding_pixels = int(padding * image.size[0] / 100) if padding < 1 else int(padding)
+
+            # Calculate inner content area (after removing padding)
+            inner_x1 = img_x + padding_pixels
+            inner_y1 = img_y + padding_pixels
+            inner_x2 = img_x + image.size[0] - padding_pixels
+            inner_y2 = img_y + image.size[1] - padding_pixels
+
+            # Only draw if the inner area is valid
+            if inner_x2 > inner_x1 and inner_y2 > inner_y1:
+                # Draw dashed border around the content area (excluding padding)
+                self._draw_dashed_rectangle(draw, inner_x1, inner_y1, inner_x2, inner_y2, border_color)
+
         # Try to load a font, fall back to default if not available
         try:
             font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", self.font_size)
@@ -554,6 +572,10 @@ class DCIPreviewGenerator:
             f"Scale: {img_info['scale']:g}x",
             f"File: {img_info['file_size']}B"
         ]
+
+        # Add padding info if it exists
+        if padding > 0:
+            metadata_lines.append(f"Padding: {padding}")
 
         # Process text lines with wrapping if needed
         wrapped_lines = []
@@ -585,6 +607,50 @@ class DCIPreviewGenerator:
                 if i < len(wrapped_lines) - 1:
                     draw.text((x, text_y), "...", fill=self.text_color, font=font)
                 break
+
+    def _draw_dashed_rectangle(self, draw, x1, y1, x2, y2, color, dash_length=4, gap_length=2):
+        """Draw a dashed rectangle border"""
+        # Draw top edge
+        self._draw_dashed_line(draw, x1, y1, x2, y1, color, dash_length, gap_length)
+        # Draw right edge
+        self._draw_dashed_line(draw, x2, y1, x2, y2, color, dash_length, gap_length)
+        # Draw bottom edge
+        self._draw_dashed_line(draw, x2, y2, x1, y2, color, dash_length, gap_length)
+        # Draw left edge
+        self._draw_dashed_line(draw, x1, y2, x1, y1, color, dash_length, gap_length)
+
+    def _draw_dashed_line(self, draw, x1, y1, x2, y2, color, dash_length=4, gap_length=2):
+        """Draw a dashed line between two points"""
+        # Calculate line length and direction
+        dx = x2 - x1
+        dy = y2 - y1
+        line_length = (dx * dx + dy * dy) ** 0.5
+
+        if line_length == 0:
+            return
+
+        # Normalize direction vector
+        dx_norm = dx / line_length
+        dy_norm = dy / line_length
+
+        # Draw dashes
+        current_pos = 0
+        while current_pos < line_length:
+            # Calculate dash start and end positions
+            dash_start = current_pos
+            dash_end = min(current_pos + dash_length, line_length)
+
+            # Calculate actual coordinates
+            start_x = x1 + dx_norm * dash_start
+            start_y = y1 + dy_norm * dash_start
+            end_x = x1 + dx_norm * dash_end
+            end_y = y1 + dy_norm * dash_end
+
+            # Draw the dash
+            draw.line([(start_x, start_y), (end_x, end_y)], fill=color, width=1)
+
+            # Move to next dash position
+            current_pos += dash_length + gap_length
 
     def _get_border_color(self):
         """Get border color that follows text color for better visual consistency"""

@@ -3106,6 +3106,50 @@ LoadImage → DCI Image → DCI Image Preview
 
 ### 预览系统优化
 
+#### Padding可视化功能
+DCI Preview 节点现在支持padding信息的可视化显示，帮助用户理解图像边界与实际内容区域的关系：
+
+**主要功能**：
+- **自动padding检测**：从DCI图层元数据中自动检测padding值
+- **虚线边框标记**：当padding > 0时，使用虚线边框标记实际内容区域
+- **双重边框系统**：实线外边框显示完整图像边界，虚线内边框显示内容区域
+- **颜色一致性**：虚线边框使用与现有实线边框相同的颜色方案
+- **元数据显示**：在预览文本中显示padding值供参考
+
+**视觉效果**：
+```
+┌─────────────────┐  ← 实线边框（图像边界）
+│ ┌─ ─ ─ ─ ─ ─ ─┐ │  ← 虚线边框（内容区域）
+│ ┊   图标内容   ┊ │
+│ └─ ─ ─ ─ ─ ─ ─┘ │
+└─────────────────┘
+  ↑               ↑
+  padding区域    图像边界
+```
+
+**技术实现**：
+```python
+# 检测padding值
+padding = img_info.get('layer_padding', 0)
+
+# 计算内容区域坐标
+if padding > 0:
+    padding_pixels = int(padding * image.size[0] / 100) if padding < 1 else int(padding)
+    inner_x1 = img_x + padding_pixels
+    inner_y1 = img_y + padding_pixels
+    inner_x2 = img_x + image.size[0] - padding_pixels
+    inner_y2 = img_y + image.size[1] - padding_pixels
+
+    # 绘制虚线边框
+    self._draw_dashed_rectangle(draw, inner_x1, inner_y1, inner_x2, inner_y2, border_color)
+```
+
+**应用场景**：
+- ✅ 图标设计时理解padding对布局的影响
+- ✅ 验证图标在不同padding设置下的视觉效果
+- ✅ 调试图标定位和对齐问题
+- ✅ 确保图标内容在指定区域内正确显示
+
 #### 动态文本宽度计算
 DCI Preview 节点现在支持智能的文本宽度计算，解决了长文件路径显示不全的问题：
 
