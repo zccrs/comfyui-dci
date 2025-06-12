@@ -429,8 +429,23 @@ class BinaryFileSaver(BaseNode):
 
     def _apply_prefix_suffix(self, filename, prefix, suffix):
         """Apply prefix and suffix to filename while preserving the file extension"""
-        # Split filename and extension
-        name_part, extension = os.path.splitext(filename)
+        # Handle complex extensions like .tar.gz, .tar.bz2, etc.
+        complex_extensions = ['.tar.gz', '.tar.bz2', '.tar.xz', '.tar.Z', '.tar.lz', '.tar.lzma']
+
+        # Check for complex extensions first
+        extension = ""
+        name_part = filename
+
+        for ext in complex_extensions:
+            if filename.lower().endswith(ext.lower()):
+                # Preserve original case of the extension
+                extension = filename[-len(ext):]
+                name_part = filename[:-len(ext)]
+                break
+
+        # If no complex extension found, use standard splitext
+        if not extension:
+            name_part, extension = os.path.splitext(filename)
 
         # Apply prefix and suffix
         if prefix:
