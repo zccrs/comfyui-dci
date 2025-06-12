@@ -684,8 +684,11 @@ class DebPackager(BaseNode):
                     # 计算软链接的相对路径（与源文件在同一目录）
                     symlink_relative_path = os.path.join(os.path.dirname(relative_path), symlink_filename)
 
-                    # 计算在tar归档中的路径
-                    symlink_arcname = symlink_relative_path.replace('\\', '/')
+                    # 计算在tar归档中的完整路径（包含install_target_path）
+                    # 需要去掉install_target_path开头的斜杠，因为tar路径以./开头
+                    install_path_clean = install_target_path.lstrip('/')
+                    symlink_full_path = os.path.join(install_path_clean, symlink_relative_path)
+                    symlink_arcname = symlink_full_path.replace('\\', '/')
 
                     # 软链接目标直接使用文件名（同一目录下）
                     target_relative = filename
@@ -699,7 +702,7 @@ class DebPackager(BaseNode):
                     }
                     symlinks_info.append(symlink_info)
 
-                    print(f"    ✓ 准备软链接: {symlink_filename} -> {target_relative}")
+                    print(f"    ✓ 准备软链接: {symlink_filename} -> {target_relative} (路径: {symlink_arcname})")
 
                 except Exception as e:
                     print(f"    ❌ 准备软链接失败 {target_name}{ext}: {str(e)}")
