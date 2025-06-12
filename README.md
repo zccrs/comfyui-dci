@@ -477,9 +477,11 @@ Supports 20 preset colors including:
 
 *Prefix and Suffix Support:*
 - **Flexible Naming**: Support for adding custom prefix and suffix to filenames
-- **Extension Preservation**: Automatically preserves file extensions when applying prefix/suffix
-- **Example**: Input `data.txt`, prefix `backup_`, suffix `_v2` → `backup_data_v2.txt`
-- **Complex Extensions**: Input `archive.tar.gz`, prefix `backup_`, suffix `_v1` → `backup_archive_v1.tar.gz`
+- **Unconditional Addition**: Prefix and suffix are added unconditionally to the filename
+- **Extension Control**: Optional removal of file extensions before applying prefix/suffix
+- **Example (Keep Extension)**: Input `data.txt`, prefix `backup_`, suffix `_v2` → `backup_data.txt_v2`
+- **Example (Remove Extension)**: Input `data.txt`, prefix `backup_`, suffix `_v2`, remove extension → `backup_data_v2`
+- **Complex Extensions**: Properly handles complex extensions like `.tar.gz`, `.tar.bz2`, etc.
 
 *Special Cases Handling:*
 - **Empty Input**: Uses default filename `binary_file` when input is empty
@@ -540,6 +542,9 @@ Supports 20 preset colors including:
 
 **Optional Input Parameters:**
 - **`output_directory`** (STRING): Output directory, defaults to ComfyUI output directory. If specified directory doesn't exist, it will be created automatically. Supports paths with trailing slashes and automatically normalizes path separators
+- **`filename_prefix`** (STRING): Prefix to add to the filename, default empty string
+- **`filename_suffix`** (STRING): Suffix to add to the filename, default empty string
+- **`remove_extension`** (BOOLEAN): Remove file extension before applying prefix/suffix, default False
 - **`allow_overwrite`** (BOOLEAN): Allow overwriting existing files, default False
 
 **Output:**

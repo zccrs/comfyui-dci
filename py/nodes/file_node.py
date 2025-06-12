@@ -285,6 +285,7 @@ class BinaryFileSaver(BaseNode):
                 t("output_directory"): ("STRING", {"default": "", "multiline": False}),
                 t("filename_prefix"): ("STRING", {"default": "", "multiline": False}),
                 t("filename_suffix"): ("STRING", {"default": "", "multiline": False}),
+                t("remove_extension"): ("BOOLEAN", {"default": False}),
                 t("allow_overwrite"): ("BOOLEAN", {"default": False}),
             }
         }
@@ -304,11 +305,12 @@ class BinaryFileSaver(BaseNode):
         output_directory = kwargs.get(t("output_directory")) if t("output_directory") in kwargs else kwargs.get("output_directory", "")
         filename_prefix = kwargs.get(t("filename_prefix")) if t("filename_prefix") in kwargs else kwargs.get("filename_prefix", "")
         filename_suffix = kwargs.get(t("filename_suffix")) if t("filename_suffix") in kwargs else kwargs.get("filename_suffix", "")
+        remove_extension = kwargs.get(t("remove_extension")) if t("remove_extension") in kwargs else kwargs.get("remove_extension", False)
         allow_overwrite = kwargs.get(t("allow_overwrite")) if t("allow_overwrite") in kwargs else kwargs.get("allow_overwrite", False)
 
-        return self._execute_impl(binary_data, file_name, output_directory, filename_prefix, filename_suffix, allow_overwrite)
+        return self._execute_impl(binary_data, file_name, output_directory, filename_prefix, filename_suffix, remove_extension, allow_overwrite)
 
-    def _execute_impl(self, binary_data, file_name, output_directory="", filename_prefix="", filename_suffix="", allow_overwrite=False):
+    def _execute_impl(self, binary_data, file_name, output_directory="", filename_prefix="", filename_suffix="", remove_extension=False, allow_overwrite=False):
         """Save binary data to file system with prefix and suffix support"""
         # Check if binary_data is valid
         if binary_data is None:
@@ -338,7 +340,7 @@ class BinaryFileSaver(BaseNode):
 
         # Apply prefix and suffix
         try:
-            final_filename = self._apply_prefix_suffix(parsed_filename, filename_prefix, filename_suffix)
+            final_filename = self._apply_prefix_suffix(parsed_filename, filename_prefix, filename_suffix, remove_extension)
         except Exception as e:
             error_msg = f"错误：文件名前缀后缀处理失败: {str(e)}"
             print(error_msg)
@@ -422,39 +424,44 @@ class BinaryFileSaver(BaseNode):
             return "binary_file"
 
         # Clean the filename (remove invalid characters)
-        from ..utils.file_utils import clean_file_name
         cleaned_filename = clean_file_name(basename)
 
         return cleaned_filename
 
-    def _apply_prefix_suffix(self, filename, prefix, suffix):
-        """Apply prefix and suffix to filename while preserving the file extension"""
-        # Handle complex extensions like .tar.gz, .tar.bz2, etc.
-        complex_extensions = ['.tar.gz', '.tar.bz2', '.tar.xz', '.tar.Z', '.tar.lz', '.tar.lzma']
+    def _apply_prefix_suffix(self, filename, prefix, suffix, remove_extension=False):
+        """Apply prefix and suffix to filename with optional extension removal"""
 
-        # Check for complex extensions first
-        extension = ""
-        name_part = filename
+        # If remove_extension is True, remove the extension first
+        if remove_extension:
+            # Handle complex extensions like .tar.gz, .tar.bz2, etc.
+            complex_extensions = ['.tar.gz', '.tar.bz2', '.tar.xz', '.tar.Z', '.tar.lz', '.tar.lzma']
 
-        for ext in complex_extensions:
-            if filename.lower().endswith(ext.lower()):
-                # Preserve original case of the extension
-                extension = filename[-len(ext):]
-                name_part = filename[:-len(ext)]
-                break
+            # Check for complex extensions first
+            name_part = filename
+            for ext in complex_extensions:
+                if filename.lower().endswith(ext.lower()):
+                    name_part = filename[:-len(ext)]
+                    break
+            else:
+                # No complex extension found, use standard splitext
+                name_part, ext = os.path.splitext(filename)
+                # Special handling for hidden files (files starting with .)
+                if filename.startswith('.') and '.' not in filename[1:]:
+                    # This is a hidden file without extension, keep the whole name
+                    name_part = filename
 
-        # If no complex extension found, use standard splitext
-        if not extension:
-            name_part, extension = os.path.splitext(filename)
+            final_name = name_part
+        else:
+            # Keep the entire filename as is
+            final_name = filename
 
-        # Apply prefix and suffix
+        # Apply prefix and suffix unconditionally
         if prefix:
-            name_part = f"{prefix}{name_part}"
+            final_name = f"{prefix}{final_name}"
         if suffix:
-            name_part = f"{name_part}{suffix}"
+            final_name = f"{final_name}{suffix}"
 
-        # Reconstruct filename with extension
-        return f"{name_part}{extension}"
+        return final_name
 
 
 class Base64Decoder(BaseNode):
