@@ -221,7 +221,7 @@ class DebLoader(BaseNode):
                         break
 
                     # Parse header
-                    filename = header[0:16].decode('ascii').strip()
+                    filename = header[0:16].decode('ascii').strip().rstrip('/')
                     size_str = header[48:58].decode('ascii').strip()
 
                     if not size_str:
@@ -247,6 +247,8 @@ class DebLoader(BaseNode):
 
         except Exception as e:
             print(f"Python ar解析失败: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return False
 
     def _extract_tar_files(self, tar_path, tar_type, skip_symlinks=True):
