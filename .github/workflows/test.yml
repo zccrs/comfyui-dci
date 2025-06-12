@@ -25,7 +25,8 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libgl1-mesa-glx libglib2.0-0 libsm6 libxext6 libxrender-dev libgomp1
+        # Install minimal dependencies for Pillow and image processing
+        sudo apt-get install -y libjpeg-dev libpng-dev libfreetype6-dev
 
     - name: Install Python dependencies
       run: |
@@ -86,13 +87,15 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libgl1-mesa-glx libglib2.0-0 libsm6 libxext6 libxrender-dev libgomp1
+        # Install minimal dependencies for Pillow and image processing
+        sudo apt-get install -y libjpeg-dev libpng-dev libfreetype6-dev
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
     - name: Run integration tests (legacy test files)
       run: |
         echo "Running legacy test files for integration testing..."
+        cd tests
 
         # Run some of the original test files as integration tests
         python test_pure_python_simple.py || echo "Pure Python simple test completed"
