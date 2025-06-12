@@ -9,7 +9,7 @@ from PIL import Image, ImageDraw
 from io import BytesIO
 
 # 添加项目路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'py'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'py'))
 
 try:
     from dci_reader import DCIPreviewGenerator

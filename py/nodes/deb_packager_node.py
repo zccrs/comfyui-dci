@@ -9,9 +9,37 @@ import struct
 import time
 from collections import deque
 from datetime import datetime
-from ..utils.file_utils import load_binary_data, ensure_directory
-from ..utils.i18n import t
-from .base_node import BaseNode
+
+try:
+    from ..utils.file_utils import load_binary_data, ensure_directory
+    from ..utils.i18n import t
+    from .base_node import BaseNode
+except ImportError:
+    # Fallback for test environment
+    import sys
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    parent_dir = os.path.dirname(current_dir)
+    sys.path.insert(0, parent_dir)
+
+    try:
+        from utils.file_utils import load_binary_data, ensure_directory
+        from utils.i18n import t
+        from nodes.base_node import BaseNode
+    except ImportError as e:
+        print(f"Warning: Could not import required modules in deb_packager_node: {e}")
+        # Define minimal fallbacks
+        def load_binary_data(path):
+            with open(path, 'rb') as f:
+                return f.read()
+
+        def ensure_directory(path):
+            os.makedirs(path, exist_ok=True)
+
+        def t(text):
+            return text
+
+        class BaseNode:
+            pass
 
 class DebPackager(BaseNode):
     """ComfyUI node for creating Debian packages with file filtering and directory scanning"""

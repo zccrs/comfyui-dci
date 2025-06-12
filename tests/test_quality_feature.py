@@ -10,7 +10,7 @@ import torch
 from PIL import Image
 
 # 添加项目路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'py'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'py'))
 
 from nodes.image_node import DCIImage
 from nodes.sample_image_node import DCISampleImage

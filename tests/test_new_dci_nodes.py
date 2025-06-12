@@ -12,7 +12,7 @@ from PIL import Image, ImageDraw
 # Add current directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from nodes import DCIImage, DCIFileNode, DCIPreviewFromBinary
+from nodes import DCIImage, DCIFileNode, DCIPreviewNode
 
 
 def create_test_image(size=(256, 256), color='red', text='Test'):
@@ -170,8 +170,8 @@ def test_dci_file_node():
 
 
 def test_dci_preview_from_binary():
-    """Test DCIPreviewFromBinary node"""
-    print("\nTesting DCIPreviewFromBinary node...")
+    """Test DCIPreviewNode node"""
+    print("\nTesting DCIPreviewNode node...")
 
     # First create a DCI file
     binary_data = test_dci_file_node()
@@ -180,8 +180,8 @@ def test_dci_preview_from_binary():
         print("  Error: No binary data to preview")
         return
 
-    # Create DCIPreviewFromBinary node
-    preview_node = DCIPreviewFromBinary()
+    # Create DCIPreviewNode node
+    preview_node = DCIPreviewNode()
 
     # Test previewing DCI binary data
     result = preview_node.preview_dci_binary(

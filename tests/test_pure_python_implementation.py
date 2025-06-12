@@ -10,7 +10,7 @@ import tempfile
 import shutil
 
 # 添加项目路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'py'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'py'))
 
 from nodes.deb_packager_node import DebPackager
 from nodes.deb_loader_node import DebLoader
