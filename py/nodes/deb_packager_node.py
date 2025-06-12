@@ -502,6 +502,10 @@ class DebPackager(BaseNode):
                     symlink_info.extend(symlinks_created)
                     file_list.extend([info['deb_path'] for info in symlinks_created])
 
+            # Create md5sums file for package integrity verification
+            md5sums_path = os.path.join(control_dir, "md5sums")
+            self._create_md5sums_file(md5sums_path, data_dir, install_target_path)
+
             # Create control.tar.gz
             control_tar_path = os.path.join(temp_dir, "control.tar.gz")
             self._create_control_tar(control_tar_path, control_dir)
@@ -518,9 +522,9 @@ class DebPackager(BaseNode):
             data_tar_path = os.path.join(temp_dir, "data.tar.gz")
             self._create_data_tar_with_symlinks(data_tar_path, data_dir, symlink_info, file_mode)
 
-            # Create debian-binary
+            # Create debian-binary with Unix line endings
             debian_binary_path = os.path.join(temp_dir, "debian-binary")
-            with open(debian_binary_path, 'w') as f:
+            with open(debian_binary_path, 'w', newline='\n') as f:
                 f.write("2.0\n")
 
             # Create final deb package using pure Python ar implementation
@@ -540,6 +544,8 @@ class DebPackager(BaseNode):
 
             # Add control files to file list
             control_files = ["./control"]
+            if os.path.exists(os.path.join(control_dir, "md5sums")):
+                control_files.append("./md5sums")
             if os.path.exists(os.path.join(control_dir, "postinst")):
                 control_files.append("./postinst")
             if os.path.exists(os.path.join(control_dir, "prerm")):
@@ -560,7 +566,7 @@ class DebPackager(BaseNode):
 
     def _create_control_file(self, control_file_path, pkg_info):
         """Create the control file with package metadata"""
-        with open(control_file_path, 'w') as f:
+        with open(control_file_path, 'w', encoding='utf-8', newline='\n') as f:
             for key, value in pkg_info.items():
                 f.write(f"{key}: {value}\n")
 
@@ -708,3 +714,41 @@ class DebPackager(BaseNode):
                     print(f"    ❌ 准备软链接失败 {target_name}{ext}: {str(e)}")
 
         return symlinks_info
+
+    def _create_md5sums_file(self, md5sums_path, data_dir, install_target_path):
+        """Create md5sums file for package integrity verification"""
+        import hashlib
+
+        md5_entries = []
+
+        # Walk through data directory and calculate MD5 for each file
+        for root, dirs, files in os.walk(data_dir):
+            for file in files:
+                file_path = os.path.join(root, file)
+
+                # Calculate MD5 hash
+                md5_hash = hashlib.md5()
+                try:
+                    with open(file_path, 'rb') as f:
+                        for chunk in iter(lambda: f.read(4096), b""):
+                            md5_hash.update(chunk)
+
+                    # Get relative path from data_dir
+                    rel_path = os.path.relpath(file_path, data_dir)
+                    # Convert to Unix path format
+                    rel_path = rel_path.replace('\\', '/')
+
+                    # Add to md5 entries
+                    md5_entries.append(f"{md5_hash.hexdigest()}  {rel_path}")
+
+                except Exception as e:
+                    print(f"警告：无法计算文件MD5 {file_path}: {str(e)}")
+
+        # Write md5sums file with Unix line endings
+        try:
+            with open(md5sums_path, 'w', encoding='utf-8', newline='\n') as f:
+                for entry in sorted(md5_entries):
+                    f.write(f"{entry}\n")
+            print(f"创建md5sums文件，包含 {len(md5_entries)} 个文件的校验和")
+        except Exception as e:
+            print(f"警告：创建md5sums文件失败: {str(e)}")
