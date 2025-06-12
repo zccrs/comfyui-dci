@@ -112,6 +112,8 @@ comfyui-dci/
 - **Cross-Platform**: Pure Python implementation works on Windows, Linux, and macOS
 - **Standard Compliance**: Generated packages are fully compatible with dpkg and apt package managers
 
+> **⚠️ Important Notice (January 2025)**: DEB packages generated before the January 2025 symlink position fix need to be regenerated. The fix ensures symlinks are correctly placed alongside their target files instead of at the root level.
+
 ### Internationalization Support
 - **Complete Chinese Interface**: All node names, parameter names, and output names support Chinese display
 - **Bilingual Support**: Support switching between Chinese and English interfaces
@@ -731,6 +733,8 @@ comfyui-dci/
 - **版本管理**：智能版本递增和软件包元数据处理
 - **跨平台支持**：纯 Python 实现，在 Windows、Linux 和 macOS 上均可运行
 - **标准兼容**：生成的软件包完全兼容 dpkg 和 apt 包管理器
+
+> **⚠️ 重要提醒（2025年1月）**：2025年1月软链接位置修复之前生成的DEB包需要重新生成。修复确保软链接正确放置在目标文件旁边，而不是根级别。
 
 ### 国际化支持
 - **完整中文界面**：所有节点名称、参数名、输出名均支持中文显示
