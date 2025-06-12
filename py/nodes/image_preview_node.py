@@ -1,5 +1,5 @@
 try:
-    from PIL import Image
+    from PIL import Image, ImageDraw
     from ..utils.image_utils import apply_background, create_checkerboard_background, pil_to_comfyui_format, pil_to_tensor
     _image_support = True
 except ImportError as e:
@@ -147,12 +147,19 @@ class DCIImagePreview(BaseNode):
             # Create preview image with background using enum string value
             preview_image = apply_background(pil_image, str(preview_background))
 
+            # Add padding visualization if padding exists
+            padding = image_data.get('layer_padding', 0)
+            if padding > 0:
+                preview_image = self._add_padding_visualization(preview_image, pil_image, padding)
+
             # Convert to ComfyUI format for UI display
             preview_base64 = pil_to_comfyui_format(preview_image, f"dci_image_preview_{index}")
 
-            # Create info text
+            # Create info text with padding information
             path = image_data.get('path', 'unknown')
             info_text = f"DCI图像预览 {index+1}: {path} - {pil_image.size} - {pil_image.mode}"
+            if padding > 0:
+                info_text += f" - Padding: {padding}"
 
             return {
                 'preview_image': preview_image,
@@ -169,6 +176,114 @@ class DCIImagePreview(BaseNode):
                 'info_text': error_msg,
                 'error_msg': error_msg
             }
+
+    def _add_padding_visualization(self, preview_image, original_image, padding):
+        """Add padding visualization with dashed border to preview image"""
+        try:
+            # Create a copy to draw on
+            result_image = preview_image.copy()
+            draw = ImageDraw.Draw(result_image)
+
+            # Calculate padding area in pixels
+            # Padding is typically a percentage or ratio, convert to pixels
+            padding_pixels = int(padding * original_image.size[0] / 100) if padding < 1 else int(padding)
+
+            # Calculate inner content area (after removing padding)
+            inner_x1 = padding_pixels
+            inner_y1 = padding_pixels
+            inner_x2 = original_image.size[0] - padding_pixels
+            inner_y2 = original_image.size[1] - padding_pixels
+
+            # Only draw if the inner area is valid
+            if inner_x2 > inner_x1 and inner_y2 > inner_y1:
+                # Get border color (use a contrasting color based on background)
+                border_color = self._get_border_color(preview_image)
+
+                # Draw dashed border around the content area (excluding padding)
+                self._draw_dashed_rectangle(draw, inner_x1, inner_y1, inner_x2, inner_y2, border_color)
+
+            return result_image
+
+        except Exception as e:
+            print(f"Warning: Failed to add padding visualization: {e}")
+            return preview_image
+
+    def _get_border_color(self, image):
+        """Get a contrasting border color based on the image background"""
+        # Sample a few pixels from corners to determine background brightness
+        try:
+            width, height = image.size
+            corners = [
+                image.getpixel((0, 0)),
+                image.getpixel((width-1, 0)),
+                image.getpixel((0, height-1)),
+                image.getpixel((width-1, height-1))
+            ]
+
+            # Calculate average brightness
+            total_brightness = 0
+            for pixel in corners:
+                if isinstance(pixel, tuple) and len(pixel) >= 3:
+                    brightness = sum(pixel[:3]) / 3
+                else:
+                    brightness = pixel if isinstance(pixel, (int, float)) else 128
+                total_brightness += brightness
+
+            avg_brightness = total_brightness / len(corners)
+
+            # Use dark border on light backgrounds, light border on dark backgrounds
+            if avg_brightness > 128:
+                return (64, 64, 64)  # Dark gray
+            else:
+                return (192, 192, 192)  # Light gray
+
+        except:
+            # Fallback to medium gray
+            return (128, 128, 128)
+
+    def _draw_dashed_rectangle(self, draw, x1, y1, x2, y2, color, dash_length=4, gap_length=2):
+        """Draw a dashed rectangle border"""
+        # Draw top edge
+        self._draw_dashed_line(draw, x1, y1, x2, y1, color, dash_length, gap_length)
+        # Draw right edge
+        self._draw_dashed_line(draw, x2, y1, x2, y2, color, dash_length, gap_length)
+        # Draw bottom edge
+        self._draw_dashed_line(draw, x2, y2, x1, y2, color, dash_length, gap_length)
+        # Draw left edge
+        self._draw_dashed_line(draw, x1, y2, x1, y1, color, dash_length, gap_length)
+
+    def _draw_dashed_line(self, draw, x1, y1, x2, y2, color, dash_length=4, gap_length=2):
+        """Draw a dashed line between two points"""
+        # Calculate line length and direction
+        dx = x2 - x1
+        dy = y2 - y1
+        line_length = (dx * dx + dy * dy) ** 0.5
+
+        if line_length == 0:
+            return
+
+        # Normalize direction vector
+        dx_norm = dx / line_length
+        dy_norm = dy / line_length
+
+        # Draw dashes
+        current_pos = 0
+        while current_pos < line_length:
+            # Calculate dash start and end positions
+            dash_start = current_pos
+            dash_end = min(current_pos + dash_length, line_length)
+
+            # Calculate actual coordinates
+            start_x = x1 + dx_norm * dash_start
+            start_y = y1 + dy_norm * dash_start
+            end_x = x1 + dx_norm * dash_end
+            end_y = y1 + dy_norm * dash_end
+
+            # Draw the dash
+            draw.line([(start_x, start_y), (end_x, end_y)], fill=color, width=1)
+
+            # Move to next dash position
+            current_pos += dash_length + gap_length
 
     def _create_error_preview_image(self, error_msg):
         """Create a simple error preview image"""

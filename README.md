@@ -3107,7 +3107,7 @@ LoadImage → DCI Image → DCI Image Preview
 ### 预览系统优化
 
 #### Padding可视化功能
-DCI Preview 节点现在支持padding信息的可视化显示，帮助用户理解图像边界与实际内容区域的关系：
+DCI Preview 和 DCI Image Preview 节点现在都支持padding信息的可视化显示，帮助用户理解图像边界与实际内容区域的关系：
 
 **主要功能**：
 - **自动padding检测**：从DCI图层元数据中自动检测padding值
@@ -3149,6 +3149,10 @@ if padding > 0:
 - ✅ 验证图标在不同padding设置下的视觉效果
 - ✅ 调试图标定位和对齐问题
 - ✅ 确保图标内容在指定区域内正确显示
+
+**节点支持情况**：
+- ✅ **DCI Preview节点**：在预览网格中显示虚线边框，元数据文本中显示padding值
+- ✅ **DCI Image Preview节点**：在单个图像预览中显示虚线边框，UI文本中显示padding值
 
 #### 动态文本宽度计算
 DCI Preview 节点现在支持智能的文本宽度计算，解决了长文件路径显示不全的问题：
