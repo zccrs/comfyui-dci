@@ -1,14 +1,16 @@
-# ComfyUI DCI Extension
+# ComfyUI DCI Extension - DCI Icons & Debian Package (DEB) Creator
 
 **Language / 语言**: [English](#english) | [中文](#中文)
+
+**Keywords**: ComfyUI, DCI, DSG Combined Icons, Debian package, deb creator, icon packaging, Linux distribution, package manager, dpkg, apt
 
 ---
 
 ## English
 
-# ComfyUI DCI Image Export Extension
+# ComfyUI DCI Image Export Extension - DCI Icons & Debian Package Creator
 
-A comprehensive ComfyUI extension for creating, previewing, and analyzing DCI (DSG Combined Icons) format files. This extension implements the complete DCI specification, supporting multi-state icons, multi-tone variants, scaling factors, and advanced metadata analysis.
+A comprehensive ComfyUI extension for creating, previewing, and analyzing DCI (DSG Combined Icons) format files. This extension implements the complete DCI specification, supporting multi-state icons, multi-tone variants, scaling factors, and advanced metadata analysis. **Features Debian package (deb) creation and extraction capabilities for icon distribution and system integration.**
 
 ## DCI Specification Documentation
 
@@ -49,6 +51,7 @@ This tool fully complies with DCI standard specifications:
 - ✅ **Modular node architecture**: Refactored into more flexible composable nodes
 - ✅ **Binary data flow**: Support for inter-node binary data transfer
 - ✅ **Binary file processing**: Dedicated binary file loading and saving nodes
+- ✅ **Debian package support**: Full deb package creation and extraction with symlink support
 - ✅ **Complete Chinese localization**: All interface elements fully support Chinese display
 - ✅ **Enhanced error handling**: Detailed error reporting and debugging information
 - ✅ **Checkerboard background support**: Checkerboard backgrounds for transparent image preview
@@ -101,6 +104,14 @@ comfyui-dci/
 - **Cross-Format Support**: Works with any file type, not limited to DCI format
 - **Workflow Integration**: Seamlessly integrate file operations into ComfyUI workflows
 
+### Debian Package (DEB) Support
+- **DEB Package Creation**: Create standard Debian packages (.deb) from DCI icon files for system distribution
+- **DEB Package Extraction**: Extract and load files from existing Debian packages with filtering capabilities
+- **Symlink Support**: Automatic creation of symbolic links in deb packages for icon compatibility
+- **Version Management**: Intelligent version incrementing and package metadata handling
+- **Cross-Platform**: Pure Python implementation works on Windows, Linux, and macOS
+- **Standard Compliance**: Generated packages are fully compatible with dpkg and apt package managers
+
 ### Internationalization Support
 - **Complete Chinese Interface**: All node names, parameter names, and output names support Chinese display
 - **Bilingual Support**: Support switching between Chinese and English interfaces
@@ -121,7 +132,7 @@ comfyui-dci/
 This extension is available on the official ComfyUI Registry. You can install it directly through ComfyUI Manager:
 
 1. Open ComfyUI Manager in your ComfyUI interface
-2. Search for "DCI Image Export Extension" or "comfyui-dci"
+2. Search for "DCI Image Export Extension", "comfyui-dci", "debian package creator", or "deb packager"
 3. Click Install and restart ComfyUI
 
 ### Automatic Installation (Alternative)
@@ -186,6 +197,8 @@ This extension provides 8 ComfyUI nodes, all unified under the **"DCI"** group a
 - DCI_Base64Encoder (Base64 Encoder)
 - DCI_Base64Decoder (Base64 Decoder)
 - DCI_DirectoryLoader (Directory Loader)
+- DCI_DebPackager (Deb Packager) - **Create Debian packages from icon files**
+- DCI_DebLoader (Deb Loader) - **Extract files from Debian packages**
 
 ### Available Node Detailed Description
 
@@ -618,9 +631,9 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 中文
 
-# ComfyUI DCI 图像导出扩展
+# ComfyUI DCI 图像导出扩展 - DCI 图标与 Debian 软件包创建器
 
-一个全面的 ComfyUI 扩展，用于创建、预览和分析 DCI（DSG Combined Icons）格式文件。此扩展实现了完整的 DCI 规范，支持多状态图标、多色调、缩放因子和高级元数据分析。
+一个全面的 ComfyUI 扩展，用于创建、预览和分析 DCI（DSG Combined Icons）格式文件。此扩展实现了完整的 DCI 规范，支持多状态图标、多色调、缩放因子和高级元数据分析。**具备 Debian 软件包（deb）创建和提取功能，用于图标分发和系统集成。**
 
 ## DCI 规范文档
 
@@ -661,6 +674,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - ✅ **模块化节点架构**：重构为更灵活的组合式节点
 - ✅ **二进制数据流**：支持节点间二进制数据传递
 - ✅ **二进制文件处理**：专用的二进制文件加载和保存节点
+- ✅ **Debian 软件包支持**：完整的 deb 包创建和提取功能，支持软链接
 - ✅ **完整中文本地化**：所有界面元素完全支持中文显示
 - ✅ **增强错误处理**：详细的错误报告和调试信息
 - ✅ **棋盘格背景支持**：透明图像预览的棋盘格背景
@@ -709,6 +723,14 @@ comfyui-dci/
 - **文件加载**：从文件系统加载任意二进制文件，专为 DCI 图标文件优化
 - **文件保存**：将二进制数据保存到指定位置，支持自定义输出目录
 - **数据结构化**：提供统一的二进制数据结构，包含内容、元数据和路径信息
+
+### Debian 软件包（DEB）支持
+- **DEB 包创建**：从 DCI 图标文件创建标准 Debian 软件包（.deb）用于系统分发
+- **DEB 包提取**：从现有 Debian 软件包中提取和加载文件，支持过滤功能
+- **软链接支持**：在 deb 包中自动创建符号链接，确保图标兼容性
+- **版本管理**：智能版本递增和软件包元数据处理
+- **跨平台支持**：纯 Python 实现，在 Windows、Linux 和 macOS 上均可运行
+- **标准兼容**：生成的软件包完全兼容 dpkg 和 apt 包管理器
 
 ### 国际化支持
 - **完整中文界面**：所有节点名称、参数名、输出名均支持中文显示
@@ -784,6 +806,8 @@ pip install -r requirements.txt
 - DCI_BinaryFileLoader (Binary File Loader)
 - DCI_BinaryFileSaver (Binary File Saver)
 - DCI_FileSaver (DCI File Saver)
+- DCI_DebPackager (Deb Packager) - **从图标文件创建 Debian 软件包**
+- DCI_DebLoader (Deb Loader) - **从 Debian 软件包中提取文件**
 
 ### 可用节点详细说明
 
