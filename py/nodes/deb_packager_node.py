@@ -518,7 +518,7 @@ class DebPackager(BaseNode):
                 print(f"警告：无效的权限值 '{file_permissions}'，使用默认值 644")
                 file_mode = 0o644
 
-            # Create data.tar.gz with symlinks
+            # Create data.tar.gz
             data_tar_path = os.path.join(temp_dir, "data.tar.gz")
             self._create_data_tar_with_symlinks(data_tar_path, data_dir, symlink_info, file_mode)
 
@@ -572,14 +572,14 @@ class DebPackager(BaseNode):
 
     def _create_control_tar(self, tar_path, control_dir):
         """Create control.tar.gz from control directory"""
-        with tarfile.open(tar_path, 'w:gz') as tar:
+        with tarfile.open(tar_path, 'w:gz', format=tarfile.GNU_FORMAT) as tar:
             for item in os.listdir(control_dir):
                 item_path = os.path.join(control_dir, item)
                 tar.add(item_path, arcname=f"./{item}")
 
     def _create_data_tar(self, tar_path, data_dir):
         """Create data.tar.gz from data directory"""
-        with tarfile.open(tar_path, 'w:gz') as tar:
+        with tarfile.open(tar_path, 'w:gz', format=tarfile.GNU_FORMAT) as tar:
             for root, dirs, files in os.walk(data_dir):
                 for file in files:
                     file_path = os.path.join(root, file)
@@ -588,7 +588,7 @@ class DebPackager(BaseNode):
 
     def _create_data_tar_with_symlinks(self, tar_path, data_dir, symlink_info, file_mode=0o644):
         """Create data.tar.gz from data directory with symlinks"""
-        with tarfile.open(tar_path, 'w:gz') as tar:
+        with tarfile.open(tar_path, 'w:gz', format=tarfile.GNU_FORMAT) as tar:
             # Add regular files with custom permissions
             for root, dirs, files in os.walk(data_dir):
                 for file in files:

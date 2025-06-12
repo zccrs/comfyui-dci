@@ -1161,6 +1161,7 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **控制文件**：自动生成标准的control文件和包结构
 - **dpkg兼容**：生成的deb包可用dpkg-deb命令验证和安装
 - **跨平台支持**：所有平台均使用纯Python ar实现，无需外部依赖
+- **GNU tar格式**：强制使用GNU tar格式避免PAX扩展头部，确保dpkg完全兼容
 
 **使用示例：**
 - 从头创建DCI图标包：`local_directory="/path/to/icons", file_filter="*.dci", output_directory="/tmp/output", package_name="my-icons", package_version="1.0.0"`
@@ -1194,14 +1195,14 @@ libreoffice,libreoffice7.0
 **必需输入参数：**
 - **`deb_file_path`** (STRING)：要解析的.deb文件路径，默认空字符串
 - **`file_filter`** (STRING)：文件过滤模式，支持通配符（如"*.dci"、"*.png,*.jpg"），默认"*.dci"
-- **`skip_symlinks`** (BOOLEAN)：**新增** - 提取时跳过软链接，默认True
+- **`skip_symlinks`** (BOOLEAN): **新增** - 提取时跳过软链接，默认True
 
 **输出：**
-- **`binary_data_list`** (BINARY_DATA_LIST)：提取文件的二进制数据列表
-- **`relative_paths`** (STRING_LIST)：deb包内文件的相对路径列表
-- **`image_list`** (IMAGE)：**新增** - 解码后的图像批次张量（未找到图像时为None）
-- **`image_relative_paths`** (STRING_LIST)：**新增** - 解码图像的相对路径列表
-- **`skipped_files`** (STRING_LIST)：**新增** - 跳过的软链接文件列表
+- **`binary_data_list`** (BINARY_DATA_LIST): 提取文件的二进制数据列表
+- **`relative_paths`** (STRING_LIST): deb包内文件的相对路径列表
+- **`image_list`** (IMAGE): **新增** - 解码后的图像批次张量（未找到图像时为None）
+- **`image_relative_paths`** (STRING_LIST): **新增** - 解码图像的相对路径列表
+- **`skipped_files`** (STRING_LIST): **新增** - 跳过的软链接文件列表
 
 **功能特性：**
 
@@ -1333,6 +1334,9 @@ libreoffice,libreoffice7.0
 
 **Optional Input Parameters:**
 - **`output_directory`** (STRING): Output directory, defaults to ComfyUI output directory. If specified directory doesn't exist, it will be created automatically. Supports paths with trailing slashes and automatically normalizes path separators
+- **`filename_prefix`** (STRING): Prefix to add to the filename, default empty string
+- **`filename_suffix`** (STRING): Suffix to add to the filename, default empty string
+- **`remove_extension`** (BOOLEAN): Remove file extension before applying prefix/suffix, default False
 - **`allow_overwrite`** (BOOLEAN): Allow overwriting existing files, default False
 
 **Output:**
@@ -1949,6 +1953,7 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **控制文件**：自动生成标准的control文件和包结构
 - **dpkg兼容**：生成的deb包可用dpkg-deb命令验证和安装
 - **跨平台支持**：所有平台均使用纯Python ar实现，无需外部依赖
+- **GNU tar格式**：强制使用GNU tar格式避免PAX扩展头部，确保dpkg完全兼容
 
 **使用示例：**
 - 从头创建DCI图标包：`local_directory="/path/to/icons", file_filter="*.dci", output_directory="/tmp/output", package_name="my-icons", package_version="1.0.0"`
@@ -1982,14 +1987,806 @@ libreoffice,libreoffice7.0
 **必需输入参数：**
 - **`deb_file_path`** (STRING)：要解析的.deb文件路径，默认空字符串
 - **`file_filter`** (STRING)：文件过滤模式，支持通配符（如"*.dci"、"*.png,*.jpg"），默认"*.dci"
-- **`skip_symlinks`** (BOOLEAN)：**新增** - 提取时跳过软链接，默认True
+- **`skip_symlinks`** (BOOLEAN): **新增** - 提取时跳过软链接，默认True
 
 **输出：**
-- **`binary_data_list`** (BINARY_DATA_LIST)：提取文件的二进制数据列表
-- **`relative_paths`** (STRING_LIST)：deb包内文件的相对路径列表
+- **`binary_data_list`** (BINARY_DATA_LIST): 提取文件的二进制数据列表
+- **`relative_paths`** (STRING_LIST): deb包内文件的相对路径列表
+- **`image_list`** (IMAGE): **新增** - 解码后的图像批次张量（未找到图像时为None）
+- **`image_relative_paths`** (STRING_LIST): **新增** - 解码图像的相对路径列表
+- **`skipped_files`** (STRING_LIST): **新增** - 跳过的软链接文件列表
+
+**功能特性：**
+
+*deb包解析：*
+- **纯Python实现**：使用纯Python解析ar归档格式，无需外部命令
+- **多归档支持**：处理control.tar.*和data.tar.*两个归档文件
+- **压缩格式支持**：处理.gz、.xz、.bz2和未压缩的tar归档文件
+- **通配符过滤**：支持多种模式，用逗号分隔（如"*.dci,*.png"）
+- **路径清理**：自动移除提取路径中的前导"./"
+- **错误恢复**：即使个别文件提取失败也继续处理
+- **跨平台支持**：Linux、Windows、macOS等所有平台均支持
+- **🆕 自动图像识别**：根据扩展名识别图像文件（.png、.jpg、.jpeg、.bmp、.gif、.tiff、.webp、.ico）
+- **🆕 图像解码**：自动将识别的图像解码为ComfyUI IMAGE格式（RGB，0-1范围）
+- **🆕 双输出系统**：同时提供二进制数据（所有文件）和解码图像（仅图像文件）
+- **🆕 格式转换**：处理各种图像格式和颜色模式（RGBA→RGB，灰度→RGB）
+- **🆕 软链接处理**：可选择跳过提取过程中的软链接，并提供详细报告
+
+*技术细节：*
+- **提取过程**：使用临时目录进行安全提取
+- **归档检测**：根据文件扩展名自动检测压缩格式
+- **内存高效**：在内存中处理文件，不创建临时文件
+- **路径规范化**：确保跨平台的路径格式一致性
+
+**使用示例：**
+- 从deb包提取DCI文件：`deb_file_path="/path/to/package.deb", file_filter="*.dci"`
+- 从deb包提取图像文件：`deb_file_path="/path/to/icons.deb", file_filter="*.png,*.svg"`
+- 从deb包提取所有文件：`deb_file_path="/path/to/data.deb", file_filter="*"`
+- **🆕 图像工作流**：将`image_list`输出直接连接到图像处理节点，实现自动图像处理
+
+**使用场景：**
+- **DCI图标包分析**：从已安装或下载的deb包中提取DCI图标文件
+- **包内容检查**：检查deb包内包含的文件和内容
+- **文件提取**：从deb包中提取特定类型的文件进行处理
+- **逆向工程**：分析现有deb包的文件结构和内容
+- **批量处理**：从多个deb包中批量提取文件进行分析
+
+**依赖要求：**
+- **系统要求**：无需外部依赖，完全使用Python标准库实现
+- **跨平台支持**：所有平台均使用纯Python实现，无需安装额外工具
+- **Python模块**：使用标准库模块（tarfile、tempfile、os、struct）
+- **路径处理**：增强的跨平台路径规范化，支持在Linux/Unix系统上处理Windows路径
+
+#### 7. Binary File Saver（二进制文件保存器）
+**节点类别**：`DCI/Files`
+**功能描述**：将二进制数据保存到文件系统，具有高级文件名处理、前缀后缀支持和跨平台路径处理功能。
+
+**必需输入参数：**
+- **`binary_data`** (BINARY_DATA): Binary data to save
+- **`file_name`** (STRING): Target filename or path, default "binary_file"
+
+**可选输入参数：**
+- **`output_directory`** (STRING): Output directory, defaults to ComfyUI output directory. If specified directory doesn't exist, it will be created automatically. Supports paths with trailing slashes and automatically normalizes path separators
+- **`filename_prefix`** (STRING): Filename prefix, default empty string
+- **`filename_suffix`** (STRING): Filename suffix, default empty string
+- **`allow_overwrite`** (BOOLEAN): Allow overwriting existing files, default False
+
+**Output:**
+- **`saved_path`** (STRING): Complete saved file path on success, detailed error message on failure (consistent with DCI File Saver behavior)
+
+**Advanced Filename Handling Features:**
+
+*Path Processing:*
+- **Cross-Platform Compatibility**: Automatically handles Windows (`\`) and Linux (`/`) path separators
+- **Path Extraction**: Automatically extracts filename from full paths
+- **Example**: `/home/user/data.txt` → `data.txt`, `C:\Users\test\file.bin` → `file.bin`
+
+*Prefix and Suffix Support:*
+- **Flexible Naming**: Support for adding custom prefix and suffix to filenames
+- **Extension Preservation**: Automatically preserves file extensions when applying prefix/suffix
+- **Example**: Input `data.txt`, prefix `backup_`, suffix `_v2` → `backup_data_v2.txt`
+- **Complex Extensions**: Input `archive.tar.gz`, prefix `backup_`, suffix `_v1` → `backup_archive_v1.tar.gz`
+
+*Special Cases Handling:*
+- **Empty Input**: Uses default filename `binary_file` when input is empty
+- **Path-Only Input**: Uses default filename when input contains only path separators
+- **No Extension**: Handles files without extensions properly
+- **File Cleaning**: Removes invalid characters from filenames for filesystem compatibility
+
+**Usage Examples:**
+- Basic save: `file_name="data.bin", output_directory="/path/to/output"`
+- With prefix: `file_name="report.pdf", filename_prefix="backup_"`
+- With suffix: `file_name="image.png", filename_suffix="_processed"`
+- Full customization: `file_name="/tmp/data.txt", filename_prefix="new_", filename_suffix="_v2"`
+
+**Technical Features:**
+- **Path Safety**: Automatic path normalization and invalid character removal
+- **Directory Creation**: Automatically creates output directories if they don't exist
+- **Overwrite Protection**: Prevents accidental file overwriting with explicit control
+- **Error Handling**: Comprehensive error reporting for debugging
+- **Cross-Platform**: Works consistently on Windows, Linux, and macOS
+
+#### 8. Base64 Decoder
+**Node Category**: `DCI/Files`
+**Function Description**: Decode binary data from base64 encoded strings, supporting multiline input for large data sets.
+
+**Required Input Parameters:**
+- **`base64_data`** (STRING): Base64 encoded string data (supports multiline input)
+
+**Output:**
+- **`binary_data`** (BINARY_DATA): Decoded binary data
+
+**Features:**
+- **Multiline Support**: Handles base64 strings with line breaks and whitespace
+- **Error Handling**: Gracefully handles invalid base64 data
+- **Large Data Support**: Efficiently processes large base64 encoded files
+
+#### 9. Base64 Encoder
+**Node Category**: `DCI/Files`
+**Function Description**: Encode binary data to base64 strings for data exchange and storage. This is a pure conversion node without file operations.
+
+**Required Input Parameters:**
+- **`binary_data`** (BINARY_DATA): Binary data to encode
+
+**Output:**
+- **`base64_data`** (STRING): Base64 encoded string
+
+**Features:**
+- **Pure Conversion**: Only performs encoding, no file operations
+- **Efficient Processing**: Direct binary-to-base64 conversion
+- **Chain-Friendly**: Output can be directly used by other nodes or saved separately
+
+#### 10. Binary File Saver（二进制文件保存器 - 增强版）
+**Node Category**: `DCI/Files`
+**Function Description**: Save binary data to the file system, supports custom output paths and directories with overwrite protection.
+
+**Required Input Parameters:**
+- **`binary_data`** (BINARY_DATA): Binary data to save
+- **`file_name`** (STRING): Target filename, default "binary_file"
+
+**Optional Input Parameters:**
+- **`output_directory`** (STRING): Output directory, defaults to ComfyUI output directory. If specified directory doesn't exist, it will be created automatically. Supports paths with trailing slashes and automatically normalizes path separators
+- **`filename_prefix`** (STRING): Prefix to add to the filename, default empty string
+- **`filename_suffix`** (STRING): Suffix to add to the filename, default empty string
+- **`remove_extension`** (BOOLEAN): Remove file extension before applying prefix/suffix, default False
+- **`allow_overwrite`** (BOOLEAN): Allow overwriting existing files, default False
+
+**Output:**
+- **`saved_path`** (STRING): Actual saved file path on success, detailed error message on failure
+
+#### 11. DCI File Saver（DCI 文件保存器 - 增强版）
+**Node Category**: `DCI/Files`
+**Function Description**: Advanced file saver specialized for saving DCI files, with intelligent filename parsing, prefix/suffix support, cross-platform path handling, and overwrite protection.
+
+**Required Input Parameters:**
+- **`binary_data`** (BINARY_DATA): DCI binary data to save
+- **`input_filename`** (STRING): Input filename or path, default "icon.png"
+
+**Optional Input Parameters:**
+- **`output_directory`** (STRING): Output directory, defaults to ComfyUI output directory. If specified directory doesn't exist, it will be created automatically. Supports paths with trailing slashes and automatically normalizes path separators
+- **`filename_prefix`** (STRING): Filename prefix, default empty string
+- **`filename_suffix`** (STRING): Filename suffix, default empty string
+- **`allow_overwrite`** (BOOLEAN): Allow overwriting existing files, default False
+
+**Output:**
+- **`saved_filename`** (STRING): Saved filename (without path), empty string if save failed
+- **`saved_full_path`** (STRING): Complete saved file path on success, detailed error message on failure
+
+#### 9. DCI Analysis
+**Node Category**: `DCI/Analysis`
+**Function Description**: Analyze DCI file internal organization structure and metadata in detail with tree structure, output text format analysis results, specialized for analyzing and debugging DCI file content.
+
+**Required Input Parameters:**
+- **`dci_binary_data`** (BINARY_DATA): Binary data of the DCI file
+
+**Output:**
+- **`analysis_text`** (STRING): Detailed analysis text in tree structure format
+
+## Example Workflows
+
+### Basic DCI Creation Workflow
+```
+Image Input → DCI Image → DCI File → Binary File Saver
+```
+
+### Advanced Multi-State Icon Workflow
+```
+Normal Image → DCI Image (state: normal) ┐
+Hover Image → DCI Image (state: hover)   ├→ DCI File → DCI Preview
+Press Image → DCI Image (state: pressed) ┘
+```
+
+### DCI Analysis and Debug Workflow
+```
+Binary File Loader → DCI Analysis (text output)
+                  └→ DCI Preview (visual output)
+```
+
+## Technical Implementation
+
+### DCI Format Support
+- **Binary Structure**: Complete implementation of DCI binary format
+- **Directory Hierarchy**: Support for nested directory structures
+- **File Metadata**: Comprehensive metadata handling
+- **Layer System**: Full layer priority and composition support
+
+### Performance Optimization
+- **Memory Efficient**: Optimized binary data handling
+- **Streaming Support**: Large file processing capabilities
+- **Caching**: Intelligent caching for repeated operations
+
+### Error Handling
+- **Graceful Degradation**: Continues operation when possible
+- **Detailed Logging**: Comprehensive error reporting
+- **User Feedback**: Clear error messages in UI
+- **Consistent List Outputs**: All LIST type outputs return empty lists instead of None when no data is available, ensuring workflow compatibility
+
+## Contributing
+
+We welcome contributions! Please see our contributing guidelines for details on:
+- Code style and standards
+- Testing requirements
+- Pull request process
+- Issue reporting
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- ComfyUI team for the excellent framework
+- Desktop Spec Group for the DCI specification
+- dtkgui project for Alpha8 format insights
+
+---
+
+## 中文
+
+# ComfyUI DCI 图像导出扩展 - DCI 图标与 Debian 软件包创建器
+
+一个全面的 ComfyUI 扩展，用于创建、预览和分析 DCI（DSG Combined Icons）格式文件。此扩展实现了完整的 DCI 规范，支持多状态图标、多色调、缩放因子和高级元数据分析。**具备 Debian 软件包（deb）创建和提取功能，用于图标分发和系统集成。**
+
+## DCI 规范文档
+
+本项目严格基于 **DCI（DSG Combined Icons）标准格式文档** 设计和实现。
+
+### 官方规范文档
+- **官方规范**：[Desktop Spec Group - 图标文件规范](https://desktopspec.org/unstable/%E5%9B%BE%E6%A0%87%E6%96%87%E4%BB%B6%E8%A7%84%E8%8C%83.html)
+- **本地文档**：**[dci-specification.md](./dci-specification.md)**
+
+### 文档特色
+
+本项目的 `dci-specification.md` 文档基于官方规范并进行了实用性优化：
+
+- 📋 **完整的 DCI 文件格式说明**：二进制结构、文件头、元数据格式
+- 📝 **详细的图层文件命名规范**：优化后的命名格式和参数说明
+- 🎨 **颜色调整算法说明**：精确的颜色计算公式和示例
+- 💡 **实际应用示例**：完整的目录结构和文件名示例
+- 🔍 **查找规则和回退机制**：图标资源的匹配和选择逻辑
+- ⚡ **Alpha8格式深度解析**：基于 [dtkgui实现](https://github.com/linuxdeepin/dtkgui) 的技术细节
+
+### 标准兼容性
+
+本工具完全遵循 DCI 标准规范：
+- ✅ **文件格式兼容**：生成的DCI文件完全符合官方二进制格式规范
+- ✅ **目录结构标准**：严格按照 `<图标大小>/<图标状态>.<色调类型>/<缩放倍数>/<图层文件>` 结构
+- ✅ **文件命名规范**：完整支持 `优先级.外边框p.调色板.色调_饱和度_亮度_红_绿_蓝_透明度.格式[.alpha8]` 格式
+- ✅ **文件名省略规则**：支持DCI规范的文件名优化策略，默认值可省略（如`1.webp`）
+- ✅ **图层系统支持**：完整实现优先级、外边框、调色板和颜色调整功能
+- ✅ **Alpha8优化**：支持基于灰度格式的alpha通道存储优化
+- ✅ **向后兼容**：同时支持简化文件名和完整文件名格式
+
+## 项目状态
+
+- ✅ **完整的 DCI 格式实现**：完全支持 DCI 文件创建和读取
+- ✅ **多状态图标支持**：正常、悬停、按下、禁用状态
+- ✅ **多色调支持**：浅色和深色调变体
+- ✅ **高级预览系统**：基于网格的可视化与元数据覆盖
+- ✅ **模块化节点架构**：重构为更灵活的组合式节点
+- ✅ **二进制数据流**：支持节点间二进制数据传递
+- ✅ **二进制文件处理**：专用的二进制文件加载和保存节点
+- ✅ **Debian 软件包支持**：完整的 deb 包创建和提取功能，支持软链接
+- ✅ **完整中文本地化**：所有界面元素完全支持中文显示
+- ✅ **增强错误处理**：详细的错误报告和调试信息
+- ✅ **棋盘格背景支持**：透明图像预览的棋盘格背景
+- ✅ **生产就绪**：通过示例工作流程全面测试
+
+## 目录结构
+
+```
+comfyui-dci/
+├── py/                          # 核心Python模块
+│   ├── __init__.py             # 模块初始化
+│   ├── dci_format.py           # DCI格式实现
+│   ├── dci_reader.py           # DCI文件读取器
+│   └── nodes.py                # ComfyUI节点定义
+├── locales/                     # 国际化文件
+├── resources/                   # 静态资源
+├── tools/                       # 开发工具
+├── tests/                       # 测试文件
+├── examples/                    # 示例工作流
+├── web_version/                 # Web组件（预留）
+├── __init__.py                  # 扩展入口点
+├── README.md                    # 项目文档
+├── requirements.txt             # Python依赖
+├── install.sh                   # Linux/Mac安装脚本
+├── install.bat                  # Windows安装脚本
+├── preliminary-design.md        # 概要设计
+└── detailed-design.md           # 详细设计
+```
+
+## 功能特性
+
+### 导出功能
+- **DCI 图像创建**：将单个图像转换为 DCI 图像数据，支持自定义参数
+- **DCI 文件组合**：将多个 DCI 图像组合成完整的 DCI 文件
+- **多种缩放因子**：支持小数缩放如 1x、1.25x、1.5x、2x 等自定义缩放组合
+- **格式支持**：WebP、PNG 和 JPEG 格式
+- **色调支持**：浅色和深色调变体
+- **可自定义图标尺寸**：从 16x16 到 1024x1024 像素
+
+### 预览功能
+- **可视化预览**：生成 DCI 文件中所有图像的网格预览
+- **元数据显示**：显示每个图像的全面元数据，包括尺寸、状态、色调、缩放、格式
+- **节点内显示**：直接在节点界面中显示预览内容
+
+### 二进制文件处理功能
+- **文件加载**：从文件系统加载任意二进制文件，专为 DCI 图标文件优化
+- **文件保存**：将二进制数据保存到指定位置，支持自定义输出目录
+- **数据结构化**：提供统一的二进制数据结构，包含内容、元数据和路径信息
+
+### Debian 软件包（DEB）支持
+- **DEB 包创建**：从 DCI 图标文件创建标准 Debian 软件包（.deb）用于系统分发
+- **DEB 包提取**：从现有 Debian 软件包中提取和加载文件，支持过滤功能
+- **软链接支持**：在 deb 包中自动创建符号链接，确保图标兼容性
+- **版本管理**：智能版本递增和软件包元数据处理
+- **跨平台支持**：纯 Python 实现，在 Windows、Linux 和 macOS 上均可运行
+- **标准兼容**：生成的软件包完全兼容 dpkg 和 apt 包管理器
+
+> **⚠️ 重要提醒（2025年1月）**：2025年1月软链接位置修复之前生成的DEB包需要重新生成。修复确保软链接正确放置在目标文件旁边，而不是根级别。
+
+### 国际化支持
+- **完整中文界面**：所有节点名称、参数名、输出名均支持中文显示
+- **双语支持**：支持中文和英文界面切换
+- **本地化翻译**：所有用户界面元素都经过专业翻译
+- **颜色名称翻译**：20种颜色名称完全本地化（浅灰色、蓝色、红色等）
+- **选项值翻译**：所有下拉选项和默认值都支持中文显示
+
+### 错误处理与调试
+- **详细错误报告**：在界面上直接显示详细的错误信息和解决建议
+- **可视化错误预览**：DCI预览节点在出错时生成包含错误信息的红色预览图
+- **分析节点调试**：DCI分析节点输出详细的错误日志和数据状态
+- **参数兼容性**：同时支持翻译后和原始参数名，确保向后兼容
+
+## 安装
+
+### 自动安装（推荐）
+
+1. 将此仓库克隆到您的 ComfyUI 自定义节点目录：
+```bash
+cd ComfyUI/custom_nodes/
+git clone https://github.com/your-username/comfyui-dci.git
+```
+
+2. 运行安装脚本：
+
+**Linux/Mac:**
+```bash
+cd comfyui-dci
+chmod +x install.sh
+./install.sh
+```
+
+**Windows:**
+```cmd
+cd comfyui-dci
+install.bat
+```
+
+### 手动安装
+
+1. 克隆仓库（同上）
+
+2. 手动安装依赖项：
+```bash
+cd comfyui-dci
+pip install -r requirements.txt
+```
+
+3. 重启 ComfyUI
+
+4. 安装完成后，所有 DCI 节点将出现在 ComfyUI 节点菜单的 **"DCI"** 分类下
+
+## ComfyUI 节点详细说明
+
+本扩展提供了 8 个 ComfyUI 节点，所有节点都统一归类在 **"DCI"** 分组下，并按功能分为三个子分类：
+
+### 节点分组
+
+#### DCI/Export（导出）
+- DCI_Image (DCI Image) - 完整功能的DCI图像创建节点
+- DCI_SampleImage (DCI Sample Image) - 简化的DCI图像创建节点
+- DCI_FileNode (DCI File)
+
+#### DCI/Preview（预览）
+- DCI_PreviewNode (DCI Preview)
+- DCI_ImagePreview (DCI Image Preview)
+
+#### DCI/Analysis（分析）
+- DCI_Analysis (DCI Analysis)
+
+#### DCI/Files（文件处理）
+- DCI_BinaryFileLoader (Binary File Loader)
+- DCI_BinaryFileSaver (Binary File Saver)
+- DCI_FileSaver (DCI File Saver)
+- DCI_DebPackager (Deb Packager) - **从图标文件创建 Debian 软件包**
+- DCI_DebLoader (Deb Loader) - **从 Debian 软件包中提取文件**
+
+### 可用节点详细说明
+
+#### 1. DCI Image（DCI 图像）
+**节点类别**：`DCI/Export`
+**功能描述**：创建单个 DCI 图像数据，输出元数据而不是直接创建文件，提供更灵活的工作流程。完全支持 DCI 规范中的图层系统，包括优先级、外边框、调色板和颜色调整功能。
+
+**必需输入参数：**
+- **`image`** (IMAGE)：ComfyUI 图像张量
+- **`icon_size`** (INT)：图标尺寸（16-1024像素），默认256
+- **`icon_state`** (COMBO)：图标状态（normal/disabled/hover/pressed），默认normal
+- **`scale`** (FLOAT)：缩放因子（0.1-10.0），默认1.0，支持小数如1.25
+
+**可选输入参数（高级设置）：**
+
+*基础设置：*
+- **`image_format`** (COMBO)：图像格式（webp/png/jpg），默认webp
+- **`image_quality`** (INT)：图片质量（1-100），默认90，仅对webp和jpg格式有效
+
+*WebP高级设置：*
+- **`webp_lossless`** (BOOLEAN)：WebP无损压缩，默认False
+- **`webp_alpha_quality`** (INT)：WebP Alpha通道质量（0-100），默认100
+
+*PNG高级设置：*
+- **`png_compress_level`** (INT)：PNG压缩等级（0-9），默认6
+
+*背景色设置：*
+- **`background_color`** (COMBO)：背景色处理（transparent/white/black/custom），默认transparent
+- **`custom_bg_r`** (INT)：自定义背景色红色分量（0-255），默认255
+- **`custom_bg_g`** (INT)：自定义背景色绿色分量（0-255），默认255
+- **`custom_bg_b`** (INT)：自定义背景色蓝色分量（0-255），默认255
+
+*图层设置（符合 DCI 规范）：*
+- **`layer_priority`** (INT)：图层优先级（1-100），默认1，数值越大绘制越靠上
+- **`layer_padding`** (INT)：外边框值（0-100），默认0，用于阴影效果等
+- **`palette_type`** (COMBO)：调色板类型（none/foreground/background/highlight_foreground/highlight），默认none
+
+*颜色调整参数（-100 到 100）：*
+- **`hue_adjustment`** (INT)：色调调整，默认0
+- **`saturation_adjustment`** (INT): Saturation adjustment, default 0
+- **`brightness_adjustment`** (INT): Brightness adjustment, default 0
+- **`red_adjustment`** (INT): Red channel adjustment, default 0
+- **`green_adjustment`** (INT): Green channel adjustment, default 0
+- **`blue_adjustment`** (INT): Blue channel adjustment, default 0
+- **`alpha_adjustment`** (INT): Alpha channel adjustment, default 0
+
+**输出：**
+- **`dci_image_data`** (DCI_IMAGE_DATA)：包含路径、内容、元数据和图层信息的字典数据
+- **`path`** (STRING)：DCI图像的内部路径字符串（如："256/normal.light/1/1.0p.-1.0_0_0_0_0_0_0.webp"）
+- **`binary_data`** (BINARY_DATA)：图像的二进制数据内容
+
+**背景色处理说明：**
+- **transparent**：保持原始透明度（仅PNG和WebP支持）
+- **white**：将透明背景替换为白色
+- **black**：将透明背景替换为黑色
+- **custom**：使用自定义RGB颜色作为背景
+
+**图层系统说明：**
+- **图层优先级**：控制图层绘制顺序，数值越大越靠上层
+- **外边框**：为图标添加外围不被控件覆盖的区域，常用于阴影效果
+- **调色板**：定义图标的颜色填充方式，支持前景色、背景色、高亮色等
+- **颜色调整**：精确控制图标的色调、饱和度、亮度和RGBA分量
+- **文件命名**：自动按照DCI规范生成图层文件名，格式为 `优先级.外边框p.调色板.色调_饱和度_亮度_红_绿_蓝_透明度.格式`
+- **文件名省略**：支持DCI规范的优化策略，当参数为默认值时可省略（如简化为`1.webp`）
+- **向后兼容**：同时支持完整文件名和简化文件名格式，确保与真实DCI文件兼容
+
+#### 2. DCI Sample Image（DCI 简单图像）
+**节点类别**：`DCI/Export`
+**功能描述**：创建简化的 DCI 图像数据，只包含最基本的参数设置，适合大多数常见使用场景。相比完整的 DCI Image 节点，此节点界面更简洁，参数更少。
+
+**必需输入参数：**
+- **`image`** (IMAGE)：ComfyUI 图像张量
+- **`icon_size`** (INT)：图标尺寸（16-1024像素），默认256
+- **`icon_state`** (COMBO)：图标状态（normal/disabled/hover/pressed），默认normal
+- **`scale`** (FLOAT)：缩放因子（0.1-10.0），默认1.0，支持小数如1.25
+- **`tone_type`** (COMBO)：色调类型（light/dark），默认light
+- **`image_format`** (COMBO)：图像格式（webp/png/jpg），默认webp
+- **`image_quality`** (INT)：图片质量（1-100），默认90，仅对webp和jpg格式有效
+
+*WebP高级设置：*
+- **`webp_lossless`** (BOOLEAN)：WebP无损压缩，默认False
+- **`webp_alpha_quality`** (INT)：WebP Alpha通道质量（0-100），默认100
+
+*PNG高级设置：*
+- **`png_compress_level`** (INT)：PNG压缩等级（0-9），默认6
+
+**输出：**
+- **`dci_image_data`** (DCI_IMAGE_DATA)：包含路径、内容、元数据的字典数据
+- **`path`** (STRING)：DCI图像的内部路径字符串（如："256/normal.light/1/1.0p.-1.0_0_0_0_0_0_0.webp"）
+- **`binary_data`** (BINARY_DATA)：图像的二进制数据内容
+
+**节点特点：**
+- **简化界面**：显示最常用的基本参数和高级压缩设置，界面清晰易用
+- **默认设置**：所有高级参数使用合理的默认值（优先级1、无外边框、无调色板、无颜色调整）
+- **透明背景**：默认保持图像原始透明度，适合大多数图标制作场景
+- **高级压缩**：支持WebP无损压缩、Alpha通道质量控制和PNG压缩等级设置
+- **质量控制**：在文件大小和图像质量之间提供精细平衡控制
+- **快速创建**：适合快速创建标准DCI图像，无需复杂配置
+
+**使用场景：**
+- 快速创建标准图标，无需复杂的图层设置
+- 批量处理多个图标文件
+- 初学者或不需要高级功能的用户
+- 简单的图标转换和格式化工作
+
+#### 3. DCI File（DCI 文件）
+**节点类别**：`DCI/Export`
+**功能描述**：接收多个 DCI Image 输出并组合成完整的 DCI 文件，采用可组合设计。此节点支持将多个 DCI File 节点串联使用，以处理无限数量的 DCI 图像，为复杂图标集提供高度灵活性。
+
+**可选输入参数：**
+- **`dci_binary_data`** (BINARY_DATA)：现有的 DCI 二进制数据，用于扩展（可组合工作流）
+- **`dci_image_1` 到 `dci_image_4`** (DCI_IMAGE_DATA)：每个节点最多4个DCI图像数据
+
+**输出：**
+- **`dci_binary_data`** (BINARY_DATA)：DCI文件的二进制数据
+
+**可组合设计特性：**
+- **无限图像支持**：串联多个 DCI File 节点以处理任意数量的图像
+- **灵活工作流**：每个节点可处理4个图像，允许模块化图标创建
+- **数据保持**：当只提供现有数据（无新图像）时，节点会原样传递数据
+- **智能合并**：当同时提供现有DCI数据和新图像时，节点会智能合并它们
+- **文件覆盖行为**：新的DCI图像会覆盖具有相同路径（尺寸/状态.色调/缩放）的现有文件，同时保留其他现有文件
+
+**使用示例：**
+```
+# 基本用法（最多4个图像）
+DCI 图像 1 → DCI 文件 → DCI 二进制数据
+
+# 可组合用法（无限图像）
+DCI 图像 1-4 → DCI 文件节点 1 → DCI 二进制数据 1
+DCI 二进制数据 1 + DCI 图像 5-8 → DCI 文件节点 2 → DCI 二进制数据 2（合并）
+DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制数据 3（合并）
+
+# 数据传递
+现有 DCI 数据 → DCI 文件节点 → 相同 DCI 数据（不变）
+
+# 文件覆盖行为
+现有 DCI 数据（256px/normal.light/1.0x 处有红色图像）+
+新 DCI 图像（256px/normal.light/1.0x 处有蓝色图像）→
+结果：蓝色图像替换红色图像，其他现有图像保留
+```
+
+#### 4. DCI Preview（DCI 预览）
+**节点类别**：`DCI/Preview`
+**功能描述**：直接在节点内显示 DCI 文件内容的可视化预览和详细元数据信息。专门用于预览 DCI 二进制数据，现支持将Light和Dark相关内容分开显示。**增强支持多个DCI二进制数据输入和IMAGE输出**。
+
+**必需输入参数：**
+- **`dci_binary_data`** (BINARY_DATA,BINARY_DATA_LIST)：单个DCI二进制数据或多个DCI二进制数据列表
+
+**可选输入参数：**
+- **`light_background_color`** (COMBO)：Light主题预览背景色，默认light_gray
+- **`dark_background_color`** (COMBO)：Dark主题预览背景色，默认dark_gray
+- **`text_font_size`** (INT)：文本字号大小（8-50像素），默认18，同时控制预览图像中的字体大小和文本摘要的格式
+
+**输出：**
+- **`preview_images`** (IMAGE)：包含预览图像的ComfyUI IMAGE张量。处理多个DCI文件时，以批次格式输出多个预览图像
+
+**背景颜色选项：**
+支持20种预设颜色，包括：
+- **基础色**：light_gray、dark_gray、white、black
+- **特殊背景**：transparent（支持Alpha通道透明度）、checkerboard
+- **彩色选项**：blue、green、red、yellow、cyan、magenta、orange、purple、pink、brown、navy、teal、olive、maroon
+
+**节点内预览功能：**
+- **双列布局**：Light主题图标在左列，Dark主题图标在右列
+- **独立背景设置**：Light和Dark主题可设置不同的背景颜色
+- **丰富背景色选项**：每种主题支持20种预设背景色，包括特殊的透明和棋盘格背景
+- **图标边框显示**：每个图标周围自动绘制细线边框，清晰显示图标的实际范围和尺寸
+  - **智能边框颜色**：边框颜色自动跟随文字颜色，保持视觉一致性和界面协调
+  - **颜色协调算法**：根据文字颜色自动计算边框颜色，浅色文字使用稍深的边框，深色文字使用稍浅的边框
+  - **精确范围指示**：边框紧贴图标边缘，准确显示图标的像素边界
+  - **多背景适配**：在所有背景颜色下都能清晰显示边框效果，边框与文字颜色保持一致的视觉风格
+  - **透明背景支持**：完整支持Alpha通道透明度，透明背景设置能正确生效
+- **自适应文本格式**：根据字体大小调整文本显示格式，较大字体使用更紧凑的布局
+- **文件路径分组显示**：Light、Dark和其他色调图标的路径分别显示
+- **预览图像标签**：每个图标下方显示详细信息，包括：
+  - **文件路径**（第一行）：显示DCI内部的完整路径（如：64/normal.light/1.0.0.0.0.0.0.0.0.0.png）
+  - 图标尺寸、状态、缩放因子
+  - 文件大小
+  - **注意**：不显示色调(tone)字段，因为已按Light/Dark分列显示；不显示格式(format)字段，因为文件名已包含格式信息
+- **详细元数据显示**：在节点内显示全面的文件信息，包括：
+  - 图标尺寸、状态、色调、缩放因子
+  - 图像格式、文件大小、实际尺寸
+  - 完整的DCI内部路径和文件名
+  - 每个图像的优先级和详细属性
+  - 统计汇总信息和文件路径列表
+
+**多数据处理：**
+- **单个输入**：处理一个DCI文件，生成一个预览图像
+- **多个输入**：处理多个DCI文件，生成对应的预览图像
+- **独立处理**：每个DCI文件独立处理，生成单独的预览图像
+- **批次输出**：所有预览图像合并为单个IMAGE张量，供下游处理
+
+**注意**：此节点专门用于处理二进制数据输入。不需要手动设置列数，默认将Light和Dark内容分开显示在两列，Light主题图标固定在左侧列，Dark主题图标固定在右侧列。文本格式会根据字体大小自动调整，提供最佳阅读体验。背景颜色选择简化为预设选项，移除了自定义RGB设置以提供更好的用户体验。
+
+#### 5. DCI Image Preview（DCI 图像预览）
+**节点类别**：`DCI/Preview`
+**功能描述**：专门用于预览DCI图像数据，提供简洁的图像预览功能。**增强支持多个DCI图像数据输入和IMAGE输出**。
+
+**必需输入参数：**
+- **`dci_image_data`** (DCI_IMAGE_DATA,DCI_IMAGE_DATA_LIST)：单个DCI图像数据或多个DCI图像数据列表
+
+**可选输入参数：**
+- **`preview_background`** (COMBO)：预览背景类型（transparent/white/black/checkerboard），默认checkerboard
+
+**输出：**
+- **`preview_images`** (IMAGE)：包含预览图像的ComfyUI IMAGE张量。处理多个DCI图像时，以批次格式输出多个预览图像
+
+**节点功能特性：**
+- **图像预览**：直接在节点界面中显示处理后的图像
+- **智能背景显示**：支持透明、白色、黑色和棋盘格背景，便于查看透明图像
+- **简洁界面**：专注于图像显示，不显示复杂的调试信息
+
+**多数据处理：**
+- **单个输入**：处理一个DCI图像，生成一个预览图像
+- **多个输入**：处理多个DCI图像，生成对应的预览图像
+- **独立处理**：每个DCI图像独立处理，生成单独的预览图像
+- **批次输出**：所有预览图像合并为单个IMAGE张量，供下游处理
+
+**使用场景：**
+- 快速预览DCI图像的最终效果
+- 验证图像背景处理效果
+- 检查图像质量和显示效果
+- 在工作流程中进行图像效果确认
+
+#### 6. Binary File Loader（二进制文件加载器）
+**节点类别**：`DCI/Files`
+**功能描述**：从文件系统加载二进制文件，专为处理 DCI 图标文件等二进制数据设计。
+
+**可选输入参数：**
+- **`file_path`** (STRING)：要加载的文件路径，默认空字符串
+
+**输出：**
+- **`binary_data`** (BINARY_DATA)：文件的二进制内容（bytes 类型）
+- **`file_path`** (STRING)：加载文件的完整路径
+
+#### 6.1. Directory Loader（目录加载器）
+**节点类别**：`DCI/Files`
+**功能描述**：批量加载目录中的多个二进制文件，支持过滤条件和递归搜索功能。使用广度优先遍历确保文件顺序的一致性。**新功能**：自动识别和解码图像文件，提供独立的图像输出，可直接用于ComfyUI工作流。
+
+**必需输入参数：**
+- **`directory_path`** (STRING)：要扫描的目录路径，默认空字符串
+- **`file_filter`** (STRING)：文件过滤模式，支持通配符（如"*.dci"、"*.png,*.jpg"），默认"*.dci"
+- **`include_subdirectories`** (BOOLEAN)：是否包含子目录搜索，默认True
+- **`skip_symlinks`** (BOOLEAN)：**新增** - 扫描时跳过软链接，默认True
+
+**输出：**
+- **`binary_data_list`** (BINARY_DATA_LIST)：加载文件的二进制数据列表
+- **`relative_paths`** (STRING_LIST)：相对文件路径列表（相对于指定目录）
 - **`image_list`** (IMAGE)：**新增** - 解码后的图像批次张量（未找到图像时为None）
 - **`image_relative_paths`** (STRING_LIST)：**新增** - 解码图像的相对路径列表
 - **`skipped_files`** (STRING_LIST)：**新增** - 跳过的软链接文件列表
+
+**功能特性：**
+- **通配符过滤**：支持多种模式，用逗号分隔（如"*.dci,*.png"）
+- **递归搜索**：广度优先目录遍历，确保顺序一致性
+- **路径规范化**：自动路径规范化和尾部斜杠处理
+- **数据一致性**：二进制数据列表和路径列表保持完美的顺序匹配
+- **错误容错**：即使个别文件加载失败也会继续处理
+- **跨平台支持**：在Windows、Linux和macOS上正确处理路径
+- **🆕 自动图像识别**：根据扩展名识别图像文件（.png、.jpg、.jpeg、.bmp、.gif、.tiff、.webp、.ico）
+- **🆕 图像解码**：自动将识别的图像解码为ComfyUI IMAGE格式（RGB，0-1范围）
+- **🆕 双输出系统**：同时提供二进制数据（所有文件）和解码图像（仅图像文件）
+- **🆕 格式转换**：处理各种图像格式和颜色模式（RGBA→RGB，灰度→RGB）
+- **🆕 软链接处理**：可选择跳过扫描过程中的软链接，并提供详细报告
+
+**使用示例：**
+- 加载所有DCI文件：`directory_path="/path/to/icons", file_filter="*.dci", include_subdirectories=True`
+- 仅加载图像文件：`directory_path="/path/to/images", file_filter="*.png,*.jpg,*.webp", include_subdirectories=False`
+- 加载所有文件：`directory_path="/path/to/data", file_filter="*", include_subdirectories=True`
+- **🆕 图像工作流**：将`image_list`输出直接连接到图像处理节点，实现自动图像处理
+
+**使用场景：**
+- **批量DCI文件处理**：一次性加载目录中的所有DCI文件进行批量分析
+- **图标库管理**：扫描图标目录，获取所有图标文件的列表和内容
+- **文件批量转换**：配合其他节点实现批量文件格式转换
+- **目录内容分析**：分析目录结构和文件分布情况
+- **工作流自动化**：在自动化工作流中批量处理文件
+
+#### 6.2. Deb Packager（Deb 打包器）
+**节点类别**：`DCI/Files`
+**功能描述**：创建Debian软件包，支持基于现有deb包扩展或从头创建，具有文件过滤、目录扫描、智能包信息管理和自动版本递增功能。生成的deb包直接保存到指定目录，文件名按照标准格式自动生成。
+
+**必需输入参数：**
+- **`local_directory`** (STRING)：本地目录路径，要扫描和打包的文件所在目录
+- **`file_filter`** (STRING)：文件过滤模式，支持通配符（如"*.dci"、"*.png,*.jpg"），默认"*.dci"
+- **`include_subdirectories`** (BOOLEAN)：是否包含子目录搜索，默认True
+- **`install_target_path`** (STRING)：安装目标路径，deb包内的目标安装路径，默认"/usr/share/dsg/icons"
+- **`output_directory`** (STRING)：输出目录，deb包保存目录，默认为ComfyUI输出目录
+
+**可选输入参数：**
+- **`base_deb_path`** (STRING)：基础deb包路径，用作模板的现有deb包文件路径
+- **`package_name`** (STRING)：包名，如果未指定且有基础包则复用基础包信息
+- **`package_version`** (STRING)：包版本，如果未指定且有基础包则自动在基础版本上+1
+- **`maintainer_name`** (STRING)：打包人姓名
+- **`maintainer_email`** (STRING)：打包人邮箱
+- **`package_description`** (STRING)：软件包描述信息，支持多行输入
+- **`symlink_csv_path`** (STRING)：软链接表格，可选的CSV文件路径，用于自动创建软链接
+- **`file_permissions`** (STRING)：文件权限，八进制格式（如755、644），默认值为644
+
+**输出：**
+- **`saved_deb_path`** (STRING)：保存成功时为完整deb包路径，失败时为错误信息
+- **`file_list`** (STRING_LIST)：deb包内所有文件的路径列表（包括control.tar.*和data.tar.*中的所有文件）
+
+**功能特性：**
+
+*智能版本管理：*
+- **自动版本递增**：基于基础deb包时，自动将版本号最后一位+1（如1.1.8→1.1.9）
+- **版本格式支持**：支持标准版本格式（1.2.3、1.2.3-4、1.0.0+build1等）
+- **智能解析**：自动识别版本号中的数字部分进行递增
+
+*文件名和路径管理：*
+- **标准文件名**：自动生成标准格式文件名（包名_版本号_架构.deb）
+- **输出目录控制**：支持自定义输出目录，默认使用ComfyUI输出目录
+- **目录自动创建**：输出目录不存在时自动创建
+
+*基础包支持：*
+- **智能继承**：基于现有deb包创建新包，自动继承包信息和依赖关系
+- **控制信息复用**：自动复用基础包的维护者、依赖、架构等信息
+- **简化配置**：基于基础包时，大部分参数可留空自动继承
+
+*文件处理：*
+- **通配符过滤**：支持多种模式，用逗号分隔（如"*.dci,*.png"）
+- **递归搜索**：广度优先目录遍历，确保顺序一致性
+- **目录结构保持**：自动保持子目录的目录结构关系
+- **路径规范化**：自动处理跨平台路径分隔符
+
+*软链接自动创建：*
+- **CSV映射表**：支持通过CSV文件定义源文件到目标软链接的映射关系
+- **精确匹配**：严格按照文件名（去掉扩展名后）完全匹配CSV中的映射规则，避免误匹配
+- **多目标支持**：一个源文件可以创建多个软链接（如微信图标同时创建weixin和uos.web.qq.wx软链接）
+- **同目录链接**：软链接与源文件在同一目录下，直接使用文件名作为目标，无需计算相对路径
+- **扩展名保持**：软链接文件自动保持与源文件相同的扩展名
+- **CSV格式**：第一列为源文件名（不含扩展名），第二列为目标名称（支持换行分隔的多个目标）
+- **tar归档创建**：软链接直接在tar归档中创建，不依赖运行环境的文件系统支持
+- **跨平台兼容**：在Windows、Linux、macOS等所有平台均可正常创建软链接
+
+*deb格式支持：*
+- **标准格式**：完全符合Debian包格式规范
+- **压缩支持**：支持gzip、xz、bz2等多种压缩格式
+- **控制文件**：自动生成标准的control文件和包结构
+- **dpkg兼容**：生成的deb包可用dpkg-deb命令验证和安装
+- **跨平台支持**：所有平台均使用纯Python ar实现，无需外部依赖
+- **GNU tar格式**：强制使用GNU tar格式避免PAX扩展头部，确保dpkg完全兼容
+
+**使用示例：**
+- 从头创建DCI图标包：`local_directory="/path/to/icons", file_filter="*.dci", output_directory="/tmp/output", package_name="my-icons", package_version="1.0.0"`
+- 基于现有包自动递增版本：`base_deb_path="/path/to/base.deb", local_directory="/path/to/new/icons", output_directory="/tmp/output"`
+- 指定新版本号：`base_deb_path="/path/to/base.deb", local_directory="/path/to/icons", package_version="2.0.0", output_directory="/tmp/output"`
+- 使用软链接表格：`local_directory="/path/to/icons", file_filter="*.dci", symlink_csv_path="/path/to/symlinks.csv", output_directory="/tmp/output"`
+
+**软链接CSV格式示例：**
+```csv
+com.qq.weixin.deepin,"weixin
+uos.web.qq.wx"
+netease-cloud-music,uos.web.163.music
+libreoffice,libreoffice7.0
+```
+此配置将为`com.qq.weixin.deepin.dci`创建`weixin.dci`和`uos.web.qq.wx.dci`两个软链接。
+
+**使用场景：**
+- **DCI图标包分发**：将DCI图标文件打包成标准的Debian软件包，直接保存到指定目录
+- **系统集成**：创建可通过apt安装的图标包，支持标准的deb包管理
+- **版本管理**：基于现有包创建新版本，自动版本递增，简化版本控制
+- **批量部署**：在多个系统间标准化部署图标资源，文件名格式统一
+- **依赖管理**：利用deb包的依赖系统管理图标包关系，继承现有依赖配置
+- **开发测试**：快速生成测试用deb包，可用dpkg-deb命令验证包结构
+- **图标兼容性**：通过软链接自动创建多个名称的图标文件，支持不同应用的图标命名需求
+- **系统迁移**：为旧系统图标名称创建软链接，确保向后兼容性
+
+#### 6.3. Deb Loader（Deb 加载器）
+**节点类别**：`DCI/Files`
+**功能描述**：从Debian软件包（.deb文件）中提取和加载文件，支持文件过滤功能。解析deb包内的control.tar.*和data.tar.*归档文件，提取符合条件的文件。**新功能**：自动识别和解码deb包中的图像文件，提供独立的图像输出，可直接用于ComfyUI工作流。
+
+**必需输入参数：**
+- **`deb_file_path`** (STRING)：要解析的.deb文件路径，默认空字符串
+- **`file_filter`** (STRING)：文件过滤模式，支持通配符（如"*.dci"、"*.png,*.jpg"），默认"*.dci"
+- **`skip_symlinks`** (BOOLEAN): **新增** - 提取时跳过软链接，默认True
+
+**输出：**
+- **`binary_data_list`** (BINARY_DATA_LIST): 提取文件的二进制数据列表
+- **`relative_paths`** (STRING_LIST): deb包内文件的相对路径列表
+- **`image_list`** (IMAGE): **新增** - 解码后的图像批次张量（未找到图像时为None）
+- **`image_relative_paths`** (STRING_LIST): **新增** - 解码图像的相对路径列表
+- **`skipped_files`** (STRING_LIST): **新增** - 跳过的软链接文件列表
 
 **功能特性：**
 
