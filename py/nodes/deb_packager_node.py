@@ -251,7 +251,7 @@ class DebPackager(BaseNode):
 
                     # Create ar header (60 bytes)
                     # Format: name(16) + date(12) + uid(6) + gid(6) + mode(8) + size(10) + end(2)
-                    name_field = filename.ljust(16)[:16].encode('ascii')
+                    name_field = (filename + "/").ljust(16)[:16].encode('ascii')
                     date_field = str(int(stat.st_mtime)).ljust(12)[:12].encode('ascii')
                     uid_field = b"0     "  # 6 bytes
                     gid_field = b"0     "  # 6 bytes
@@ -321,7 +321,7 @@ class DebPackager(BaseNode):
                         break
 
                     # Parse header
-                    filename = header[0:16].decode('ascii').strip()
+                    filename = header[0:16].decode('ascii').strip().rstrip('/')
                     size_str = header[48:58].decode('ascii').strip()
 
                     if not size_str:
