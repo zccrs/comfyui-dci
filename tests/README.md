@@ -13,12 +13,42 @@ This directory contains comprehensive unit tests for the ComfyUI DCI Extension.
 
 ### Legacy Tests (Integration)
 The existing test files serve as integration tests:
+
+#### DCI Preview and UI Tests
 - `test_dci_preview_*.py` - DCI preview functionality tests
+- `test_dci_preview_node_fix.py` - DCI preview node bug fixes
+- `test_dci_preview_simple.py` - Simple DCI preview tests
+- `test_dci_preview_ui.py` - UI-related preview tests
+- `test_font_size_*.py` - Font size handling tests
+
+#### File Processing Tests
 - `test_dci_file_saver.py` - DCI file saving tests
 - `test_binary_*.py` - Binary file handling tests
-- `test_node_*.py` - Node registration and connectivity tests
 - `test_real_dci_files.py` - Real DCI file processing tests
-- And many more...
+- `test_layer_system.py` - DCI layer system tests
+
+#### Node Tests
+- `test_node_*.py` - Node registration and connectivity tests
+- `test_new_dci_nodes.py` - New DCI node functionality tests
+- `test_structure_node.py` - DCI structure analysis tests
+
+#### Quality and Feature Tests (Moved from root)
+- `test_advanced_compression.py` - Advanced compression feature tests
+- `test_border_color.py` - Border color functionality tests
+- `test_categories.py` - Category system tests
+- `test_quality_feature.py` - Image quality feature tests
+- `test_transparent_preview.py` - Transparent image preview tests
+- `test_pure_python_implementation.py` - Pure Python implementation tests
+- `test_pure_python_simple.py` - Simple pure Python tests
+- `simple_quality_test.py` - Simple quality testing script
+
+#### Test Assets
+- `test_preview_*.png` - Test preview images (blue, dark, light themes)
+- `test_transparent_preview.png` - Transparent preview test image
+- `test_output.dci` - Sample DCI output file for testing
+
+#### Verification Scripts
+- `verify_*.py` - Various verification and validation scripts
 
 ## Running Tests
 
