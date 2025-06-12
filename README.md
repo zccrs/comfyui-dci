@@ -1162,6 +1162,7 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **dpkg兼容**：生成的deb包可用dpkg-deb命令验证和安装
 - **跨平台支持**：所有平台均使用纯Python ar实现，无需外部依赖
 - **GNU tar格式**：强制使用GNU tar格式避免PAX扩展头部，确保dpkg完全兼容
+- **目录条目创建**：自动在tar归档中创建所有必要的目录条目，确保dpkg能正确创建目录结构
 
 **使用示例：**
 - 从头创建DCI图标包：`local_directory="/path/to/icons", file_filter="*.dci", output_directory="/tmp/output", package_name="my-icons", package_version="1.0.0"`
@@ -1954,6 +1955,7 @@ DCI 二进制数据 2 + DCI 图像 9-12 → DCI 文件节点 3 → DCI 二进制
 - **dpkg兼容**：生成的deb包可用dpkg-deb命令验证和安装
 - **跨平台支持**：所有平台均使用纯Python ar实现，无需外部依赖
 - **GNU tar格式**：强制使用GNU tar格式避免PAX扩展头部，确保dpkg完全兼容
+- **目录条目创建**：自动在tar归档中创建所有必要的目录条目，确保dpkg能正确创建目录结构
 
 **使用示例：**
 - 从头创建DCI图标包：`local_directory="/path/to/icons", file_filter="*.dci", output_directory="/tmp/output", package_name="my-icons", package_version="1.0.0"`

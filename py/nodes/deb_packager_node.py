@@ -589,6 +589,48 @@ class DebPackager(BaseNode):
     def _create_data_tar_with_symlinks(self, tar_path, data_dir, symlink_info, file_mode=0o644):
         """Create data.tar.gz from data directory with symlinks"""
         with tarfile.open(tar_path, 'w:gz', format=tarfile.GNU_FORMAT) as tar:
+            # Collect all directories that need to be created
+            directories_to_add = set()
+
+            # Add directories for regular files
+            for root, dirs, files in os.walk(data_dir):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    arcname = os.path.relpath(file_path, data_dir)
+
+                    # Add all parent directories to the set
+                    dir_path = os.path.dirname(arcname)
+                    while dir_path and dir_path != '.':
+                        directories_to_add.add(dir_path)
+                        dir_path = os.path.dirname(dir_path)
+
+            # Add directories for symlinks
+            for symlink in symlink_info:
+                symlink_arcname = symlink['arcname']
+                dir_path = os.path.dirname(symlink_arcname)
+                while dir_path and dir_path != '.':
+                    directories_to_add.add(dir_path)
+                    dir_path = os.path.dirname(dir_path)
+
+            # Add directory entries to tar archive first
+            for dir_name in sorted(directories_to_add):
+                try:
+                    # Create a TarInfo object for the directory
+                    tarinfo = tarfile.TarInfo(name=f"./{dir_name.replace(chr(92), '/')}")
+                    tarinfo.type = tarfile.DIRTYPE  # Directory
+                    tarinfo.mode = 0o755  # Standard directory permissions
+                    tarinfo.uid = 0
+                    tarinfo.gid = 0
+                    tarinfo.mtime = int(time.time())
+                    tarinfo.size = 0
+
+                    # Add the directory to the tar archive
+                    tar.addfile(tarinfo)
+                    print(f"    ✓ 在tar中创建目录: {dir_name}")
+
+                except Exception as e:
+                    print(f"    ❌ 在tar中创建目录失败 {dir_name}: {str(e)}")
+
             # Add regular files with custom permissions
             for root, dirs, files in os.walk(data_dir):
                 for file in files:
