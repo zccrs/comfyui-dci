@@ -1,4 +1,11 @@
-import torch
+# 可选导入torch，支持在没有ComfyUI环境中运行
+try:
+    import torch
+    HAS_TORCH = True
+except ImportError:
+    torch = None
+    HAS_TORCH = False
+
 import numpy as np
 from PIL import Image
 from io import BytesIO
@@ -10,7 +17,7 @@ import time
 def tensor_to_pil(image):
     """Convert ComfyUI image tensor to PIL Image"""
     # Handle both torch tensors and numpy arrays
-    if hasattr(image, 'cpu'):
+    if HAS_TORCH and hasattr(image, 'cpu'):
         # PyTorch tensor
         if len(image.shape) == 4:
             img_array = image[0].cpu().numpy()
@@ -54,8 +61,12 @@ def pil_to_tensor(pil_image):
     # Normalize to 0-1 range
     img_array = img_array / 255.0
 
-    # Convert to torch tensor with shape [1, H, W, C] (batch dimension)
-    tensor = torch.from_numpy(img_array).unsqueeze(0)
+    if HAS_TORCH:
+        # Convert to torch tensor with shape [1, H, W, C] (batch dimension)
+        tensor = torch.from_numpy(img_array).unsqueeze(0)
+    else:
+        # Return numpy array with batch dimension for compatibility
+        tensor = np.expand_dims(img_array, axis=0)
 
     return tensor
 
