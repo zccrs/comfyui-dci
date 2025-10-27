@@ -165,6 +165,8 @@
   "metadata.blue_component": "蓝色分量",
   "metadata.alpha_adjustment": "透明度调整",
   "metadata.alpha8_format": "Alpha8格式",
+  "metadata.symlink": "符号链接",
+  "metadata.symlink_target": "目标",
 
   "bytes": "字节",
   "px": "像素"

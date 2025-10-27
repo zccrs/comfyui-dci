@@ -99,7 +99,7 @@ class DCIAnalysis(BaseNode):
                 return (error_msg,)
 
             # Generate tree structure
-            tree_structure = self._generate_tree_structure(images)
+            tree_structure = self._generate_tree_structure(images, reader)
 
             # Add success header
             success_header = f"✅ DCI 分析成功\n"
@@ -120,7 +120,7 @@ class DCIAnalysis(BaseNode):
             error_msg += traceback.format_exc()
             return (error_msg,)
 
-    def _generate_tree_structure(self, images):
+    def _generate_tree_structure(self, images, reader=None):
         """Generate tree structure representation of DCI file"""
 
         # Organize images by directory structure
@@ -148,9 +148,31 @@ class DCIAnalysis(BaseNode):
                 # Add file info with metadata
                 metadata = self._parse_filename_metadata(filename)
                 metadata['scale'] = f"{scale}x"  # Set scale from path
+
+                # Check if this is a symlink by looking at the file type in directory_structure
+                is_symlink = False
+                symlink_target = ''
+
+                if reader and hasattr(reader, 'directory_structure'):
+                    dir_path = img['path']
+                    if dir_path in reader.directory_structure:
+                        files_in_dir = reader.directory_structure[dir_path]
+                        if filename in files_in_dir:
+                            file_info_raw = files_in_dir[filename]
+                            if file_info_raw.get('type') == reader.FILE_TYPE_LINK:
+                                is_symlink = True
+                                # Get symlink target from content
+                                if 'content' in file_info_raw:
+                                    try:
+                                        symlink_target = file_info_raw['content'].decode('utf-8')
+                                    except Exception:
+                                        symlink_target = '<invalid target>'
+
                 file_info = {
                     'filename': filename,
-                    'metadata': metadata
+                    'metadata': metadata,
+                    'is_symlink': is_symlink,
+                    'symlink_target': symlink_target
                 }
 
                 structure[size][state_tone][scale].append(file_info)
@@ -198,13 +220,18 @@ class DCIAnalysis(BaseNode):
                         # Build file display with metadata
                         filename = file_info['filename']
                         metadata = file_info['metadata']
+                        is_symlink = file_info.get('is_symlink', False)
+                        symlink_target = file_info.get('symlink_target', '')
 
-                        # Add filename
-                        lines.append(f"{file_indent}{file_prefix}{filename}")
+                        # Add filename with symlink indicator
+                        if is_symlink:
+                            lines.append(f"{file_indent}{file_prefix}{filename} 🔗 -> {symlink_target}")
+                        else:
+                            lines.append(f"{file_indent}{file_prefix}{filename}")
 
                         # Add metadata lines with proper indentation
                         metadata_indent = file_indent + ("    " if is_last_file else "│   ")
-                        metadata_lines = self._format_metadata_lines(metadata)
+                        metadata_lines = self._format_metadata_lines(metadata, is_symlink)
                         for meta_line in metadata_lines:
                             lines.append(f"{metadata_indent}    {meta_line}")
 
@@ -286,9 +313,13 @@ class DCIAnalysis(BaseNode):
 
         return metadata
 
-    def _format_metadata_lines(self, metadata):
+    def _format_metadata_lines(self, metadata, is_symlink=False):
         """Format metadata into separate lines"""
         lines = []
+
+        # Symlink indicator (show first if it's a symlink)
+        if is_symlink:
+            lines.append(f"[🔗 {t('metadata.symlink')}]")
 
         # Scale (always show)
         lines.append(f"[{t('metadata.scale')}: {metadata.get('scale', '1x')}]")

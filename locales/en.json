@@ -161,6 +161,8 @@
   "metadata.blue_component": "Blue Component",
   "metadata.alpha_adjustment": "Alpha Adjustment",
   "metadata.alpha8_format": "Alpha8 Format",
+  "metadata.symlink": "Symlink",
+  "metadata.symlink_target": "Target",
 
   "bytes": "Bytes",
   "px": "px"
