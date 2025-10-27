@@ -31,6 +31,7 @@ class IconState(Enum):
 
 class ToneType(Enum):
     """Tone type enumeration"""
+    UNIVERSAL = "universal"
     LIGHT = "light"
     DARK = "dark"
 

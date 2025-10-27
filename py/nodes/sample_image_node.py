@@ -82,7 +82,7 @@ class DCISampleImage(BaseNode):
                 t("icon_size"): ("INT", {"default": 256, "min": 16, "max": 1024, "step": 1}),
                 t("icon_state"): (get_enum_ui_options(IconState, t), {"default": get_enum_default_ui_value(IconState.NORMAL, t)}),
                 t("scale"): ("FLOAT", {"default": 1.0, "min": 0.1, "max": 10.0, "step": 0.1}),
-                t("tone_type"): (get_enum_ui_options(ToneType, t), {"default": get_enum_default_ui_value(ToneType.LIGHT, t)}),
+                t("tone_type"): (get_enum_ui_options(ToneType, t), {"default": get_enum_default_ui_value(ToneType.UNIVERSAL, t)}),
                 t("image_format"): ([fmt.value for fmt in ImageFormat], {"default": ImageFormat.WEBP.value}),
                 t("image_quality"): ("INT", {"default": 90, "min": 1, "max": 100, "step": 1}),
 
@@ -114,7 +114,7 @@ class DCISampleImage(BaseNode):
         scale = kwargs.get(t("scale")) if t("scale") in kwargs else kwargs.get("scale")
 
         tone_type_ui = kwargs.get(t("tone_type")) if t("tone_type") in kwargs else kwargs.get("tone_type")
-        tone_type = translate_ui_to_enum(tone_type_ui, ToneType, t) if tone_type_ui else ToneType.LIGHT
+        tone_type = translate_ui_to_enum(tone_type_ui, ToneType, t) if tone_type_ui else ToneType.UNIVERSAL
 
         image_format_ui = kwargs.get(t("image_format")) if t("image_format") in kwargs else kwargs.get("image_format", ImageFormat.WEBP.value)
         image_format = ImageFormat(image_format_ui) if image_format_ui else ImageFormat.WEBP
@@ -131,7 +131,7 @@ class DCISampleImage(BaseNode):
         return self._execute_impl(image, icon_size, icon_state, scale, tone_type, image_format, image_quality,
                                  webp_lossless, webp_alpha_quality, png_compress_level)
 
-    def _execute_impl(self, image, icon_size, icon_state: IconState, scale, tone_type: ToneType = ToneType.LIGHT, image_format: ImageFormat = ImageFormat.WEBP, image_quality: int = 90,
+    def _execute_impl(self, image, icon_size, icon_state: IconState, scale, tone_type: ToneType = ToneType.UNIVERSAL, image_format: ImageFormat = ImageFormat.WEBP, image_quality: int = 90,
                      webp_lossless: bool = False, webp_alpha_quality: int = 100, png_compress_level: int = 6):
         """Create simple DCI image data with basic settings only"""
         if not _image_support:

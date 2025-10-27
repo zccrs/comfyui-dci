@@ -46,7 +46,7 @@ This tool fully complies with DCI standard specifications:
 
 - ✅ **Complete DCI format implementation**: Full support for DCI file creation and reading
 - ✅ **Multi-state icon support**: Normal, hover, pressed, disabled states
-- ✅ **Multi-tone support**: Light and dark tone variants
+- ✅ **Multi-tone support**: Universal, light and dark tone variants with automatic symlink creation
 - ✅ **Advanced preview system**: Grid-based visualization with metadata overlay
 - ✅ **Modular node architecture**: Refactored into more flexible composable nodes
 - ✅ **Binary data flow**: Support for inter-node binary data transfer
@@ -90,7 +90,7 @@ comfyui-dci/
 - **DCI File Composition**: Combine multiple DCI images into complete DCI files
 - **Multiple Scale Factors**: Support decimal scaling like 1x, 1.25x, 1.5x, 2x, etc.
 - **Format Support**: WebP, PNG, and JPEG formats
-- **Tone Support**: Light and dark tone variants
+- **Tone Support**: Universal, light and dark tone variants
 - **Customizable Icon Sizes**: From 16x16 to 1024x1024 pixels
 
 ### Preview Functions
@@ -115,6 +115,13 @@ comfyui-dci/
 - **Standard Compliance**: Generated packages are fully compatible with dpkg and apt package managers
 
 > **⚠️ Important Notice (January 2025)**: DEB packages generated before the January 2025 symlink position fix need to be regenerated. The fix ensures symlinks are correctly placed alongside their target files instead of at the root level.
+
+### Universal Tone Type Support
+- **Universal Tone Type**: New "Universal" tone type that works for both light and dark themes
+- **Automatic Symlink Creation**: When using universal tone, images are stored in light directory with automatic symlinks created in dark directory
+- **Default Setting**: Universal tone is now the default option for new icons
+- **DCI Specification Compliance**: Symlinks follow DCI specification using relative paths (../../target/path)
+- **Backward Compatibility**: Existing light and dark tone types continue to work as before
 
 ### Internationalization Support
 - **Complete Chinese Interface**: All node names, parameter names, and output names support Chinese display
@@ -217,7 +224,7 @@ The `examples/` directory contains sample ComfyUI workflows demonstrating:
 ### DCI Format Support
 - Complete binary format implementation
 - Layer system with priority, padding, and color adjustments
-- Multi-state and multi-tone icon support
+- Multi-state and multi-tone icon support (including universal tone with symlinks)
 - Alpha8 format optimization
 
 ### Node Architecture
@@ -292,7 +299,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - ✅ **完整的 DCI 格式实现**：完全支持 DCI 文件创建和读取
 - ✅ **多状态图标支持**：正常、悬停、按下、禁用状态
-- ✅ **多色调支持**：浅色和深色调变体
+- ✅ **多色调支持**：通用、浅色和深色调变体，支持自动符号链接创建
 - ✅ **高级预览系统**：基于网格的可视化与元数据覆盖
 - ✅ **模块化节点架构**：重构为更灵活的组合式节点
 - ✅ **二进制数据流**：支持节点间二进制数据传递
@@ -336,7 +343,7 @@ comfyui-dci/
 - **DCI 文件组合**：将多个 DCI 图像组合成完整的 DCI 文件
 - **多种缩放因子**：支持小数缩放如 1x、1.25x、1.5x、2x 等
 - **格式支持**：WebP、PNG 和 JPEG 格式
-- **色调支持**：浅色和深色调变体
+- **色调支持**：通用、浅色和深色调变体
 - **可自定义图标尺寸**：从 16x16 到 1024x1024 像素
 
 ### 预览功能
@@ -359,6 +366,13 @@ comfyui-dci/
 - **版本管理**：智能版本递增和软件包元数据处理
 - **跨平台支持**：纯 Python 实现，在 Windows、Linux 和 macOS 上均可运行
 - **标准兼容**：生成的软件包完全兼容 dpkg 和 apt 包管理器
+
+### 通用色调类型支持
+- **通用色调类型**：新增"通用"色调类型，同时适用于浅色和深色主题
+- **自动符号链接创建**：使用通用色调时，图像存储在浅色目录中，并在深色目录中自动创建符号链接
+- **默认设置**：通用色调现在是新图标的默认选项
+- **DCI规范兼容**：符号链接遵循DCI规范，使用相对路径（../../目标/路径）
+- **向后兼容**：现有的浅色和深色调类型继续正常工作
 
 ### 国际化支持
 - **完整中文界面**：所有节点名称、参数名、输出名均支持中文显示
@@ -461,7 +475,7 @@ pip install -r requirements.txt
 ### DCI格式支持
 - 完整的二进制格式实现
 - 支持优先级、外边框和颜色调整的图层系统
-- 多状态和多色调图标支持
+- 多状态和多色调图标支持（包括通用色调和符号链接）
 - Alpha8格式优化
 
 ### 节点架构

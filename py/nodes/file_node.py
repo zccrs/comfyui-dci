@@ -89,6 +89,7 @@ class DCIFileNode(BaseNode):
             for dci_image in dci_images:
                 path = dci_image['path']
                 content = dci_image['content']
+                tone_type = dci_image.get('tone')  # Get original tone type from metadata
 
                 # Parse path: size/state.tone/scale/filename
                 path_parts = path.split('/')
@@ -106,7 +107,34 @@ class DCIFileNode(BaseNode):
                 if scale_dir not in directory_structure[size_dir][state_tone_dir]:
                     directory_structure[size_dir][state_tone_dir][scale_dir] = {}
 
-                directory_structure[size_dir][state_tone_dir][scale_dir][filename_part] = content
+                directory_structure[size_dir][state_tone_dir][scale_dir][filename_part] = {
+                    'type': 'file',
+                    'content': content
+                }
+
+                # Handle universal tone type - create symlink in dark directory
+                if hasattr(tone_type, 'value') and tone_type.value == 'universal':
+                    # Extract state from state_tone_dir (format: "state.light")
+                    state_part = state_tone_dir.split('.')[0]
+                    dark_state_tone_dir = f"{state_part}.dark"
+
+                    # Create symlink target path: ../../state.light/scale/filename
+                    # Need to go up two levels: from scale_dir to state_tone_dir, then to size_dir
+                    symlink_target = f"../../{state_tone_dir}/{scale_dir}/{filename_part}"
+
+                    # Build dark directory structure
+                    if dark_state_tone_dir not in directory_structure[size_dir]:
+                        directory_structure[size_dir][dark_state_tone_dir] = {}
+                    if scale_dir not in directory_structure[size_dir][dark_state_tone_dir]:
+                        directory_structure[size_dir][dark_state_tone_dir][scale_dir] = {}
+
+                    # Add symlink
+                    directory_structure[size_dir][dark_state_tone_dir][scale_dir][filename_part] = {
+                        'type': 'symlink',
+                        'target': symlink_target
+                    }
+
+                    print(f"Created symlink for universal tone: {dark_state_tone_dir}/{scale_dir}/{filename_part} -> {symlink_target}")
 
             # Convert directory structure to DCI format
             for size_dir, size_content in directory_structure.items():
@@ -118,12 +146,29 @@ class DCIFileNode(BaseNode):
                     for scale_dir, scale_content in state_tone_content.items():
                         # Create files for this scale directory
                         scale_files = []
-                        for filename_part, file_content in scale_content.items():
-                            scale_files.append({
-                                'name': filename_part,
-                                'content': file_content,
-                                'type': DCIFile.FILE_TYPE_FILE
-                            })
+                        for filename_part, file_info in scale_content.items():
+                            if isinstance(file_info, dict):
+                                if file_info['type'] == 'file':
+                                    scale_files.append({
+                                        'name': filename_part,
+                                        'content': file_info['content'],
+                                        'type': DCIFile.FILE_TYPE_FILE
+                                    })
+                                elif file_info['type'] == 'symlink':
+                                    # Create symlink content (target path as UTF-8 bytes)
+                                    symlink_content = file_info['target'].encode('utf-8')
+                                    scale_files.append({
+                                        'name': filename_part,
+                                        'content': symlink_content,
+                                        'type': DCIFile.FILE_TYPE_LINK
+                                    })
+                            else:
+                                # Backward compatibility: treat as file content
+                                scale_files.append({
+                                    'name': filename_part,
+                                    'content': file_info,
+                                    'type': DCIFile.FILE_TYPE_FILE
+                                })
 
                         # Create scale directory
                         scale_dir_content = self._create_directory_content(scale_files, dci_file)

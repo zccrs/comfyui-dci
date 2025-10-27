@@ -85,7 +85,7 @@ class DCIImage(BaseNode):
                 t("icon_size"): ("INT", {"default": 256, "min": 16, "max": 1024, "step": 1}),
                 t("icon_state"): (get_enum_ui_options(IconState, t), {"default": get_enum_default_ui_value(IconState.NORMAL, t)}),
                 t("scale"): ("FLOAT", {"default": 1.0, "min": 0.1, "max": 10.0, "step": 0.1}),
-                t("tone_type"): (get_enum_ui_options(ToneType, t), {"default": get_enum_default_ui_value(ToneType.LIGHT, t)}),
+                t("tone_type"): (get_enum_ui_options(ToneType, t), {"default": get_enum_default_ui_value(ToneType.UNIVERSAL, t)}),
             },
             "optional": {
                 # Basic format setting
@@ -140,7 +140,7 @@ class DCIImage(BaseNode):
         scale = kwargs.get(t("scale")) if t("scale") in kwargs else kwargs.get("scale")
 
         tone_type_ui = kwargs.get(t("tone_type")) if t("tone_type") in kwargs else kwargs.get("tone_type")
-        tone_type = translate_ui_to_enum(tone_type_ui, ToneType, t) if tone_type_ui else ToneType.LIGHT
+        tone_type = translate_ui_to_enum(tone_type_ui, ToneType, t) if tone_type_ui else ToneType.UNIVERSAL
 
         image_format_ui = kwargs.get(t("image_format")) if t("image_format") in kwargs else kwargs.get("image_format", ImageFormat.WEBP.value)
         image_format = ImageFormat(image_format_ui) if image_format_ui else ImageFormat.WEBP
@@ -181,7 +181,7 @@ class DCIImage(BaseNode):
                                  hue_adjustment, saturation_adjustment, brightness_adjustment,
                                  red_adjustment, green_adjustment, blue_adjustment, alpha_adjustment)
 
-    def _execute_impl(self, image, icon_size, icon_state: IconState, scale, tone_type: ToneType = ToneType.LIGHT,
+    def _execute_impl(self, image, icon_size, icon_state: IconState, scale, tone_type: ToneType = ToneType.UNIVERSAL,
                      image_format: ImageFormat = ImageFormat.WEBP, image_quality=90,
                      webp_lossless=False, webp_alpha_quality=100, png_compress_level=6,
                      background_color: BackgroundColor = BackgroundColor.TRANSPARENT, custom_bg_r=255, custom_bg_g=255, custom_bg_b=255,

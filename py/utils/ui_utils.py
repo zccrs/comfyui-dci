@@ -14,7 +14,7 @@ def format_dci_path(size, state, tone, scale, format_type, priority=1, padding=0
     Args:
         size: Icon size in pixels
         state: Icon state (normal, disabled, hover, pressed)
-        tone: Tone type (light, dark)
+        tone: Tone type (universal, light, dark)
         scale: Scale factor
         format_type: Image format (png, webp, jpg)
         priority: Layer priority (1-n), default 1
@@ -30,6 +30,9 @@ def format_dci_path(size, state, tone, scale, format_type, priority=1, padding=0
     """
     scale_str = f"{scale:g}"  # Remove trailing zeros
 
+    # Handle universal tone type - store as light but indicate universal in path
+    actual_tone = "light" if tone == "universal" else tone
+
     # Format padding with 'p' suffix according to DCI specification
     padding_str = f"{padding}p"
 
@@ -40,7 +43,7 @@ def format_dci_path(size, state, tone, scale, format_type, priority=1, padding=0
     # Format: priority.padding_with_p.palette.color_adjustments_with_underscores.format
     layer_filename = f"{priority}.{padding_str}.{palette}.{color_adjustments}.{format_type}"
 
-    return f"{size}/{state}.{tone}/{scale_str}/{layer_filename}"
+    return f"{size}/{state}.{actual_tone}/{scale_str}/{layer_filename}"
 
 def format_image_info(image_data, index=None):
     """Format image information for display"""

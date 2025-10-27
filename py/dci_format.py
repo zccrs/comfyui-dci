@@ -117,7 +117,7 @@ class DCIIconBuilder:
     """Builder for DCI icon files following the icon specification"""
 
     ICON_STATES = ['normal', 'disabled', 'hover', 'pressed']
-    TONE_TYPES = ['light', 'dark']
+    TONE_TYPES = ['universal', 'light', 'dark']
     SUPPORTED_FORMATS = ['png', 'jpg', 'webp']
 
     def __init__(self):
@@ -125,7 +125,7 @@ class DCIIconBuilder:
         self.directory_structure = {}  # Track directory structure
 
     def add_icon_image(self, image: Image.Image, size: int, state: str = 'normal',
-                      tone: str = 'dark', scale: float = 1.0, format: str = 'webp', quality: int = 90,
+                      tone: str = 'universal', scale: float = 1.0, format: str = 'webp', quality: int = 90,
                       webp_lossless: bool = False, webp_alpha_quality: int = 100, png_compress_level: int = 6):
         """Add an icon image for specific state, tone, and scale"""
 
@@ -172,17 +172,45 @@ class DCIIconBuilder:
 
         img_content = img_bytes.getvalue()
 
-        # Create directory structure: size/state.tone/scale/1.0.0.0.0.format
+        # Handle universal tone type
+        if tone == 'universal':
+            # Store image in light directory
+            self._add_icon_image_internal(image, img_content, size, state, 'light', scale, format)
+            # Create symlink in dark directory
+            self._add_icon_symlink(size, state, 'light', 'dark', scale, format)
+        else:
+            # Normal processing for light/dark tones
+            self._add_icon_image_internal(image, img_content, size, state, tone, scale, format)
+
+    def _add_icon_image_internal(self, image: Image.Image, img_content: bytes, size: int, state: str,
+                                tone: str, scale: float, format: str):
+        """Internal method to add icon image to structure"""
+        # Create directory structure: size/state.tone/scale/1.0p.-1.0_0_0_0_0_0_0.format
         size_dir = str(size)
         state_tone_dir = f"{state}.{tone}"
         # Format scale to remove unnecessary decimal places
         scale_dir = f"{scale:g}"
 
         # Layer file: priority.padding.palette.hue.saturation.brightness.red.green.blue.alpha.format
-        layer_filename = f"1.0.0.0.0.0.0.0.0.0.{format}"
+        layer_filename = f"1.0p.-1.0_0_0_0_0_0_0.{format}"
 
         # Build nested directory structure
         self._add_to_structure(size_dir, state_tone_dir, scale_dir, layer_filename, img_content)
+
+    def _add_icon_symlink(self, size: int, state: str, source_tone: str, target_tone: str, scale: float, format: str):
+        """Add a symlink from target_tone directory to source_tone directory"""
+        size_dir = str(size)
+        source_state_tone_dir = f"{state}.{source_tone}"
+        target_state_tone_dir = f"{state}.{target_tone}"
+        scale_dir = f"{scale:g}"
+        layer_filename = f"1.0p.-1.0_0_0_0_0_0_0.{format}"
+
+        # Create symlink path: ../../state.source_tone/scale/filename
+        # Need to go up two levels: from scale_dir to state_tone_dir, then to size_dir
+        symlink_target = f"../../{source_state_tone_dir}/{scale_dir}/{layer_filename}"
+
+        # Add symlink to target directory structure
+        self._add_symlink_to_structure(size_dir, target_state_tone_dir, scale_dir, layer_filename, symlink_target)
 
     def _add_to_structure(self, size_dir: str, state_tone_dir: str,
                          scale_dir: str, filename: str, content: bytes):
@@ -199,7 +227,30 @@ class DCIIconBuilder:
             self.directory_structure[size_dir][state_tone_dir][scale_dir] = {}
 
         # Add the file
-        self.directory_structure[size_dir][state_tone_dir][scale_dir][filename] = content
+        self.directory_structure[size_dir][state_tone_dir][scale_dir][filename] = {
+            'type': 'file',
+            'content': content
+        }
+
+    def _add_symlink_to_structure(self, size_dir: str, state_tone_dir: str,
+                                 scale_dir: str, filename: str, target_path: str):
+        """Add symlink to the directory structure"""
+
+        # Initialize structure if needed
+        if size_dir not in self.directory_structure:
+            self.directory_structure[size_dir] = {}
+
+        if state_tone_dir not in self.directory_structure[size_dir]:
+            self.directory_structure[size_dir][state_tone_dir] = {}
+
+        if scale_dir not in self.directory_structure[size_dir][state_tone_dir]:
+            self.directory_structure[size_dir][state_tone_dir][scale_dir] = {}
+
+        # Add the symlink
+        self.directory_structure[size_dir][state_tone_dir][scale_dir][filename] = {
+            'type': 'symlink',
+            'target': target_path
+        }
 
     def build(self, output_path: str):
         """Build and write the DCI file"""
@@ -219,12 +270,29 @@ class DCIIconBuilder:
                 for scale_dir, scale_content in state_tone_content.items():
                     # Create files for this scale directory
                     scale_files = []
-                    for filename, file_content in scale_content.items():
-                        scale_files.append({
-                            'name': filename,
-                            'content': file_content,
-                            'type': DCIFile.FILE_TYPE_FILE
-                        })
+                    for filename, file_info in scale_content.items():
+                        if isinstance(file_info, dict):
+                            if file_info['type'] == 'file':
+                                scale_files.append({
+                                    'name': filename,
+                                    'content': file_info['content'],
+                                    'type': DCIFile.FILE_TYPE_FILE
+                                })
+                            elif file_info['type'] == 'symlink':
+                                # Create symlink content (target path as UTF-8 bytes)
+                                symlink_content = file_info['target'].encode('utf-8')
+                                scale_files.append({
+                                    'name': filename,
+                                    'content': symlink_content,
+                                    'type': DCIFile.FILE_TYPE_LINK
+                                })
+                        else:
+                            # Backward compatibility: treat as file content
+                            scale_files.append({
+                                'name': filename,
+                                'content': file_info,
+                                'type': DCIFile.FILE_TYPE_FILE
+                            })
 
                     # Create scale directory
                     scale_dir_content = self._create_directory_content(scale_files)
@@ -283,7 +351,7 @@ def create_dci_icon(image: Image.Image, output_path: str, size: int = 256,
     if states is None:
         states = ['normal']
     if tones is None:
-        tones = ['light']
+        tones = ['universal']
     if scales is None:
         scales = [1.0, 1.25, 1.5, 2.0]
 

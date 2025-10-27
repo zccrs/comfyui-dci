@@ -225,6 +225,54 @@ class DCIReader:
                         except Exception as e:
                             print(f"Error loading image {filename}: {e}")
 
+                    elif file_info['type'] == self.FILE_TYPE_LINK:
+                        print(f"处理符号链接: {filename} (在目录 {dir_path} 中)")
+
+                        # Get symlink target path
+                        target_path = file_info['content'].decode('utf-8')
+                        print(f"符号链接目标: {target_path}")
+
+                        # Resolve symlink target relative to current directory
+                        resolved_image = self._resolve_symlink(dir_path, target_path)
+
+                        if resolved_image:
+                            # Parse layer filename for additional metadata
+                            layer_info = self._parse_layer_filename(filename)
+
+                            # Create image info for symlink (reuse resolved image data)
+                            image_info = {
+                                'image': resolved_image['image'],
+                                'size': size,
+                                'state': state,
+                                'tone': tone,
+                                'scale': scale,
+                                'format': layer_info.get('format', 'unknown'),
+                                'priority': layer_info.get('priority', 1),
+                                'path': dir_path,
+                                'filename': filename,
+                                'file_size': resolved_image['file_size'],
+                                'is_symlink': True,
+                                'symlink_target': target_path,
+
+                                # Layer information
+                                'layer_priority': layer_info.get('priority', 1),
+                                'layer_padding': layer_info.get('padding', 0.0),
+                                'palette_type': layer_info.get('palette_name', 'none'),
+                                'palette_value': layer_info.get('palette', -1),
+                                'hue_adjustment': layer_info.get('hue', 0),
+                                'saturation_adjustment': layer_info.get('saturation', 0),
+                                'brightness_adjustment': layer_info.get('brightness', 0),
+                                'red_adjustment': layer_info.get('red', 0),
+                                'green_adjustment': layer_info.get('green', 0),
+                                'blue_adjustment': layer_info.get('blue', 0),
+                                'alpha_adjustment': layer_info.get('alpha', 0),
+                            }
+
+                            print(f"添加符号链接图像: 路径={image_info['path']}, 文件名={image_info['filename']}, 目标={target_path}")
+                            images.append(image_info)
+                        else:
+                            print(f"无法解析符号链接: {filename} -> {target_path}")
+
         print(f"DCIReader.get_icon_images: 共提取 {len(images)} 个图像")
         return images
 
@@ -379,6 +427,68 @@ class DCIReader:
         layer_info['palette_name'] = palette_names.get(layer_info['palette'], "unknown")
 
         return layer_info
+
+    def _resolve_symlink(self, current_dir: str, target_path: str) -> Optional[Dict]:
+        """Resolve symlink target and return image data"""
+        try:
+            # Parse target path (e.g., "../../normal.light/1/1.0p.-1.0_0_0_0_0_0_0.webp")
+            # Split current directory path
+            current_parts = current_dir.split('/')
+
+            # Process target path
+            target_parts = target_path.split('/')
+            resolved_parts = current_parts.copy()
+
+            for part in target_parts:
+                if part == '..':
+                    # Go up one directory level
+                    if resolved_parts:
+                        resolved_parts.pop()
+                elif part == '.':
+                    # Stay in current directory
+                    continue
+                elif part:
+                    # Add directory or filename
+                    resolved_parts.append(part)
+
+            # Reconstruct the resolved path
+            if len(resolved_parts) < 3:
+                print(f"Invalid resolved path: {resolved_parts}")
+                return None
+
+            # Extract filename from resolved path
+            filename = resolved_parts[-1]
+            resolved_dir = '/'.join(resolved_parts[:-1])
+
+            print(f"解析符号链接: {current_dir} + {target_path} -> {resolved_dir}/{filename}")
+
+            # Look for the target file in directory structure
+            if resolved_dir in self.directory_structure:
+                files = self.directory_structure[resolved_dir]
+                if filename in files:
+                    file_info = files[filename]
+                    if file_info['type'] == self.FILE_TYPE_FILE:
+                        # Load image from target file
+                        image = Image.open(BytesIO(file_info['content']))
+                        return {
+                            'image': image,
+                            'file_size': file_info['size'],
+                            'content': file_info['content']
+                        }
+                    else:
+                        print(f"符号链接目标不是文件: {resolved_dir}/{filename}")
+                else:
+                    print(f"符号链接目标文件不存在: {resolved_dir}/{filename}")
+                    print(f"可用文件: {list(files.keys())}")
+            else:
+                print(f"符号链接目标目录不存在: {resolved_dir}")
+                print(f"可用目录: {list(self.directory_structure.keys())}")
+
+            return None
+
+        except Exception as e:
+            print(f"解析符号链接时出错: {e}")
+            return None
 
 
 class DCIPreviewGenerator:

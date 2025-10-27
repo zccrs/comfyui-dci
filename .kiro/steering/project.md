@@ -1,0 +1,14 @@
+---
+inclusion: always
+---
+1. 如果当前项目不是一个git仓库，则自动初始化为git仓库。
+2. 判断项目根目录有无README.md文件。没有时新建，且根据下述对你的要求更新文件。
+3. 判断项目根目录有无preliminary-design.md文件。没有时新建，且根据下述对你的要求更新文件。
+4. 判断项目根目录有无detailed-design.md文件。没有时新建，且根据下述对你的要求更新文件。
+5. 阅读项目的README.md、preliminary-design.md、detailed-design.md、文件和所有代码文档，理解这个项目的目标、架构、实现方式等。
+6. 根据用户需求，思考实现方案，然后按实现后的结果更新README.md、preliminary-design.md、detailed-design.md 文件，向用户确认设计方案和实现细节，确保用户对设计方案满意后再开始编写代码。
+7. 代码编写完成后，检查所修改和新增的代码，不要有任何的编译错误和警告，且代码风格要和当前项目保持一致。
+8. 对代码改动的功能进行全面的测试，确保功能的正确性和稳定性。
+9. 在确认代码无问题后，根据代码变动，更新README.md、preliminary-design.md、detailed-design.md 文件，确保文档和代码保持一致。
+10. 你应该将本次改动提交到git，commit的风格从mcp的记忆中查找。
+11. 最后，总是询问用户是否还需要改进，而不是直接结束流程。
