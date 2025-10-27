@@ -19,8 +19,12 @@ class BaseNode:
         try:
             return self._execute(*args, **kwargs)
         except Exception as e:
-            print(f"Error in {self.__class__.__name__}: {str(e)}")
-            traceback.print_exc()
+            try:
+                print(f"Error in {self.__class__.__name__}: {str(e)}")
+                traceback.print_exc()
+            except Exception:
+                # If even printing fails, just continue silently
+                pass
             return self._handle_error(e)
 
     def _execute(self, *args, **kwargs):

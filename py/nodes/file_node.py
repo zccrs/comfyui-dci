@@ -134,7 +134,10 @@ class DCIFileNode(BaseNode):
                         'target': symlink_target
                     }
 
-                    print(f"Created symlink for universal tone: {dark_state_tone_dir}/{scale_dir}/{filename_part} -> {symlink_target}")
+                    try:
+                        print(f"Created symlink for universal tone: {dark_state_tone_dir}/{scale_dir}/{filename_part} -> {symlink_target}")
+                    except Exception:
+                        print("Created symlink for universal tone: <path> -> <target>")
 
             # Convert directory structure to DCI format
             for size_dir, size_content in directory_structure.items():

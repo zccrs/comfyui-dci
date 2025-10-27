@@ -3,7 +3,10 @@ try:
     from ..utils.image_utils import tensor_to_pil, apply_background
     _image_support = True
 except ImportError as e:
-    print(f"Warning: Image support not available in sample_image_node: {e}")
+    try:
+        print(f"Warning: Image support not available in sample_image_node: {e}")
+    except Exception:
+        print("Warning: Image support not available in sample_image_node")
     _image_support = False
 
 from io import BytesIO
@@ -33,7 +36,10 @@ except ImportError:
             translate_ui_to_enum, get_enum_ui_options, get_enum_default_ui_value
         )
     except ImportError as e:
-        print(f"Warning: Could not import required modules in sample_image_node: {e}")
+        try:
+            print(f"Warning: Could not import required modules in sample_image_node: {e}")
+        except Exception:
+            print("Warning: Could not import required modules in sample_image_node")
         # Define minimal fallbacks
         def format_dci_path(*args, **kwargs):
             return "test_path"
@@ -216,6 +222,9 @@ class DCISampleImage(BaseNode):
             'alpha_adjustment': 0,
         }
 
-        print(f"Created simple DCI image: {dci_path} ({len(img_content)} bytes)")
+        try:
+            print(f"Created simple DCI image: {dci_path} ({len(img_content)} bytes)")
+        except Exception:
+            print(f"Created simple DCI image: <path> ({len(img_content)} bytes)")
 
         return (dci_image_data, dci_path, img_content)

@@ -218,7 +218,10 @@ class DCIReader:
                             }
 
                             # 打印完整的图像信息以进行调试
-                            print(f"添加图像: 路径={image_info['path']}, 文件名={image_info['filename']}")
+                            try:
+                                print(f"添加图像: 路径={image_info['path']}, 文件名={image_info['filename']}")
+                            except Exception:
+                                print(f"添加图像: 路径=<path>, 文件名=<filename>")
 
                             images.append(image_info)
 
@@ -226,11 +229,17 @@ class DCIReader:
                             print(f"Error loading image {filename}: {e}")
 
                     elif file_info['type'] == self.FILE_TYPE_LINK:
-                        print(f"处理符号链接: {filename} (在目录 {dir_path} 中)")
+                        try:
+                            print(f"处理符号链接: {filename} (在目录 {dir_path} 中)")
+                        except Exception:
+                            print("处理符号链接")
 
                         # Get symlink target path
                         target_path = file_info['content'].decode('utf-8')
-                        print(f"符号链接目标: {target_path}")
+                        try:
+                            print(f"符号链接目标: {target_path}")
+                        except Exception:
+                            print("符号链接目标")
 
                         # Resolve symlink target relative to current directory
                         resolved_image = self._resolve_symlink(dir_path, target_path)
@@ -268,10 +277,16 @@ class DCIReader:
                                 'alpha_adjustment': layer_info.get('alpha', 0),
                             }
 
-                            print(f"添加符号链接图像: 路径={image_info['path']}, 文件名={image_info['filename']}, 目标={target_path}")
+                            try:
+                                print(f"添加符号链接图像: 路径={image_info['path']}, 文件名={image_info['filename']}, 目标={target_path}")
+                            except Exception:
+                                print(f"添加符号链接图像: 路径=<path>, 文件名=<filename>, 目标=<target>")
                             images.append(image_info)
                         else:
-                            print(f"无法解析符号链接: {filename} -> {target_path}")
+                            try:
+                                print(f"无法解析符号链接: {filename} -> {target_path}")
+                            except Exception:
+                                print("无法解析符号链接")
 
         print(f"DCIReader.get_icon_images: 共提取 {len(images)} 个图像")
         return images
@@ -460,7 +475,10 @@ class DCIReader:
             filename = resolved_parts[-1]
             resolved_dir = '/'.join(resolved_parts[:-1])
 
-            print(f"解析符号链接: {current_dir} + {target_path} -> {resolved_dir}/{filename}")
+            try:
+                print(f"解析符号链接: {current_dir} + {target_path} -> {resolved_dir}/{filename}")
+            except Exception:
+                print("解析符号链接")
 
             # Look for the target file in directory structure
             if resolved_dir in self.directory_structure:
@@ -476,18 +494,30 @@ class DCIReader:
                             'content': file_info['content']
                         }
                     else:
-                        print(f"符号链接目标不是文件: {resolved_dir}/{filename}")
+                        try:
+                            print(f"符号链接目标不是文件: {resolved_dir}/{filename}")
+                        except Exception:
+                            print("符号链接目标不是文件")
                 else:
-                    print(f"符号链接目标文件不存在: {resolved_dir}/{filename}")
-                    print(f"可用文件: {list(files.keys())}")
+                    try:
+                        print(f"符号链接目标文件不存在: {resolved_dir}/{filename}")
+                        print(f"可用文件: {list(files.keys())}")
+                    except Exception:
+                        print("符号链接目标文件不存在")
             else:
-                print(f"符号链接目标目录不存在: {resolved_dir}")
-                print(f"可用目录: {list(self.directory_structure.keys())}")
+                try:
+                    print(f"符号链接目标目录不存在: {resolved_dir}")
+                    print(f"可用目录: {list(self.directory_structure.keys())}")
+                except Exception:
+                    print("符号链接目标目录不存在")
 
             return None
 
         except Exception as e:
-            print(f"解析符号链接时出错: {e}")
+            try:
+                print(f"解析符号链接时出错: {e}")
+            except Exception:
+                print("解析符号链接时出错")
             return None
 
 

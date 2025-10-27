@@ -3,7 +3,10 @@ try:
     from ..utils.image_utils import tensor_to_pil, apply_background
     _image_support = True
 except ImportError as e:
-    print(f"Warning: Image support not available in image_node: {e}")
+    try:
+        print(f"Warning: Image support not available in image_node: {e}")
+    except Exception:
+        print("Warning: Image support not available in image_node")
     _image_support = False
 
 from io import BytesIO
@@ -33,7 +36,10 @@ except ImportError:
         )
         from nodes.base_node import BaseNode
     except ImportError as e:
-        print(f"Warning: Could not import required modules in image_node: {e}")
+        try:
+            print(f"Warning: Could not import required modules in image_node: {e}")
+        except Exception:
+            print("Warning: Could not import required modules in image_node")
         # Define minimal fallbacks
         def format_dci_path(*args, **kwargs):
             return "test_path"
@@ -285,9 +291,15 @@ class DCIImage(BaseNode):
             'alpha_adjustment': alpha_adjustment,
         }
 
-        print(f"{t('Created DCI image with layers')}: {dci_path} ({len(img_content)} {t('bytes')})")
-        print(f"  {t('Layer priority')}: {layer_priority}, {t('padding')}: {layer_padding}, {t('palette')}: {t(str(palette_type))}")
-        print(f"  {t('Color adjustments')} - H:{hue_adjustment} S:{saturation_adjustment} B:{brightness_adjustment}")
-        print(f"  {t('RGBA adjustments')} - R:{red_adjustment} G:{green_adjustment} B:{blue_adjustment} A:{alpha_adjustment}")
+        try:
+            print(f"{t('Created DCI image with layers')}: {dci_path} ({len(img_content)} {t('bytes')})")
+            print(f"  {t('Layer priority')}: {layer_priority}, {t('padding')}: {layer_padding}, {t('palette')}: {t(str(palette_type))}")
+            print(f"  {t('Color adjustments')} - H:{hue_adjustment} S:{saturation_adjustment} B:{brightness_adjustment}")
+            print(f"  {t('RGBA adjustments')} - R:{red_adjustment} G:{green_adjustment} B:{blue_adjustment} A:{alpha_adjustment}")
+        except Exception:
+            print(f"{t('Created DCI image with layers')}: <path> ({len(img_content)} {t('bytes')})")
+            print(f"  {t('Layer priority')}: {layer_priority}, {t('padding')}: {layer_padding}")
+            print(f"  {t('Color adjustments')} - H:{hue_adjustment} S:{saturation_adjustment} B:{brightness_adjustment}")
+            print(f"  {t('RGBA adjustments')} - R:{red_adjustment} G:{green_adjustment} B:{blue_adjustment} A:{alpha_adjustment}")
 
         return (dci_image_data, dci_path, img_content)
